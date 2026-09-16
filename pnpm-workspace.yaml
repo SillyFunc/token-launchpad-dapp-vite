@@ -1,0 +1,2 @@
+minimumReleaseAgeExclude:
+  - '@sillyfunc/launchpad-contracts@0.1.0'
