@@ -25,7 +25,6 @@ import {
 import { PLATFORM_CHAIN_ID } from '@/lib/web3'
 import { m } from '@/paraglide/messages.js'
 
-const GAS_RESERVE = parseEther('0.005')
 const TOKEN_SCALE = 10n ** 18n
 
 function ceilDivide(value: bigint, divisor: bigint): bigint {
@@ -189,12 +188,6 @@ export function TokenPresale({
     : Math.max(0, endTimeSeconds - nowSeconds)
   const parsedAmount = parseBnbInput(subscribeAmount)
   const walletBalance = balanceData?.value ?? null
-  const spendableBalance =
-    walletBalance === null
-      ? null
-      : walletBalance > GAS_RESERVE
-        ? walletBalance - GAS_RESERVE
-        : 0n
   const remainingWalletTokens =
     gate.maxBuyPerWallet > 0n
       ? userSubscribedTokens >= gate.maxBuyPerWallet
@@ -205,6 +198,10 @@ export function TokenPresale({
     remainingWalletTokens === null || gate.presalePrice <= 0n
       ? null
       : ceilDivide(remainingWalletTokens * gate.presalePrice, TOKEN_SCALE)
+  const walletLimitBnb =
+    gate.maxBuyPerWallet <= 0n || gate.presalePrice <= 0n
+      ? null
+      : ceilDivide(gate.maxBuyPerWallet * gate.presalePrice, TOKEN_SCALE)
   const remainingHardCap =
     gate.hardCap > 0n
       ? gate.bnbAccumulated >= gate.hardCap
@@ -212,7 +209,7 @@ export function TokenPresale({
         : gate.hardCap - gate.bnbAccumulated
       : null
   const maxContribution = minimum([
-    spendableBalance,
+    walletBalance,
     remainingWalletBnb,
     remainingHardCap,
   ])
@@ -230,11 +227,11 @@ export function TokenPresale({
     parsedAmount > 0n &&
     remainingHardCap !== null &&
     parsedAmount > remainingHardCap
-  const exceedsSpendableBalance =
+  const exceedsWalletBalance =
     parsedAmount !== null &&
     parsedAmount > 0n &&
-    spendableBalance !== null &&
-    parsedAmount > spendableBalance
+    walletBalance !== null &&
+    parsedAmount > walletBalance
   const isAmountOverLimit = exceedsWalletTokenLimit || exceedsHardCap
   const amountError =
     parsedAmount === null
@@ -249,8 +246,8 @@ export function TokenPresale({
             ? m.token_presale_capacity_exceeded({
                 amount: formatBnbAmount(remainingHardCap ?? 0n),
               })
-            : exceedsSpendableBalance
-              ? m.token_insufficient_spendable_balance()
+            : exceedsWalletBalance
+              ? m.token_insufficient_balance_description()
               : null
 
   const refreshPresale = async () => {
@@ -332,11 +329,11 @@ export function TokenPresale({
       })
       return
     }
-    if (walletBalance !== null && parsedAmount + GAS_RESERVE > walletBalance) {
+    if (walletBalance !== null && parsedAmount > walletBalance) {
       toast.add({
         type: 'error',
         title: m.token_insufficient_balance(),
-        description: m.token_gas_reserve_description(),
+        description: m.token_insufficient_balance_description(),
       })
       return
     }
@@ -395,11 +392,7 @@ export function TokenPresale({
         />
         <PresaleRow
           label={m.token_wallet_limit()}
-          value={
-            gate.maxBuyPerWallet > 0n
-              ? `${formatTokenAmount(gate.maxBuyPerWallet)} ${symbol}`
-              : '--'
-          }
+          value={walletLimitBnb !== null ? formatBnbAmount(walletLimitBnb) : '--'}
         />
         <PresaleRow
           label={m.token_soft_cap()}
@@ -494,14 +487,6 @@ export function TokenPresale({
                   {walletBalance === null ? '--' : formatBnbAmount(walletBalance)}
                 </span>
               </div>
-              {remainingWalletBnb !== null && (
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-[#A0A3A7]">{m.token_wallet_remaining()}</span>
-                  <span className="font-mono text-foreground">
-                    {formatBnbAmount(remainingWalletBnb)}
-                  </span>
-                </div>
-              )}
               <div className="flex h-11 items-center border border-foreground/15 bg-background px-3 focus-within:border-primary">
                 <input
                   type="text"
