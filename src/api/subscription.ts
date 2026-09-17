@@ -14,7 +14,7 @@ export type SubscriptionItemResponse = {
   payCoin: string
   status: number
   txHash: string
-  preIndex: unknown
+  preIndex: number
   remark: string
   createTime: string
   updateTime: string
