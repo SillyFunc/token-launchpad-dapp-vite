@@ -1,4 +1,10 @@
-import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react'
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type ReactNode,
+} from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useForm } from '@tanstack/react-form'
 import { isAddress } from 'viem'
@@ -39,24 +45,18 @@ const taxDurationSchema = z
   .string()
   .trim()
   .min(1, m.launch_tax_duration())
-  .refine(
-    (value) => {
-      const number = Number(value)
-      return Number.isInteger(number) && number >= 1 && number <= 365
-    },
-    'Enter an integer from 1 to 365',
-  )
+  .refine((value) => {
+    const number = Number(value)
+    return Number.isInteger(number) && number >= 1 && number <= 365
+  }, 'Enter an integer from 1 to 365')
 
 const antiFarmerDurationSchema = z
   .string()
   .trim()
-  .refine(
-    (value) => {
-      const number = Number(value)
-      return Number.isInteger(number) && number >= 0 && number <= 365
-    },
-    'Enter an integer from 0 to 365',
-  )
+  .refine((value) => {
+    const number = Number(value)
+    return Number.isInteger(number) && number >= 0 && number <= 365
+  }, 'Enter an integer from 0 to 365')
 
 const feeRecipientSchema = z
   .string()
@@ -65,14 +65,18 @@ const feeRecipientSchema = z
   .refine((value) => isAddress(value), 'Enter a valid EVM address')
 
 function sanitizeDaysInput(value: string) {
-  return value.replace(/\D/g, '').replace(/^0+(?=\d)/, '').slice(0, 3)
+  return value
+    .replace(/\D/g, '')
+    .replace(/^0+(?=\d)/, '')
+    .slice(0, 3)
+}
+
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error && error.message ? error.message : fallback
 }
 
 function showError(error: unknown, fallback: string) {
-  toast.error(
-    m.request_failed(),
-    error instanceof Error && error.message ? error.message : fallback,
-  )
+  toast.error(m.request_failed(), getErrorMessage(error, fallback))
 }
 
 interface LaunchFormProps {
@@ -152,6 +156,7 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
   const [logoPreview, setLogoPreview] = useState<string | null>(
     initialData?.coinImg || null,
   )
+  const [isEditSubmitting, setIsEditSubmitting] = useState(false)
   const [initialValues] = useState(() => getInitialValues(initialData, address))
 
   useEffect(
@@ -178,41 +183,63 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
         return
       }
 
+      const usePromiseToast = isEditMode && Boolean(editId)
+      if (usePromiseToast) setIsEditSubmitting(true)
+
       try {
-        const coinImg = logoFile
-          ? await uploadTokenLogo(logoFile)
-          : logoPreview || ''
-        const auth = await requestAuthSignature(config, address)
-        const payload = {
-          name: value.name.trim(),
-          coinImg,
-          symbol: value.symbol.trim(),
-          meta: value.description.trim(),
-          buyTax: Number(value.buyTax),
-          sellTax: Number(value.sellTax),
-          feeRecipient: value.feeRecipient.trim(),
-          taxDuration: Number(value.taxDuration),
-          antiFarmerDuration: Number(value.antiFarmerDuration),
-          liqExpectedOutputAmount: 0,
-          launchType: Number(initialData?.launchType ?? 2),
-          website: value.links.website.trim(),
-          telegram: value.links.telegram.trim(),
-          twitter: value.links.twitter.trim(),
-          ...(initialData?.salt ? { salt: initialData.salt } : {}),
-          ...auth,
-        }
+        const submission = (async () => {
+          const coinImg = logoFile
+            ? await uploadTokenLogo(logoFile)
+            : logoPreview || ''
+          const auth = await requestAuthSignature(config, address)
+          const payload = {
+            name: value.name.trim(),
+            coinImg,
+            symbol: value.symbol.trim(),
+            meta: value.description.trim(),
+            buyTax: Number(value.buyTax),
+            sellTax: Number(value.sellTax),
+            feeRecipient: value.feeRecipient.trim(),
+            taxDuration: Number(value.taxDuration),
+            antiFarmerDuration: Number(value.antiFarmerDuration),
+            liqExpectedOutputAmount: 0,
+            launchType: Number(initialData?.launchType ?? 2),
+            website: value.links.website.trim(),
+            telegram: value.links.telegram.trim(),
+            twitter: value.links.twitter.trim(),
+            ...(initialData?.salt ? { salt: initialData.salt } : {}),
+            ...auth,
+          }
+
+          if (isEditMode && editId) {
+            await updateTokenInfo({ id: editId, ...payload })
+            return
+          }
+
+          await saveTokenInfo(payload)
+        })()
 
         if (isEditMode && editId) {
-          await updateTokenInfo({ id: editId, ...payload })
-          toast.success(m.launch_update_success())
+          await toast.promise(submission, {
+            loading: { title: m.launch_saving() },
+            success: { title: m.launch_update_success() },
+            error: (error: unknown) => ({
+              title: m.request_failed(),
+              description: getErrorMessage(error, m.launch_submit_failed()),
+              priority: 'high',
+            }),
+          })
         } else {
-          await saveTokenInfo(payload)
+          await submission
           toast.success(m.launch_create_success())
         }
 
         navigate('/dashboard')
       } catch (error) {
+        if (usePromiseToast) return
         showError(error, m.launch_submit_failed())
+      } finally {
+        if (usePromiseToast) setIsEditSubmitting(false)
       }
     },
   })
@@ -244,7 +271,12 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
         void form.handleSubmit()
       }}
     >
-      <div className="flex flex-col border border-[#484b51] bg-[#131516]">
+      <div
+        aria-busy={isEditSubmitting}
+        inert={isEditSubmitting}
+        data-submitting={isEditSubmitting}
+        className="flex flex-col border border-[#484b51] bg-[#131516] transition-opacity data-[submitting=true]:opacity-60"
+      >
         <div className="flex items-center justify-between gap-3 border-b border-b-[#484b51] p-4">
           <div className="min-w-0 flex-1">
             <div className="text-xs font-bold text-white">
@@ -578,7 +610,9 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
                       spellCheck={false}
                       value={field.state.value}
                       onBlur={field.handleBlur}
-                      onChange={(event) => field.handleChange(event.target.value)}
+                      onChange={(event) =>
+                        field.handleChange(event.target.value)
+                      }
                     />
                     <FieldInfo field={field} />
                   </div>
@@ -605,7 +639,9 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
                       spellCheck={false}
                       value={field.state.value}
                       onBlur={field.handleBlur}
-                      onChange={(event) => field.handleChange(event.target.value)}
+                      onChange={(event) =>
+                        field.handleChange(event.target.value)
+                      }
                     />
                     <FieldInfo field={field} />
                   </div>
@@ -632,7 +668,9 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
                       spellCheck={false}
                       value={field.state.value}
                       onBlur={field.handleBlur}
-                      onChange={(event) => field.handleChange(event.target.value)}
+                      onChange={(event) =>
+                        field.handleChange(event.target.value)
+                      }
                     />
                     <FieldInfo field={field} />
                   </div>
@@ -659,10 +697,8 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
             <Web3ActionButton
               type="submit"
               disabled={!canSubmit}
-              loading={isSubmitting}
-              loadingText={
-                isEditMode ? m.launch_saving() : m.launch_creating()
-              }
+              loading={isSubmitting && !isEditMode}
+              loadingText={m.launch_creating()}
               className="flex h-10.5 text-background w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-linear-to-r from-[#FE810B] via-[#FFA546] to-[#FE810B] text-base font-bold [clip-path:polygon(10px_0,100%_0,100%_calc(100%-10px),calc(100%-10px)_100%,0_100%,0_10px)] transition-[transform,opacity] active:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFA546]"
             >
               <span>

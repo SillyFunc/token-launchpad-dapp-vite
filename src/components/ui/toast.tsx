@@ -37,7 +37,7 @@ function Toast({ className, ...props }: ToastPrimitive.Root.Props) {
         "data-[type=info]:border-sky-500/40 data-[type=info]:bg-sky-950 data-[type=info]:text-sky-100 data-[type=info]:shadow-[0_12px_32px_rgba(14,165,233,0.18)]",
         "data-[type=warning]:border-amber-500/40 data-[type=warning]:bg-amber-950 data-[type=warning]:text-amber-100 data-[type=warning]:shadow-[0_12px_32px_rgba(245,158,11,0.18)]",
         "data-[type=error]:border-red-500/40 data-[type=error]:bg-red-950 data-[type=error]:text-red-100 data-[type=error]:shadow-[0_12px_32px_rgba(239,68,68,0.18)]",
-        "data-[type=loading]:border-orange-500/40 data-[type=loading]:bg-orange-950 data-[type=loading]:text-orange-100 data-[type=loading]:shadow-[0_12px_32px_rgba(249,115,22,0.18)]",
+        "data-[type=loading]:border-orange-500/45 data-[type=loading]:bg-[#151515] data-[type=loading]:text-white data-[type=loading]:shadow-[0_12px_32px_rgba(249,115,22,0.14)]",
         "[--gap:0.75rem] [--height:var(--toast-frontmost-height,var(--toast-height))] [--offset-y:calc(var(--toast-offset-y)*-1+calc(var(--toast-index)*var(--gap)*-1)+var(--toast-swipe-movement-y))] [--peek:0.75rem] [--scale:calc(max(0,1-(var(--toast-index)*0.1)))] [--shrink:calc(1-var(--scale))]",
         "h-(--height) [transform:translateX(var(--toast-swipe-movement-x))_translateY(calc(var(--toast-swipe-movement-y)-(var(--toast-index)*var(--peek))-(var(--shrink)*var(--height))))_scale(var(--scale))] [transition:transform_500ms_cubic-bezier(0.22,1,0.36,1),opacity_500ms,height_150ms]",
         "after:absolute after:top-full after:left-0 after:h-[calc(var(--gap)+1px)] after:w-full after:content-['']",
