@@ -1,4 +1,4 @@
-import { postForm, postMultipart } from '@/lib/http/client'
+import { get, postForm, postMultipart } from '@/lib/http/client'
 
 export interface TokenDetail {
   id: number
@@ -69,6 +69,23 @@ export interface ParseTxHashParams {
   signature: string
 }
 
+export interface SaveTokenSaltParams {
+  contractAddress: string
+  salt: string
+  address: string
+  message: string
+  signature: string
+  txHash: string
+}
+
+export type ReservedAddressItem = {
+  id: number
+  contractAddress: string
+  salt: string
+  status: number
+  coinStatus: 0 | 1 | 2
+}
+
 export function getTokenByContractAddress(
   address: string,
   signal?: AbortSignal,
@@ -91,7 +108,11 @@ export function getTokenById(id: string | null, signal?: AbortSignal) {
 export function uploadTokenLogo(file: File, signal?: AbortSignal) {
   const formData = new FormData()
   formData.append('file', file)
-  return postMultipart<string>('deposit/common/upload/local/image', formData, signal)
+  return postMultipart<string>(
+    'deposit/common/upload/local/image',
+    formData,
+    signal,
+  )
 }
 
 export function saveTokenInfo(params: SaveTokenParams, signal?: AbortSignal) {
@@ -115,4 +136,22 @@ export function updateTokenInfo(
 
 export function parseTxHash(params: ParseTxHashParams, signal?: AbortSignal) {
   return postForm<void>('deposit/exSwap/swapCoinIssuedUpdate', params, signal)
+}
+
+export function saveTokenSalt(
+  params: SaveTokenSaltParams,
+  signal?: AbortSignal,
+) {
+  return postForm<void>('deposit/coinIssueSetting/insertSalt', params, signal)
+}
+
+export function getReservedAddressesByUser(
+  address: string,
+  signal?: AbortSignal,
+) {
+  return get<ReservedAddressItem[]>(
+    'deposit/coinIssueSetting/getSaltList',
+    { address },
+    signal,
+  )
 }
