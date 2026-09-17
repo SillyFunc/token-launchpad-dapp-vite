@@ -96,7 +96,7 @@ function PresaleProgress({
           </strong>
         </span>
       </div>
-      <Progress value={value} className="h-1.5 bg-foreground/10" />
+      <Progress value={value} className="w-full" />
     </div>
   )
 }

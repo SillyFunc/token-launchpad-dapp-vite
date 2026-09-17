@@ -6,10 +6,15 @@ export const boardKeys = {
   list: (p: BoardListParams) => [...boardKeys.all, 'list', p] as const,
 }
 
-export const useBoardList = (params: Partial<BoardListParams> = {}) => {
+export const useBoardList = (
+  params: Partial<BoardListParams> = {},
+  options: { enabled?: boolean } = {},
+) => {
   const query: BoardListParams = { pageNo: 1, pageSize: 10, ...params }
   return useQuery({
     queryKey: boardKeys.list(query),
     queryFn: ({ signal }) => listBoard(query, signal),
+    enabled: options.enabled ?? Boolean(query.address),
+    staleTime: 30_000,
   })
 }
