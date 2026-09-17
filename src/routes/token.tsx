@@ -1,3 +1,5 @@
+import { m } from '@/paraglide/messages.js'
+
 export const TokenPage = () => {
-  return <div>Token Page</div>
+  return <div>{m.token_page()}</div>
 }

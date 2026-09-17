@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "i18n:compile": "paraglide-js compile --project ./project.inlang --outdir ./src/paraglide --emit-ts-declarations",
+    "build": "pnpm run i18n:compile && tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview"
   },
@@ -37,6 +38,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.29.7",
+    "@inlang/paraglide-js": "^2.25.4",
     "@rolldown/plugin-babel": "^0.2.3",
     "@types/babel__core": "^7.20.5",
     "@types/node": "^24.13.3",

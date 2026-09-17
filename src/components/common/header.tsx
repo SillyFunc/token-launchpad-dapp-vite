@@ -4,6 +4,7 @@ import { ConnectKitButton } from 'connectkit'
 import { formatAddress } from '@/lib/utils'
 import { Button } from '../ui/button'
 import type React from 'react'
+import { m } from '@/paraglide/messages.js'
 
 interface HeaderProps {
   isMenuOpen: boolean
@@ -16,7 +17,7 @@ export const Header: React.FC<HeaderProps> = ({ isMenuOpen, onToggleMenu }) => {
       <div className="flex items-center space-x-3">
         <button
           type="button"
-          aria-label={isMenuOpen ? '关闭菜单' : '打开菜单'}
+          aria-label={isMenuOpen ? m.close_menu() : m.open_menu()}
           aria-expanded={isMenuOpen}
           onClick={onToggleMenu}
           className="cursor-pointer active:opacity-85 transition-opacity"
@@ -40,7 +41,7 @@ export const Header: React.FC<HeaderProps> = ({ isMenuOpen, onToggleMenu }) => {
           to="/launch"
           className="cursor-pointer bg-linear-to-r from-[#FE810B] via-[#FFA546] to-[#FE810B] px-6 py-1.5 text-sm font-semibold transition-all active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFA546]"
         >
-          创建代币
+          {m.create_token()}
         </Link>
         <ConnectKitButton.Custom>
           {({ isConnected, show, address, ensName, unsupported }) => {
@@ -51,7 +52,7 @@ export const Header: React.FC<HeaderProps> = ({ isMenuOpen, onToggleMenu }) => {
                   type="button"
                   className="cursor-pointer border text-foreground border-[#FE810B] bg-[#FD810B1A] px-6 py-1.5 text-sm font-semibold transition-all active:translate-y-0.5 hover:bg-[#FD810B33] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFA546]"
                 >
-                  连接钱包
+                  {m.connect_wallet()}
                 </Button>
               )
             }
@@ -63,7 +64,7 @@ export const Header: React.FC<HeaderProps> = ({ isMenuOpen, onToggleMenu }) => {
                   type="button"
                   className="cursor-pointer border border-rose-500 bg-rose-500/10 px-4 py-1.5 text-sm font-semibold text-rose-500 transition-all active:translate-y-0.5 hover:bg-rose-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
                 >
-                  网络错误
+                  {m.network_error()}
                 </button>
               )
             }

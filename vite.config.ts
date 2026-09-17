@@ -4,6 +4,7 @@ import { defineConfig } from 'vite'
 import { nodePolyfills } from 'vite-plugin-node-polyfills'
 import tailwindcss from '@tailwindcss/vite'
 import { fileURLToPath } from 'node:url'
+import { paraglideVitePlugin } from '@inlang/paraglide-js'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -12,6 +13,11 @@ export default defineConfig({
     babel({ presets: [reactCompilerPreset()] }),
     tailwindcss(),
     nodePolyfills(),
+    paraglideVitePlugin({
+      project: './project.inlang',
+      outdir: './src/paraglide',
+      emitTsDeclarations: true,
+    }),
   ],
   resolve: {
     alias: {

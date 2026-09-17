@@ -1,4 +1,5 @@
 import { toast } from '@/components/ui/toast'
+import { m } from '@/paraglide/messages.js'
 import { DEFAULT_REQUEST_ERROR_MESSAGE } from './error'
 
 const REQUEST_TOAST_DEDUP_WINDOW_MS = 1500
@@ -18,5 +19,5 @@ export function notifyRequestError(message: string) {
   }
   lastRequestToastKey = text
   lastRequestToastAt = now
-  toast.error(text, '请求失败')
+  toast.add({ type: 'error', title: m.request_failed(), description: text })
 }

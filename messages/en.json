@@ -1,0 +1,22 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "nav_home": "Home",
+  "nav_launch": "Launch",
+  "nav_dashboard": "Dashboard",
+  "language": "Language",
+  "language_zh_tw": "繁體中文",
+  "language_english": "English",
+  "create_token": "Create Token",
+  "connect_wallet": "Connect Wallet",
+  "network_error": "Network Error",
+  "request_failed": "Request failed",
+  "open_menu": "Open menu",
+  "close_menu": "Close menu",
+  "sidebar_menu": "Sidebar menu",
+  "board_page": "Board Page",
+  "launch_page": "Launch Page",
+  "prelaunch_page": "Prelaunch Page",
+  "dashboard_page": "Dashboard Page",
+  "presale_page": "Presale Page",
+  "token_page": "Token Page"
+}

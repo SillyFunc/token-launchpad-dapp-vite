@@ -5,6 +5,10 @@ import { RouterProvider } from 'react-router'
 import { router } from '@/router/index.ts'
 import { Auth } from '@/components/common/auth.tsx'
 import { Web3Provider } from '@/providers/web3-provider.tsx'
+import { getLocale, getTextDirection } from '@/paraglide/runtime.js'
+
+document.documentElement.lang = getLocale()
+document.documentElement.dir = getTextDirection()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

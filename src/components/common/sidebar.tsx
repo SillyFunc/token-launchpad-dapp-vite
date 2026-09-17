@@ -3,6 +3,8 @@ import { Link } from 'react-router'
 import { ArrowUpRight, ChevronRight } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react'
 import { Drawer, DrawerContent, DrawerTitle } from '@/components/ui/drawer'
+import { m } from '@/paraglide/messages.js'
+import { getLocale, setLocale } from '@/paraglide/runtime.js'
 
 interface SidebarProps {
   isOpen: boolean
@@ -10,16 +12,21 @@ interface SidebarProps {
 }
 
 const navItems = [
-  { name: '首页', path: '/board' },
-  { name: '发射', path: '/launch' },
-  { name: '控制台', path: '/dashboard' },
+  { label: () => m.nav_home(), path: '/board' },
+  { label: () => m.nav_launch(), path: '/launch' },
+  { label: () => m.nav_dashboard(), path: '/dashboard' },
 ]
 
-const languages = ['中文', 'EN']
+const languages = [
+  { locale: 'zh-TW', label: () => m.language_zh_tw() },
+  { locale: 'en', label: () => m.language_english() },
+] as const
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const [isLangOpen, setIsLangOpen] = useState(false)
-  const [currentLang, setCurrentLang] = useState('中文')
+  const currentLocale = getLocale()
+  const currentLanguage =
+    languages.find(({ locale }) => locale === currentLocale) ?? languages[1]
 
   useEffect(() => {
     if (!isOpen) return
@@ -53,17 +60,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       swipeDirection="left"
     >
       <DrawerContent className="bg-[#070808] data-[swipe-direction=left]:border-r-0 top-16! bottom-0! w-full!">
-        <DrawerTitle className="sr-only">侧边菜单</DrawerTitle>
+        <DrawerTitle className="sr-only">{m.sidebar_menu()}</DrawerTitle>
 
         <nav className="flex flex-1 flex-col overflow-y-auto">
           {navItems.map((item) => (
             <Link
-              key={item.name}
+              key={item.path}
               to={item.path}
               onClick={onClose}
               className="flex items-center justify-between border-b border-b-[#303236] px-6 py-6 text-white transition-colors hover:bg-white/5 active:bg-white/10"
             >
-              <span className="text-base">{item.name}</span>
+              <span className="text-base">{item.label()}</span>
               <ArrowUpRight className="size-5 text-white" />
             </Link>
           ))}
@@ -74,9 +81,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               onClick={() => setIsLangOpen((prev) => !prev)}
               className="flex w-full cursor-pointer items-center justify-between p-6 text-white transition-colors hover:bg-white/5 active:bg-white/10"
             >
-              <span className="text-base">语言</span>
+              <span className="text-base">{m.language()}</span>
               <div className="flex items-center space-x-1.5 text-base text-[#A0A3A7]">
-                <span>{currentLang}</span>
+                <span>{currentLanguage.label()}</span>
                 <ChevronRight
                   className={`size-5 text-white transition-transform duration-200 ${
                     isLangOpen ? 'rotate-90' : 'rotate-0'
@@ -96,20 +103,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 >
                   {languages.map((lang) => (
                     <button
-                      key={lang}
+                      key={lang.locale}
                       type="button"
                       onClick={() => {
-                        setCurrentLang(lang)
+                        setLocale(lang.locale)
                         setIsLangOpen(false)
                       }}
                       className={`flex w-full cursor-pointer items-center justify-between rounded-md px-3 py-2 text-sm transition-colors ${
-                        currentLang === lang
+                        currentLocale === lang.locale
                           ? 'bg-white/10 font-semibold text-white'
-                          : 'text-neutral-400 hover:bg-white/5 hover:text-white'
+                          : 'text-neutral-400 hover:bg-white/10 hover:text-white'
                       }`}
                     >
-                      <span>{lang}</span>
-                      {currentLang === lang && (
+                      <span>{lang.label()}</span>
+                      {currentLocale === lang.locale && (
                         <span className="h-1.5 w-1.5 rounded-full bg-[#FE810B]" />
                       )}
                     </button>

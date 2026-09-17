@@ -1,0 +1,22 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "nav_home": "首頁",
+  "nav_launch": "發射",
+  "nav_dashboard": "控制台",
+  "language": "語言",
+  "language_zh_tw": "繁體中文",
+  "language_english": "English",
+  "create_token": "建立代幣",
+  "connect_wallet": "連接錢包",
+  "network_error": "網路錯誤",
+  "request_failed": "請求失敗",
+  "open_menu": "開啟選單",
+  "close_menu": "關閉選單",
+  "sidebar_menu": "側邊選單",
+  "board_page": "首頁",
+  "launch_page": "發射頁面",
+  "prelaunch_page": "預發射頁面",
+  "dashboard_page": "控制台",
+  "presale_page": "預售頁面",
+  "token_page": "代幣頁面"
+}

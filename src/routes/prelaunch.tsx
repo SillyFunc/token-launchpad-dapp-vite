@@ -1,3 +1,5 @@
+import { m } from '@/paraglide/messages.js'
+
 export const PrelaunchPage = () => {
-  return <div>Prelaunch Page</div>
+  return <div>{m.prelaunch_page()}</div>
 }

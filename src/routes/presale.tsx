@@ -1,3 +1,5 @@
+import { m } from '@/paraglide/messages.js'
+
 export const PresalePage = () => {
-  return <div>Presale Page</div>
+  return <div>{m.presale_page()}</div>
 }
