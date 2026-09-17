@@ -18,7 +18,7 @@ const navItems = [
 ]
 
 const languages = [
-  { locale: 'zh-TW', label: () => m.language_zh_tw() },
+  { locale: 'zh-Hant', label: () => m.language_zh_hant() },
   { locale: 'en', label: () => m.language_english() },
 ] as const
 

@@ -4,6 +4,6 @@
 
 - LLMS documentation: https://paraglidejs.com/llms.txt
 - Vite integration uses `@inlang/paraglide-js` and `paraglideVitePlugin`.
-- Supported locales: `en` and `zh-TW`.
+- Supported locales: `en` and `zh-Hant`.
 - Translation source files are stored in `messages/{locale}.json`.
 - Paraglide configuration is stored in `project.inlang/settings.json` and `project.inlang/paraglide.config.js`.
