@@ -7,10 +7,18 @@ import {
   webSocket,
 } from 'wagmi'
 import { bsc } from 'wagmi/chains'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import {
+  MutationCache,
+  QueryCache,
+  QueryClient,
+  QueryClientProvider,
+} from '@tanstack/react-query'
 import { ConnectKitProvider } from 'connectkit'
 import { walletConnect } from 'wagmi/connectors'
+import { Toaster, toast } from '@/components/ui/toast'
 import { env } from '@/env/client'
+import { ApiError } from '@/lib/http/error'
+import { m } from '@/paraglide/messages.js'
 
 const config = createConfig({
   chains: [bsc],
@@ -29,14 +37,27 @@ const config = createConfig({
   },
 })
 
-const queryClient = new QueryClient()
+function showApiError(error: Error) {
+  if (!(error instanceof ApiError)) return
+
+  toast.add({
+    type: 'error',
+    title: m.request_failed(),
+    description: error.message,
+  })
+}
+
+const queryClient = new QueryClient({
+  queryCache: new QueryCache({ onError: showApiError }),
+  mutationCache: new MutationCache({ onError: showApiError }),
+})
 
 export const Web3Provider = ({ children }: { children: React.ReactNode }) => {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
         <ConnectKitProvider mode="dark" debugMode>
-          {children}
+          <Toaster>{children}</Toaster>
         </ConnectKitProvider>
       </QueryClientProvider>
     </WagmiProvider>

@@ -1,5 +1,4 @@
-import { boardApi } from '@/api/board'
-import type { BoardListParams } from '@/api/board/types'
+import { listBoard, type BoardListParams } from '@/api/board'
 import { useQuery } from '@tanstack/react-query'
 
 export const boardKeys = {
@@ -11,6 +10,6 @@ export const useBoardList = (params: Partial<BoardListParams> = {}) => {
   const query: BoardListParams = { pageNo: 1, pageSize: 10, ...params }
   return useQuery({
     queryKey: boardKeys.list(query),
-    queryFn: () => boardApi.list(query),
+    queryFn: ({ signal }) => listBoard(query, signal),
   })
 }

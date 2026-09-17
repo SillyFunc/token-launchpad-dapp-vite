@@ -1,9 +1,3 @@
-export interface ApiEnvelope<T = unknown> {
-  data: T
-  code: number
-  message: string
-}
-
 export interface PageParams {
   pageNo: number
   pageSize: number

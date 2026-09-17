@@ -1,15 +1,19 @@
 import { useConnection } from 'wagmi'
 import { useQuery } from '@tanstack/react-query'
 
-import { authApi } from '@/api/auth'
+import { registerWallet } from '@/api/auth'
 
 export const Auth = () => {
   const { address } = useConnection()
 
   useQuery({
-    queryKey: [address],
-    queryFn: () => authApi.create({ address: address! }),
+    queryKey: ['auth', address],
+    queryFn: ({ signal }) => registerWallet({ address: address! }, signal),
     enabled: Boolean(address),
+    retry: false,
+    refetchOnReconnect: false,
+    refetchOnWindowFocus: false,
+    staleTime: Infinity,
   })
 
   return null
