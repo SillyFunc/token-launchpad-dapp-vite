@@ -143,17 +143,17 @@ function DashboardLoadingState() {
       {[1, 2, 3].map((item) => (
         <div
           key={item}
-          className="space-y-4 rounded-lg border border-[#2F3737] bg-[#131516] p-4"
+          className="flex flex-col gap-4 border border-[#2F3737] bg-[#131516] p-4"
         >
           <div className="flex items-center gap-3">
-            <Skeleton className="size-12 rounded-lg bg-neutral-800" />
-            <div className="flex-1 space-y-2">
+            <Skeleton className="size-12 bg-neutral-800" />
+            <div className="flex flex-1 flex-col gap-2">
               <Skeleton className="h-4 w-24 bg-neutral-800" />
               <Skeleton className="h-3 w-36 bg-neutral-800" />
             </div>
           </div>
-          <Skeleton className="h-12 rounded bg-neutral-800/60" />
-          <Skeleton className="h-16 rounded bg-neutral-800/40" />
+          <Skeleton className="h-12 bg-neutral-800/60" />
+          <Skeleton className="h-16 bg-neutral-800/40" />
         </div>
       ))}
     </div>

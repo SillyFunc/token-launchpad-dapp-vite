@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   CheckIcon,
+  CircleStopIcon,
   CoinsIcon,
   CopyIcon,
   ExternalLinkIcon,
@@ -12,12 +14,16 @@ import {
   WalletIcon,
 } from 'lucide-react'
 import { isAddress, type Address } from 'viem'
+import { usePublicClient, useWriteContract } from 'wagmi'
+import { presaleAbi } from '@sillyfunc/launchpad-contracts'
 
 import type { BoardItemResponse } from '@/api/board'
 import { PresaleProgress } from '@/components/common/presale-progress'
+import { Web3ActionButton } from '@/components/common/web3-action-button'
 import { useTokenGate } from '@/hooks/use-token-gate'
+import { getContractErrorMessage } from '@/lib/contract-error'
 import { formatBnbAmount, formatDecimal, formatTokenAmount } from '@/lib/format'
-import { getExplorerAddressUrl } from '@/lib/web3'
+import { PLATFORM_CHAIN_ID, getExplorerAddressUrl } from '@/lib/web3'
 import { formatAddress, getPresaleProgress } from '@/lib/utils'
 import { m } from '@/paraglide/messages.js'
 import { Badge } from '@/components/ui/badge'
@@ -30,6 +36,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { toast } from '@/components/ui/toast'
 
 interface TokenCardProps {
   token: BoardItemResponse
@@ -439,13 +446,24 @@ export function TokenCard({
       </div>
 
       <CardFooter className="flex w-full flex-col items-stretch gap-2 border-t border-[#2F3737] bg-[#16181a] p-3">
+        {stage === 'presale' && (
+          <EndPresaleButton
+            presaleAddress={gate.presaleAddress}
+            onSettled={gate.refetch}
+          />
+        )}
         <Button
           type="button"
+          variant={stage === 'presale' ? 'outline' : 'default'}
           onClick={handlePrimaryAction}
           disabled={
             stage === 'syncing' || (stage !== 'notIssued' && !tokenAddress)
           }
-          className="border-transparent bg-linear-to-r from-[#FE810B] via-[#FFA546] to-[#FE810B] font-bold text-white transition-transform active:translate-y-0.5"
+          className={
+            stage === 'presale'
+              ? 'border-[#484b51] bg-[#131516] font-bold text-white hover:bg-white/10'
+              : 'border-transparent bg-linear-to-r from-[#FE810B] via-[#FFA546] to-[#FE810B] font-bold text-white transition-transform active:translate-y-0.5'
+          }
         >
           <RocketIcon aria-hidden="true" />
           <span>
@@ -470,13 +488,71 @@ function getStage(
   token: BoardItemResponse,
   gate: ReturnType<typeof useTokenGate>,
 ): TokenStage {
-  if (!getTokenAddress(token) || (!gate.tokenExists && !gate.isError)) {
-    return gate.isLoading || gate.isFetching ? 'syncing' : 'notIssued'
-  }
-  if (gate.isLoading || gate.isFetching) return 'syncing'
+  if (!getTokenAddress(token)) return 'notIssued'
+  // Background refetch must not flip the badge or hide actions.
+  if (gate.isLoading) return 'syncing'
+  if (!gate.tokenExists) return 'notIssued'
   if (gate.presaleStatus === 4) return 'failed'
   if (gate.presaleStatus === 3 || (gate.tokenState ?? 0) >= 2) return 'live'
   if (gate.presaleStatus === 2) return 'waitingLaunch'
-  if (gate.presaleStatus === 1 && gate.presaleEnabled) return 'presale'
+  if (gate.presaleStatus === 1) return 'presale'
   return 'prelaunch'
+}
+
+function EndPresaleButton({
+  presaleAddress,
+  onSettled,
+}: {
+  presaleAddress?: Address
+  onSettled: () => Promise<void>
+}) {
+  const publicClient = usePublicClient({ chainId: PLATFORM_CHAIN_ID })
+  const { mutateAsync: writeContract } = useWriteContract()
+  const queryClient = useQueryClient()
+  const [isEnding, setIsEnding] = useState(false)
+
+  const handleEndPresale = async () => {
+    if (!presaleAddress || !publicClient || isEnding) return
+
+    setIsEnding(true)
+    try {
+      const hash = await writeContract({
+        address: presaleAddress,
+        abi: presaleAbi,
+        functionName: 'endPresale',
+        chainId: PLATFORM_CHAIN_ID,
+      })
+      await publicClient.waitForTransactionReceipt({ hash })
+      await Promise.all([
+        onSettled(),
+        queryClient.invalidateQueries({ queryKey: ['readContracts'] }),
+      ])
+      toast.add({
+        type: 'success',
+        title: m.token_transaction_confirmed(),
+        description: m.dashboard_end_presale_success(),
+      })
+    } catch (error) {
+      toast.add({
+        type: 'error',
+        title: m.token_transaction_failed(),
+        description: getContractErrorMessage(error),
+      })
+    } finally {
+      setIsEnding(false)
+    }
+  }
+
+  return (
+    <Web3ActionButton
+      onAction={handleEndPresale}
+      loading={isEnding}
+      loadingText={m.dashboard_ending_presale()}
+      disabled={!presaleAddress}
+      className="border-transparent bg-linear-to-r from-[#FE810B] via-[#FFA546] to-[#FE810B] font-bold text-white transition-transform active:translate-y-0.5"
+    >
+      <CircleStopIcon aria-hidden="true" />
+      <span>{m.dashboard_end_presale()}</span>
+    </Web3ActionButton>
+  )
 }

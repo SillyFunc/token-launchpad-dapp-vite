@@ -12,7 +12,6 @@ import {
   uploadTokenLogo,
   type TokenDetail,
 } from '@/api/token'
-import BackArrow from '@/assets/svgs/back-arrow.svg'
 import { FieldInfo } from '@/components/common/field-info'
 import { FormInput } from '@/components/common/form-input'
 import { FormSectionTitle } from '@/components/common/form-section-title'
@@ -186,32 +185,13 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
 
   return (
     <form
-      className="relative mx-auto flex w-full flex-col pb-28 pt-6"
+      className="relative mx-auto flex w-full flex-col pb-28"
       onSubmit={(event) => {
         event.preventDefault()
         event.stopPropagation()
         void form.handleSubmit()
       }}
     >
-      <div className="mb-4 flex items-center gap-3">
-        <button
-          type="button"
-          aria-label="返回"
-          onClick={() => navigate('/')}
-          className="flex size-6 shrink-0 items-center justify-center rounded-xs hover:opacity-80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#FE810B]"
-        >
-          <img
-            src={BackArrow}
-            alt=""
-            aria-hidden="true"
-            className="h-full w-full object-cover"
-          />
-        </button>
-        <span className="text-lg font-semibold tracking-wide text-white">
-          {isEditMode ? m.launch_edit_title() : m.launch_create_title()}
-        </span>
-      </div>
-
       <div className="flex flex-col border border-[#484b51] bg-[#131516]">
         <div className="flex items-center justify-between gap-3 border-b border-b-[#484b51] p-4">
           <div className="min-w-0 flex-1">
