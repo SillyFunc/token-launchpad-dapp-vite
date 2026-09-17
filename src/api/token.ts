@@ -1,28 +1,25 @@
 import { postForm } from '@/lib/http/client'
 
-type Nullable<T> = T | null
-type NumericValue = string | number
-
 export interface TokenDetail {
   id: number
   name: string
   symbol: string
-  meta: Nullable<string>
-  coinImg: Nullable<string>
-  website: Nullable<string>
-  telegram: Nullable<string>
-  twitter: Nullable<string>
-  creatorAddress: Nullable<string>
-  address: Nullable<string>
-  coinContractAddress: Nullable<string>
-  presaleAddress: Nullable<string>
-  feeRecipient: Nullable<string>
-  buyTax: Nullable<number>
-  sellTax: Nullable<number>
-  taxDuration: Nullable<NumericValue>
-  antiFarmerDuration: Nullable<NumericValue>
-  createTime: Nullable<string>
-  launchType: Nullable<number>
+  meta: string
+  coinImg: string
+  website: string
+  telegram: string
+  twitter: string
+  creatorAddress: string
+  address: string
+  coinContractAddress: string
+  presaleAddress: string
+  feeRecipient: string
+  buyTax: number
+  sellTax: number
+  taxDuration: number
+  antiFarmerDuration: number
+  createTime: string
+  launchType: string
 }
 
 export function getTokenByContractAddress(
