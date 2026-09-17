@@ -8,20 +8,30 @@ import {
   ExternalLinkIcon,
   GlobeIcon,
   PercentIcon,
+  PencilIcon,
   RocketIcon,
   SendIcon,
   ShieldCheckIcon,
   TriangleAlertIcon,
   WalletIcon,
 } from 'lucide-react'
-import { isAddress, type Address } from 'viem'
-import { usePublicClient, useWriteContract } from 'wagmi'
+import { isAddress, type Address, type Hex } from 'viem'
+import {
+  useConfig,
+  useConnection,
+  usePublicClient,
+  useWriteContract,
+} from 'wagmi'
 import { presaleAbi } from '@sillyfunc/launchpad-contracts'
 
 import type { BoardItemResponse } from '@/api/board'
+import { parseTxHash } from '@/api/token'
 import { PresaleProgress } from '@/components/common/presale-progress'
 import { Web3ActionButton } from '@/components/common/web3-action-button'
+import { boardKeys } from '@/hooks/use-board'
+import { useCreateToken } from '@/hooks/use-create-token'
 import { useTokenGate } from '@/hooks/use-token-gate'
+import { requestAuthSignature } from '@/lib/auth'
 import { getContractErrorMessage } from '@/lib/contract-error'
 import { formatBnbAmount, formatDecimal, formatTokenAmount } from '@/lib/format'
 import { PLATFORM_CHAIN_ID, getExplorerAddressUrl } from '@/lib/web3'
@@ -157,9 +167,15 @@ export function TokenCard({
   onView,
 }: TokenCardProps) {
   const [copied, setCopied] = useState(false)
-  const tokenAddress = getTokenAddress(token)
+  const [issuedAddress, setIssuedAddress] = useState<Address>()
+  const [isIssuing, setIsIssuing] = useState(false)
+  const config = useConfig()
+  const { address: connectedAddress } = useConnection()
+  const queryClient = useQueryClient()
+  const { createToken } = useCreateToken()
+  const tokenAddress = issuedAddress ?? getTokenAddress(token)
   const gate = useTokenGate(tokenAddress, token.presaleAddress)
-  const stage = getStage(token, gate)
+  const stage = getStage(gate)
   const stageStyle = stageStyles[stage]
 
   const tokenName = gate.tokenName || token.name || '--'
@@ -234,12 +250,71 @@ export function TokenCard({
     Boolean(gate.presaleAddress)
   const isSecondaryAction = stage === 'presale'
 
-  const handlePrimaryAction = () => {
-    if (stage === 'notIssued') {
-      onEdit(token)
+  const handleIssueToken = async () => {
+    if (!connectedAddress || isIssuing) return
+
+    if (!isAddress(token.feeRecipient)) {
+      toast.error(
+        m.token_transaction_failed(),
+        m.dashboard_issue_invalid_recipient(),
+      )
       return
     }
 
+    setIsIssuing(true)
+    try {
+      const auth = await requestAuthSignature(config, connectedAddress)
+      const salt = /^0x[\da-fA-F]{64}$/.test(token.salt)
+        ? (token.salt as Hex)
+        : undefined
+      const result = await createToken({
+        account: connectedAddress,
+        name: token.name,
+        symbol: token.symbol,
+        meta:
+          token.meta || token.zhIntroduction || token.enIntroduction || '',
+        buyTax: token.buyTax ?? 0,
+        sellTax: token.sellTax ?? 0,
+        feeRecipient: token.feeRecipient,
+        taxDurationDays: Number(token.taxDuration) || 30,
+        antiFarmerDurationDays: Number(token.antiFarmerDuration) || 0,
+        salt,
+      })
+
+      setIssuedAddress(result.tokenAddress)
+      toast.success(
+        m.dashboard_issue_success(),
+        m.dashboard_issue_success_description(),
+      )
+
+      try {
+        await parseTxHash({
+          id: token.id,
+          hash: result.txHash,
+          ...auth,
+        })
+      } catch {
+        toast.warning(
+          m.dashboard_issue_sync_pending(),
+          m.dashboard_issue_sync_pending_description(),
+        )
+      }
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: boardKeys.all }),
+        queryClient.invalidateQueries({ queryKey: ['readContracts'] }),
+      ]).catch(() => undefined)
+    } catch (error) {
+      toast.error(
+        m.token_transaction_failed(),
+        getContractErrorMessage(error),
+      )
+    } finally {
+      setIsIssuing(false)
+    }
+  }
+
+  const handlePrimaryAction = () => {
     if (isSetupAction && tokenAddress) {
       onPresale(token, tokenAddress)
       return
@@ -465,6 +540,29 @@ export function TokenCard({
       </div>
 
       <CardFooter className="flex w-full flex-col items-stretch gap-2 border-t border-[#2F3737] bg-[#16181a] p-3">
+        {stage === 'notIssued' && (
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onEdit(token)}
+              disabled={isIssuing}
+              className="border-[#484b51] bg-[#131516] font-bold text-white hover:bg-white/10"
+            >
+              <PencilIcon aria-hidden="true" />
+              <span>{m.dashboard_edit_token()}</span>
+            </Button>
+            <Web3ActionButton
+              onAction={handleIssueToken}
+              loading={isIssuing}
+              loadingText={m.dashboard_issuing_token()}
+              className="border-transparent bg-linear-to-r from-[#FE810B] via-[#FFA546] to-[#FE810B] font-bold text-white transition-transform active:translate-y-0.5 disabled:opacity-50"
+            >
+              <RocketIcon aria-hidden="true" />
+              <span>{m.dashboard_issue_token()}</span>
+            </Web3ActionButton>
+          </>
+        )}
         {stage === 'presale' && (
           <EndPresaleButton
             presaleAddress={gate.presaleAddress}
@@ -490,30 +588,28 @@ export function TokenCard({
         {isOpenPresaleAction && gate.presaleAddress && (
           <OpenPresaleButton presaleAddress={gate.presaleAddress} />
         )}
-        {stage !== 'failed' && !isOpenPresaleAction && (
-          <Button
-            type="button"
-            variant={isSecondaryAction ? 'outline' : 'default'}
-            onClick={handlePrimaryAction}
-            disabled={
-              stage === 'syncing' || (stage !== 'notIssued' && !tokenAddress)
-            }
-            className={
-              isSecondaryAction
-                ? 'border-[#484b51] bg-[#131516] font-bold text-white hover:bg-white/10'
-                : 'border-transparent bg-linear-to-r from-[#FE810B] via-[#FFA546] to-[#FE810B] font-bold text-white transition-transform active:translate-y-0.5'
-            }
-          >
-            <RocketIcon aria-hidden="true" />
-            <span>
-              {stage === 'notIssued'
-                ? m.dashboard_edit_token()
-                : isSetupAction
+        {stage !== 'failed' &&
+          stage !== 'notIssued' &&
+          !isOpenPresaleAction && (
+            <Button
+              type="button"
+              variant={isSecondaryAction ? 'outline' : 'default'}
+              onClick={handlePrimaryAction}
+              disabled={stage === 'syncing' || !tokenAddress}
+              className={
+                isSecondaryAction
+                  ? 'border-[#484b51] bg-[#131516] font-bold text-white hover:bg-white/10'
+                  : 'border-transparent bg-linear-to-r from-[#FE810B] via-[#FFA546] to-[#FE810B] font-bold text-white transition-transform active:translate-y-0.5'
+              }
+            >
+              <RocketIcon aria-hidden="true" />
+              <span>
+                {isSetupAction
                   ? m.dashboard_setup_presale()
                   : m.dashboard_view_token()}
-            </span>
-          </Button>
-        )}
+              </span>
+            </Button>
+          )}
         {stage === 'live' && gate.tokensClaimed && (
           <p className="text-center text-xs text-green-300">
             {m.dashboard_token_claimed()}
@@ -524,11 +620,8 @@ export function TokenCard({
   )
 }
 
-function getStage(
-  token: BoardItemResponse,
-  gate: ReturnType<typeof useTokenGate>,
-): TokenStage {
-  if (!getTokenAddress(token)) return 'notIssued'
+function getStage(gate: ReturnType<typeof useTokenGate>): TokenStage {
+  if (!gate.tokenAddress) return 'notIssued'
   // Background refetch must not flip the badge or hide actions.
   if (gate.isLoading) return 'syncing'
   if (!gate.tokenExists) return 'notIssued'
