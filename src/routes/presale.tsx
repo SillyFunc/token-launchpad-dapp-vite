@@ -1,4 +1,5 @@
-import { useNavigate, useSearchParams } from 'react-router'
+import { useEffect, useState } from 'react'
+import { useLocation, useNavigate, useSearchParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { useConnection } from 'wagmi'
 import { isAddress, type Address } from 'viem'
@@ -17,6 +18,7 @@ type PresaleMode = 'setup' | 'edit' | 'blocked'
 
 function resolvePresaleAccess(
   gate: TokenGateResult,
+  allowEditAfterRelaunch: boolean,
   userAddress?: string,
 ): {
   mode: PresaleMode
@@ -79,18 +81,24 @@ function resolvePresaleAccess(
         isLoading: false,
       }
     }
-    if (gate.presaleStatus === 4 && gate.bnbAccumulated > 0n) {
+    if (gate.presaleStatus === 4) {
       return {
         mode: 'blocked',
-        reason: m.presale_refunds_outstanding(),
+        reason:
+          gate.bnbAccumulated > 0n
+            ? m.presale_refunds_outstanding()
+            : m.presale_relaunch_first(),
         isLoading: false,
       }
     }
-    if (
-      (gate.presaleStatus === 0 || gate.presaleStatus === 4) &&
-      gate.presaleAddress
-    ) {
-      return { mode: 'edit', reason: '', isLoading: false }
+    if (gate.presaleStatus === 0 && gate.presaleAddress) {
+      return allowEditAfterRelaunch
+        ? { mode: 'edit', reason: '', isLoading: false }
+        : {
+            mode: 'blocked',
+            reason: m.presale_edit_window_closed(),
+            isLoading: false,
+          }
     }
     return {
       mode: 'blocked',
@@ -112,8 +120,27 @@ function resolvePresaleAccess(
 
 export const PresalePage = () => {
   const nav = useNavigate()
+  const location = useLocation()
   const [searchParams] = useSearchParams()
   const { address } = useConnection()
+  const [allowEditAfterRelaunch] = useState(
+    () =>
+      (
+        location.state as {
+          allowEditAfterRelaunch?: boolean
+        } | null
+      )?.allowEditAfterRelaunch === true,
+  )
+
+  useEffect(() => {
+    if (!allowEditAfterRelaunch) return
+
+    void nav(`${location.pathname}${location.search}`, {
+      replace: true,
+      state: null,
+    })
+  }, [allowEditAfterRelaunch, location.pathname, location.search, nav])
+
   const id = searchParams.get('id')
   const rawAddress = searchParams.get('address') || ''
   const tokenAddress = isAddress(rawAddress)
@@ -140,7 +167,11 @@ export const PresalePage = () => {
       ? (token?.coinContractAddress as Address)
       : undefined)
   const gate = useTokenGate(effectiveAddress, token?.presaleAddress)
-  const access = resolvePresaleAccess(gate, address)
+  const access = resolvePresaleAccess(
+    gate,
+    allowEditAfterRelaunch,
+    address,
+  )
   const isEditMode = access.mode === 'edit'
 
   return (

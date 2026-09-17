@@ -172,21 +172,6 @@ export function RepresaleForm({
 
         const auth = await requestAuthSignature(config, address)
 
-        if (gate.presaleStatus === 4) {
-          setSubmitStep(m.presale_resetting())
-          const relaunchHash = await writeContract(config, {
-            address: presaleAddress,
-            abi: presaleAbi,
-            functionName: 'relaunchPresale',
-            account: address,
-            chainId: PLATFORM_CHAIN_ID,
-          })
-          await waitForTransactionReceipt(config, {
-            hash: relaunchHash,
-            chainId: PLATFORM_CHAIN_ID,
-          })
-        }
-
         setSubmitStep(m.presale_updating_terms())
         const configHash = await writeContract(config, {
           address: presaleAddress,

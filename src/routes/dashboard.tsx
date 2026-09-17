@@ -94,8 +94,12 @@ export const DashboardPage = () => {
               key={token.id || token.coinContractAddress || token.contractAddress}
               token={token}
               onEdit={(item) => navigate(`/launch?id=${item.id}`)}
-              onPresale={(item, tokenAddress) =>
-                navigate(`/presale?address=${tokenAddress}&id=${item.id}`)
+              onPresale={(item, tokenAddress, options) =>
+                navigate(`/presale?address=${tokenAddress}&id=${item.id}`, {
+                  state: options?.allowEditAfterRelaunch
+                    ? { allowEditAfterRelaunch: true }
+                    : undefined,
+                })
               }
               onView={(tokenAddress) => navigate(`/token/${tokenAddress}`)}
             />

@@ -47,7 +47,11 @@ import { toast } from '@/components/ui/toast'
 interface TokenCardProps {
   token: BoardItemResponse
   onEdit: (token: BoardItemResponse) => void
-  onPresale: (token: BoardItemResponse, tokenAddress: Address) => void
+  onPresale: (
+    token: BoardItemResponse,
+    tokenAddress: Address,
+    options?: { allowEditAfterRelaunch?: boolean },
+  ) => void
   onView: (tokenAddress: Address) => void
 }
 
@@ -221,11 +225,14 @@ export function TokenCard({
     }
   }
 
-  const canSetupFailedPresale =
-    stage === 'failed' && gate.bnbAccumulated === 0n
-  const isSetupAction = stage === 'prelaunch' || canSetupFailedPresale
-  const isSecondaryAction =
-    stage === 'presale' || (stage === 'failed' && !canSetupFailedPresale)
+  const hasConfiguredPresale =
+    gate.presaleConfigured || gate.presaleEnabled
+  const isSetupAction = stage === 'prelaunch' && !hasConfiguredPresale
+  const isOpenPresaleAction =
+    stage === 'prelaunch' &&
+    hasConfiguredPresale &&
+    Boolean(gate.presaleAddress)
+  const isSecondaryAction = stage === 'presale'
 
   const handlePrimaryAction = () => {
     if (stage === 'notIssued') {
@@ -465,30 +472,48 @@ export function TokenCard({
           />
         )}
         {stage === 'failed' && (
-          <FailedPresaleNotice outstanding={gate.bnbAccumulated} />
+          <>
+            <FailedPresaleNotice outstanding={gate.bnbAccumulated} />
+            {gate.presaleAddress && tokenAddress && (
+              <RelaunchPresaleButton
+                presaleAddress={gate.presaleAddress}
+                disabled={gate.bnbAccumulated > 0n}
+                onRelaunched={() =>
+                  onPresale(token, tokenAddress, {
+                    allowEditAfterRelaunch: true,
+                  })
+                }
+              />
+            )}
+          </>
         )}
-        <Button
-          type="button"
-          variant={isSecondaryAction ? 'outline' : 'default'}
-          onClick={handlePrimaryAction}
-          disabled={
-            stage === 'syncing' || (stage !== 'notIssued' && !tokenAddress)
-          }
-          className={
-            isSecondaryAction
-              ? 'border-[#484b51] bg-[#131516] font-bold text-white hover:bg-white/10'
-              : 'border-transparent bg-linear-to-r from-[#FE810B] via-[#FFA546] to-[#FE810B] font-bold text-white transition-transform active:translate-y-0.5'
-          }
-        >
-          <RocketIcon aria-hidden="true" />
-          <span>
-            {stage === 'notIssued'
-              ? m.dashboard_edit_token()
-              : isSetupAction
-                ? m.dashboard_setup_presale()
-                : m.dashboard_view_token()}
-          </span>
-        </Button>
+        {isOpenPresaleAction && gate.presaleAddress && (
+          <OpenPresaleButton presaleAddress={gate.presaleAddress} />
+        )}
+        {stage !== 'failed' && !isOpenPresaleAction && (
+          <Button
+            type="button"
+            variant={isSecondaryAction ? 'outline' : 'default'}
+            onClick={handlePrimaryAction}
+            disabled={
+              stage === 'syncing' || (stage !== 'notIssued' && !tokenAddress)
+            }
+            className={
+              isSecondaryAction
+                ? 'border-[#484b51] bg-[#131516] font-bold text-white hover:bg-white/10'
+                : 'border-transparent bg-linear-to-r from-[#FE810B] via-[#FFA546] to-[#FE810B] font-bold text-white transition-transform active:translate-y-0.5'
+            }
+          >
+            <RocketIcon aria-hidden="true" />
+            <span>
+              {stage === 'notIssued'
+                ? m.dashboard_edit_token()
+                : isSetupAction
+                  ? m.dashboard_setup_presale()
+                  : m.dashboard_view_token()}
+            </span>
+          </Button>
+        )}
         {stage === 'live' && gate.tokensClaimed && (
           <p className="text-center text-xs text-green-300">
             {m.dashboard_token_claimed()}
@@ -546,6 +571,121 @@ function FailedPresaleNotice({ outstanding }: { outstanding: bigint }) {
         </span>
       </div>
     </div>
+  )
+}
+
+function RelaunchPresaleButton({
+  presaleAddress,
+  disabled,
+  onRelaunched,
+}: {
+  presaleAddress: Address
+  disabled: boolean
+  onRelaunched: () => void
+}) {
+  const publicClient = usePublicClient({ chainId: PLATFORM_CHAIN_ID })
+  const { mutateAsync: writeContract } = useWriteContract()
+  const queryClient = useQueryClient()
+  const [isRelaunching, setIsRelaunching] = useState(false)
+
+  const handleRelaunchPresale = async () => {
+    if (!publicClient || disabled || isRelaunching) return
+
+    setIsRelaunching(true)
+    try {
+      const hash = await writeContract({
+        address: presaleAddress,
+        abi: presaleAbi,
+        functionName: 'relaunchPresale',
+        chainId: PLATFORM_CHAIN_ID,
+      })
+      await publicClient.waitForTransactionReceipt({ hash })
+      await queryClient
+        .invalidateQueries({ queryKey: ['readContracts'] })
+        .catch(() => undefined)
+      toast.add({
+        type: 'success',
+        title: m.token_transaction_confirmed(),
+        description: m.dashboard_relaunch_presale_success(),
+      })
+      onRelaunched()
+    } catch (error) {
+      toast.add({
+        type: 'error',
+        title: m.token_transaction_failed(),
+        description: getContractErrorMessage(error),
+      })
+    } finally {
+      setIsRelaunching(false)
+    }
+  }
+
+  return (
+    <Web3ActionButton
+      onAction={handleRelaunchPresale}
+      loading={isRelaunching}
+      loadingText={m.dashboard_relaunching_presale()}
+      disabled={disabled}
+      title={disabled ? m.presale_refunds_outstanding() : undefined}
+      className="border-transparent bg-linear-to-r from-[#FE810B] via-[#FFA546] to-[#FE810B] font-bold text-white transition-transform active:translate-y-0.5 disabled:opacity-40"
+    >
+      <RocketIcon aria-hidden="true" />
+      <span>{m.dashboard_relaunch_presale()}</span>
+    </Web3ActionButton>
+  )
+}
+
+function OpenPresaleButton({
+  presaleAddress,
+}: {
+  presaleAddress: Address
+}) {
+  const publicClient = usePublicClient({ chainId: PLATFORM_CHAIN_ID })
+  const { mutateAsync: writeContract } = useWriteContract()
+  const queryClient = useQueryClient()
+  const [isOpening, setIsOpening] = useState(false)
+
+  const handleOpenPresale = async () => {
+    if (!publicClient || isOpening) return
+
+    setIsOpening(true)
+    try {
+      const hash = await writeContract({
+        address: presaleAddress,
+        abi: presaleAbi,
+        functionName: 'openPresale',
+        chainId: PLATFORM_CHAIN_ID,
+      })
+      await publicClient.waitForTransactionReceipt({ hash })
+      await queryClient
+        .invalidateQueries({ queryKey: ['readContracts'] })
+        .catch(() => undefined)
+      toast.add({
+        type: 'success',
+        title: m.token_transaction_confirmed(),
+        description: m.dashboard_open_presale_success(),
+      })
+    } catch (error) {
+      toast.add({
+        type: 'error',
+        title: m.token_transaction_failed(),
+        description: getContractErrorMessage(error),
+      })
+    } finally {
+      setIsOpening(false)
+    }
+  }
+
+  return (
+    <Web3ActionButton
+      onAction={handleOpenPresale}
+      loading={isOpening}
+      loadingText={m.dashboard_opening_presale()}
+      className="border-transparent bg-linear-to-r from-[#FE810B] via-[#FFA546] to-[#FE810B] font-bold text-white transition-transform active:translate-y-0.5 disabled:opacity-40"
+    >
+      <RocketIcon aria-hidden="true" />
+      <span>{m.dashboard_open_presale()}</span>
+    </Web3ActionButton>
   )
 }
 
