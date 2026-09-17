@@ -14,7 +14,7 @@ export function useSubscriptionList(params: SubscriptionListParams) {
   return useQuery({
     queryKey: subscriptionKeys.list(params),
     queryFn: ({ signal }) => listSubscription(params, signal),
-    enabled: Boolean(params.address && params.presaleAddress),
+    enabled: Boolean(params.address || params.presaleAddress),
     placeholderData: keepPreviousData,
   })
 }
