@@ -17,7 +17,7 @@ import { FormInput } from '@/components/common/form-input'
 import { FormSectionTitle } from '@/components/common/form-section-title'
 import { Slider } from '@/components/common/slider'
 import { Web3ActionButton } from '@/components/common/web3-action-button'
-import { toast } from '@/components/ui/toast'
+import { toast } from '@/lib/toast'
 import { requestAuthSignature } from '@/lib/auth'
 import { m } from '@/paraglide/messages.js'
 
@@ -69,16 +69,77 @@ function sanitizeDaysInput(value: string) {
 }
 
 function showError(error: unknown, fallback: string) {
-  toast.add({
-    type: 'error',
-    title: m.request_failed(),
-    description: error instanceof Error && error.message ? error.message : fallback,
-  })
+  toast.error(
+    m.request_failed(),
+    error instanceof Error && error.message ? error.message : fallback,
+  )
 }
 
 interface LaunchFormProps {
   initialData?: TokenDetail | null
   editId?: string | null
+}
+
+interface LaunchFormValues {
+  name: string
+  symbol: string
+  description: string
+  feeRecipient: string
+  buyTax: number
+  sellTax: number
+  taxDuration: string
+  antiFarmerDuration: string
+  links: {
+    telegram: string
+    twitter: string
+    website: string
+  }
+}
+
+function getInitialValues(
+  initialData: TokenDetail | null | undefined,
+  address: string | undefined,
+): LaunchFormValues {
+  return {
+    name: initialData?.name ?? '',
+    symbol: initialData?.symbol ?? '',
+    description: initialData?.meta || initialData?.zhIntroduction || '',
+    feeRecipient: initialData?.feeRecipient || address || '',
+    buyTax: initialData?.buyTax ?? 0,
+    sellTax: initialData?.sellTax ?? 0,
+    taxDuration: String(initialData?.taxDuration ?? 30),
+    antiFarmerDuration: String(initialData?.antiFarmerDuration ?? 0),
+    links: {
+      telegram: initialData?.telegram ?? '',
+      twitter: initialData?.twitter ?? '',
+      website: initialData?.website ?? '',
+    },
+  }
+}
+
+function normalizeValues(value: LaunchFormValues) {
+  return {
+    name: value.name.trim(),
+    symbol: value.symbol.trim(),
+    description: value.description.trim(),
+    feeRecipient: value.feeRecipient.trim().toLowerCase(),
+    buyTax: Number(value.buyTax),
+    sellTax: Number(value.sellTax),
+    taxDuration: Number(value.taxDuration),
+    antiFarmerDuration: Number(value.antiFarmerDuration),
+    links: {
+      telegram: value.links.telegram.trim(),
+      twitter: value.links.twitter.trim(),
+      website: value.links.website.trim(),
+    },
+  }
+}
+
+function hasFormChanges(current: LaunchFormValues, initial: LaunchFormValues) {
+  return (
+    JSON.stringify(normalizeValues(current)) !==
+    JSON.stringify(normalizeValues(initial))
+  )
 }
 
 export function LaunchForm({ initialData, editId }: LaunchFormProps) {
@@ -91,6 +152,7 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
   const [logoPreview, setLogoPreview] = useState<string | null>(
     initialData?.coinImg || null,
   )
+  const [initialValues] = useState(() => getInitialValues(initialData, address))
 
   useEffect(
     () => () => {
@@ -100,22 +162,12 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
   )
 
   const form = useForm({
-    defaultValues: {
-      name: initialData?.name ?? '',
-      symbol: initialData?.symbol ?? '',
-      description: initialData?.meta || initialData?.zhIntroduction || '',
-      feeRecipient: initialData?.feeRecipient || address || '',
-      buyTax: initialData?.buyTax ?? 0,
-      sellTax: initialData?.sellTax ?? 0,
-      taxDuration: String(initialData?.taxDuration ?? 30),
-      antiFarmerDuration: String(initialData?.antiFarmerDuration ?? 0),
-      links: {
-        telegram: initialData?.telegram ?? '',
-        twitter: initialData?.twitter ?? '',
-        website: initialData?.website ?? '',
-      },
-    },
+    defaultValues: initialValues,
     onSubmit: async ({ value }) => {
+      if (isEditMode && !logoFile && !hasFormChanges(value, initialValues)) {
+        return
+      }
+
       if (!address) {
         showError(null, m.launch_auth_required())
         return
@@ -152,10 +204,10 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
 
         if (isEditMode && editId) {
           await updateTokenInfo({ id: editId, ...payload })
-          toast.add({ type: 'success', title: m.launch_update_success() })
+          toast.success(m.launch_update_success())
         } else {
           await saveTokenInfo(payload)
-          toast.add({ type: 'success', title: m.launch_create_success() })
+          toast.success(m.launch_create_success())
         }
 
         navigate('/dashboard')
@@ -594,7 +646,12 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-t-white/10 bg-[#131516] p-4">
         <form.Subscribe
           selector={(state) => ({
-            canSubmit: state.isValid && !state.isSubmitting,
+            canSubmit:
+              state.isValid &&
+              !state.isSubmitting &&
+              (!isEditMode ||
+                logoFile !== null ||
+                hasFormChanges(state.values, initialValues)),
             isSubmitting: state.isSubmitting,
           })}
         >

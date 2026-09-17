@@ -4,7 +4,7 @@ import { RefreshCw, Wallet, Loader2 } from 'lucide-react'
 import { useConnection, useSwitchChain } from 'wagmi'
 
 import { Button } from '@/components/ui/button'
-import { toast } from '@/components/ui/toast'
+import { toast } from '@/lib/toast'
 import { cn } from '@/lib/utils'
 import { PLATFORM_CHAIN_ID } from '@/lib/web3'
 import { m } from '@/paraglide/messages.js'
@@ -73,11 +73,10 @@ export function Web3ActionButton({
           } catch (error) {
             const message = error instanceof Error ? error.message : ''
             if (!message.toLowerCase().includes('reject')) {
-              toast.add({
-                type: 'error',
-                title: m.network_error(),
-                description: m.token_switch_network_failed(),
-              })
+              toast.error(
+                m.network_error(),
+                m.token_switch_network_failed(),
+              )
             }
           } finally {
             setLocalSwitching(false)

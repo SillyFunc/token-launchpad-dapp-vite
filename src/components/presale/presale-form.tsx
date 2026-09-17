@@ -17,7 +17,7 @@ import { FormSectionTitle } from '@/components/common/form-section-title'
 import { Web3ActionButton } from '@/components/common/web3-action-button'
 import { CreatorBuySection } from '@/components/presale/creator-buy-section'
 import { FieldWrap, UnitInput } from '@/components/presale/form-fields'
-import { toast } from '@/components/ui/toast'
+import { toast } from '@/lib/toast'
 import { requestAuthSignature } from '@/lib/auth'
 import { getContractErrorMessage } from '@/lib/contract-error'
 import { formatTokenSupply } from '@/lib/format'
@@ -136,21 +136,19 @@ export function PresaleForm({
       const softcapWei = parseEther(softcapStr)
       const minSoftcapWei = (hardcapWei + 1n) / 2n
       if (softcapWei < minSoftcapWei || softcapWei > hardcapWei) {
-        toast.add({
-          type: 'error',
-          title: m.presale_config_failed(),
-          description: m.presale_error_softcap_range(),
-        })
+        toast.error(
+          m.presale_config_failed(),
+          m.presale_error_softcap_range(),
+        )
         return
       }
       const minLiquidityWei = softcapWei
       const priceWei = calculatePresaleTokenPrice(hardcapWei, presaleShare)
       if (!priceWei) {
-        toast.add({
-          type: 'error',
-          title: m.presale_config_failed(),
-          description: m.presale_error_wait_share(),
-        })
+        toast.error(
+          m.presale_config_failed(),
+          m.presale_error_wait_share(),
+        )
         return
       }
       const priceBNB = formatEther(priceWei)
@@ -161,28 +159,25 @@ export function PresaleForm({
         maxBuyBnbWei > hardcapWei ||
         maxBuyBnbWei > maxRaiseWei
       ) {
-        toast.add({
-          type: 'error',
-          title: m.presale_config_failed(),
-          description: m.presale_error_max_buy_range(),
-        })
+        toast.error(
+          m.presale_config_failed(),
+          m.presale_error_max_buy_range(),
+        )
         return
       }
       if (maxRaiseWei < softcapWei) {
-        toast.add({
-          type: 'error',
-          title: m.presale_config_failed(),
-          description: m.presale_error_price_too_low(),
-        })
+        toast.error(
+          m.presale_config_failed(),
+          m.presale_error_price_too_low(),
+        )
         return
       }
       const maxBuyWei = (maxBuyBnbWei * 10n ** 18n) / priceWei
       if (maxBuyWei <= 0n) {
-        toast.add({
-          type: 'error',
-          title: m.presale_config_failed(),
-          description: m.presale_error_max_buy_too_small(),
-        })
+        toast.error(
+          m.presale_config_failed(),
+          m.presale_error_max_buy_too_small(),
+        )
         return
       }
       const maxBuyTokensStr = formatEther(maxBuyWei)
@@ -193,22 +188,20 @@ export function PresaleForm({
         vestingDelaySec < VESTING_DELAY_MIN_SEC ||
         vestingDelaySec > VESTING_DELAY_MAX_SEC
       ) {
-        toast.add({
-          type: 'error',
-          title: m.presale_config_failed(),
-          description: m.presale_error_vesting_delay(),
-        })
+        toast.error(
+          m.presale_config_failed(),
+          m.presale_error_vesting_delay(),
+        )
         return
       }
       const durationSec = Math.round(
         hoursToSeconds(Number(value.durationHours || '0')),
       )
       if (durationSec < DURATION_MIN_SEC || durationSec > DURATION_MAX_SEC) {
-        toast.add({
-          type: 'error',
-          title: m.presale_config_failed(),
-          description: m.presale_error_duration(),
-        })
+        toast.error(
+          m.presale_config_failed(),
+          m.presale_error_duration(),
+        )
         return
       }
 
@@ -216,11 +209,10 @@ export function PresaleForm({
       let creatorBuyBnbWei = parseEther(value.creatorBuyBnb || '0')
       if (creatorBuyTokensWei > 0n) {
         if (poolShare <= creatorBuyTokensWei) {
-          toast.add({
-            type: 'error',
-            title: m.presale_config_failed(),
-            description: m.presale_error_creator_buy_supply(),
-          })
+          toast.error(
+            m.presale_config_failed(),
+            m.presale_error_creator_buy_supply(),
+          )
           return
         }
         creatorBuyBnbWei =
@@ -232,31 +224,28 @@ export function PresaleForm({
         maxCreatorBuyBnbAllowed > 0 &&
         creatorBuyBnbNum > maxCreatorBuyBnbAllowed + 0.0001
       ) {
-        toast.add({
-          type: 'error',
-          title: m.presale_config_failed(),
-          description: m.presale_error_creator_buy_bnb({
+        toast.error(
+          m.presale_config_failed(),
+          m.presale_error_creator_buy_bnb({
             amount: maxCreatorBuyBnbAllowed.toFixed(4),
           }),
-        })
+        )
         return
       }
       if (poolShare > 0n && creatorBuyTokensWei > poolShare / 20n) {
-        toast.add({
-          type: 'error',
-          title: m.presale_config_failed(),
-          description: m.presale_error_creator_buy_tokens({
+        toast.error(
+          m.presale_config_failed(),
+          m.presale_error_creator_buy_tokens({
             amount: formatTokenSupply(poolShare / 20n),
           }),
-        })
+        )
         return
       }
       if (!resolvedTokenAddress || !isAddress(resolvedTokenAddress)) {
-        toast.add({
-          type: 'error',
-          title: m.presale_config_failed(),
-          description: m.presale_error_missing_address(),
-        })
+        toast.error(
+          m.presale_config_failed(),
+          m.presale_error_missing_address(),
+        )
         return
       }
 
@@ -321,18 +310,11 @@ export function PresaleForm({
           ...auth,
         })
 
-        toast.add({
-          type: 'success',
-          title: m.presale_save_success(),
-        })
+        toast.success(m.presale_save_success())
         void queryClient.invalidateQueries({ queryKey: ['board'] })
         navigate('/dashboard')
       } catch (err: unknown) {
-        toast.add({
-          type: 'error',
-          title: m.presale_config_failed(),
-          description: getContractErrorMessage(err),
-        })
+        toast.error(m.presale_config_failed(), getContractErrorMessage(err))
       }
     },
   })

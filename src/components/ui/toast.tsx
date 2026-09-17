@@ -3,9 +3,8 @@ import { Toast as ToastPrimitive } from "@base-ui/react/toast"
 import { cn } from "cn"
 
 import { Button } from "@/components/ui/button"
+import { toastManager } from "@/lib/toast"
 import { XIcon, CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Loader2Icon } from "lucide-react"
-
-const toast = ToastPrimitive.createToastManager()
 
 function ToastProvider({ ...props }: ToastPrimitive.Provider.Props) {
   return <ToastPrimitive.Provider {...props} />
@@ -34,6 +33,11 @@ function Toast({ className, ...props }: ToastPrimitive.Root.Props) {
       data-slot="toast"
       className={cn(
         "group/toast pointer-events-auto absolute right-0 bottom-0 z-[calc(1000-var(--toast-index))] w-full origin-bottom rounded-none border bg-popover text-popover-foreground shadow-lg will-change-transform outline-none select-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50",
+        "data-[type=success]:border-emerald-500/40 data-[type=success]:bg-emerald-950 data-[type=success]:text-emerald-100 data-[type=success]:shadow-[0_12px_32px_rgba(16,185,129,0.18)]",
+        "data-[type=info]:border-sky-500/40 data-[type=info]:bg-sky-950 data-[type=info]:text-sky-100 data-[type=info]:shadow-[0_12px_32px_rgba(14,165,233,0.18)]",
+        "data-[type=warning]:border-amber-500/40 data-[type=warning]:bg-amber-950 data-[type=warning]:text-amber-100 data-[type=warning]:shadow-[0_12px_32px_rgba(245,158,11,0.18)]",
+        "data-[type=error]:border-red-500/40 data-[type=error]:bg-red-950 data-[type=error]:text-red-100 data-[type=error]:shadow-[0_12px_32px_rgba(239,68,68,0.18)]",
+        "data-[type=loading]:border-orange-500/40 data-[type=loading]:bg-orange-950 data-[type=loading]:text-orange-100 data-[type=loading]:shadow-[0_12px_32px_rgba(249,115,22,0.18)]",
         "[--gap:0.75rem] [--height:var(--toast-frontmost-height,var(--toast-height))] [--offset-y:calc(var(--toast-offset-y)*-1+calc(var(--toast-index)*var(--gap)*-1)+var(--toast-swipe-movement-y))] [--peek:0.75rem] [--scale:calc(max(0,1-(var(--toast-index)*0.1)))] [--shrink:calc(1-var(--scale))]",
         "h-(--height) [transform:translateX(var(--toast-swipe-movement-x))_translateY(calc(var(--toast-swipe-movement-y)-(var(--toast-index)*var(--peek))-(var(--shrink)*var(--height))))_scale(var(--scale))] [transition:transform_500ms_cubic-bezier(0.22,1,0.36,1),opacity_500ms,height_150ms]",
         "after:absolute after:top-full after:left-0 after:h-[calc(var(--gap)+1px)] after:w-full after:content-['']",
@@ -85,7 +89,7 @@ function ToastDescription({
   return (
     <ToastPrimitive.Description
       data-slot="toast-description"
-      className={cn("text-sm text-muted-foreground", className)}
+      className={cn("text-sm text-current opacity-75", className)}
       {...props}
     />
   )
@@ -118,7 +122,7 @@ function ToastClose({
       aria-label="Close toast"
       render={render}
       className={cn(
-        "relative shrink-0 text-muted-foreground after:absolute after:-inset-2 after:content-[''] hover:text-foreground",
+        "relative shrink-0 text-current opacity-60 after:absolute after:-inset-2 after:content-[''] hover:opacity-100",
         className
       )}
       {...props}
@@ -135,31 +139,31 @@ function ToastIcon({ type }: { type: string | undefined }) {
 
   if (type === "success") {
     icon = (
-      <CircleCheckIcon aria-hidden="true" />
+      <CircleCheckIcon className="text-emerald-400" aria-hidden="true" />
     )
   }
 
   if (type === "info") {
     icon = (
-      <InfoIcon aria-hidden="true" />
+      <InfoIcon className="text-sky-400" aria-hidden="true" />
     )
   }
 
   if (type === "warning") {
     icon = (
-      <TriangleAlertIcon aria-hidden="true" />
+      <TriangleAlertIcon className="text-amber-400" aria-hidden="true" />
     )
   }
 
   if (type === "error") {
     icon = (
-      <OctagonXIcon className="text-destructive" aria-hidden="true" />
+      <OctagonXIcon className="text-red-400" aria-hidden="true" />
     )
   }
 
   if (type === "loading") {
     icon = (
-      <Loader2Icon className="animate-spin" aria-hidden="true" />
+      <Loader2Icon className="animate-spin text-orange-400" aria-hidden="true" />
     )
   }
 
@@ -181,7 +185,7 @@ function ToastList() {
   const { toasts } = ToastPrimitive.useToastManager()
 
   return toasts.map((toastItem) => (
-    <Toast key={toastItem.id} toast={toastItem}>
+    <Toast key={toastItem.id} toast={toastItem} data-type={toastItem.type}>
       <ToastContent>
         <ToastIcon type={toastItem.type} />
         <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -197,11 +201,11 @@ function ToastList() {
 
 function Toaster({
   children,
-  toastManager = toast,
+  toastManager: manager = toastManager,
   ...props
 }: ToastPrimitive.Provider.Props) {
   return (
-    <ToastProvider toastManager={toastManager} {...props}>
+    <ToastProvider toastManager={manager} {...props}>
       {children}
       <ToastPortal>
         <ToastViewport>
@@ -211,9 +215,6 @@ function Toaster({
     </ToastProvider>
   )
 }
-
-const createToastManager = ToastPrimitive.createToastManager
-const useToastManager = ToastPrimitive.useToastManager
 
 export {
   Toaster,
@@ -226,7 +227,4 @@ export {
   ToastProvider,
   ToastTitle,
   ToastViewport,
-  createToastManager,
-  toast,
-  useToastManager,
 }

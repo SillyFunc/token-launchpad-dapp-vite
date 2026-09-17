@@ -19,7 +19,7 @@ import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Spinner } from '@/components/ui/spinner'
-import { toast } from '@/components/ui/toast'
+import { toast } from '@/lib/toast'
 import {
   CoordinatorError,
   FALLBACK_RESERVATION_FEE_WEI,
@@ -65,11 +65,12 @@ function showToast(
   description: string,
   title?: string,
 ) {
-  toast.add({
-    type,
-    title,
-    description,
-  })
+  if (type === 'success') {
+    toast.success(title, description)
+    return
+  }
+
+  toast.error(title, description)
 }
 
 function toLockErrorMessage(err: unknown): string {

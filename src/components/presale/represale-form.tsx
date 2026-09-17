@@ -12,7 +12,7 @@ import { FieldInfo } from '@/components/common/field-info'
 import { FormSectionTitle } from '@/components/common/form-section-title'
 import { Web3ActionButton } from '@/components/common/web3-action-button'
 import { FieldWrap, UnitInput } from '@/components/presale/form-fields'
-import { toast } from '@/components/ui/toast'
+import { toast } from '@/lib/toast'
 import type { TokenGateResult } from '@/hooks/use-token-gate'
 import { requestAuthSignature } from '@/lib/auth'
 import { getContractErrorMessage } from '@/lib/contract-error'
@@ -230,17 +230,13 @@ export function RepresaleForm({
           ...auth,
         })
 
-        toast.add({
-          type: 'success',
-          title: m.presale_edit_save_success(),
-        })
+        toast.success(m.presale_edit_save_success())
         onSuccess()
       } catch (error: unknown) {
-        toast.add({
-          type: 'error',
-          title: m.presale_config_failed(),
-          description: getContractErrorMessage(error),
-        })
+        toast.error(
+          m.presale_config_failed(),
+          getContractErrorMessage(error),
+        )
       } finally {
         submitInFlightRef.current = false
         setSubmitStep('')

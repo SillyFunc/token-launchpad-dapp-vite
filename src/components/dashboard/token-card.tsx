@@ -42,7 +42,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { toast } from '@/components/ui/toast'
+import { toast } from '@/lib/toast'
 
 interface TokenCardProps {
   token: BoardItemResponse
@@ -603,18 +603,16 @@ function RelaunchPresaleButton({
       await queryClient
         .invalidateQueries({ queryKey: ['readContracts'] })
         .catch(() => undefined)
-      toast.add({
-        type: 'success',
-        title: m.token_transaction_confirmed(),
-        description: m.dashboard_relaunch_presale_success(),
-      })
+      toast.success(
+        m.token_transaction_confirmed(),
+        m.dashboard_relaunch_presale_success(),
+      )
       onRelaunched()
     } catch (error) {
-      toast.add({
-        type: 'error',
-        title: m.token_transaction_failed(),
-        description: getContractErrorMessage(error),
-      })
+      toast.error(
+        m.token_transaction_failed(),
+        getContractErrorMessage(error),
+      )
     } finally {
       setIsRelaunching(false)
     }
@@ -660,17 +658,15 @@ function OpenPresaleButton({
       await queryClient
         .invalidateQueries({ queryKey: ['readContracts'] })
         .catch(() => undefined)
-      toast.add({
-        type: 'success',
-        title: m.token_transaction_confirmed(),
-        description: m.dashboard_open_presale_success(),
-      })
+      toast.success(
+        m.token_transaction_confirmed(),
+        m.dashboard_open_presale_success(),
+      )
     } catch (error) {
-      toast.add({
-        type: 'error',
-        title: m.token_transaction_failed(),
-        description: getContractErrorMessage(error),
-      })
+      toast.error(
+        m.token_transaction_failed(),
+        getContractErrorMessage(error),
+      )
     } finally {
       setIsOpening(false)
     }
@@ -717,17 +713,15 @@ function EndPresaleButton({
         onSettled(),
         queryClient.invalidateQueries({ queryKey: ['readContracts'] }),
       ])
-      toast.add({
-        type: 'success',
-        title: m.token_transaction_confirmed(),
-        description: m.dashboard_end_presale_success(),
-      })
+      toast.success(
+        m.token_transaction_confirmed(),
+        m.dashboard_end_presale_success(),
+      )
     } catch (error) {
-      toast.add({
-        type: 'error',
-        title: m.token_transaction_failed(),
-        description: getContractErrorMessage(error),
-      })
+      toast.error(
+        m.token_transaction_failed(),
+        getContractErrorMessage(error),
+      )
     } finally {
       setIsEnding(false)
     }

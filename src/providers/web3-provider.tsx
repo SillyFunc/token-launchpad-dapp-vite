@@ -15,9 +15,10 @@ import {
 } from '@tanstack/react-query'
 import { ConnectKitProvider } from 'connectkit'
 import { walletConnect } from 'wagmi/connectors'
-import { Toaster, toast } from '@/components/ui/toast'
+import { Toaster } from '@/components/ui/toast'
 import { env } from '@/env/client'
 import { ApiError } from '@/lib/http/error'
+import { toast } from '@/lib/toast'
 import { m } from '@/paraglide/messages.js'
 
 const config = createConfig({
@@ -40,11 +41,7 @@ const config = createConfig({
 function showApiError(error: Error) {
   if (!(error instanceof ApiError)) return
 
-  toast.add({
-    type: 'error',
-    title: m.request_failed(),
-    description: error.message,
-  })
+  toast.error(m.request_failed(), error.message)
 }
 
 const queryClient = new QueryClient({

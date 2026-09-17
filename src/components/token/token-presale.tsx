@@ -14,7 +14,7 @@ import { presaleAbi } from '@sillyfunc/launchpad-contracts'
 import type { TokenGateResult } from '@/hooks/use-token-gate'
 import { PresaleProgress } from '@/components/common/presale-progress'
 import { Web3ActionButton } from '@/components/common/web3-action-button'
-import { toast } from '@/components/ui/toast'
+import { toast } from '@/lib/toast'
 import { getContractErrorMessage } from '@/lib/contract-error'
 import {
   formatBnbAmount,
@@ -267,22 +267,19 @@ export function TokenPresale({
       await publicClient.waitForTransactionReceipt({ hash })
       await refreshPresale()
       if (action === 'subscribe') setSubscribeAmount('')
-      toast.add({
-        type: 'success',
-        title: m.token_transaction_confirmed(),
-        description:
-          action === 'subscribe'
-            ? m.token_subscribe_success()
-            : action === 'refund'
-              ? m.token_refund_success()
-              : m.token_settle_success(),
-      })
+      toast.success(
+        m.token_transaction_confirmed(),
+        action === 'subscribe'
+          ? m.token_subscribe_success()
+          : action === 'refund'
+            ? m.token_refund_success()
+            : m.token_settle_success(),
+      )
     } catch (error) {
-      toast.add({
-        type: 'error',
-        title: m.token_transaction_failed(),
-        description: getContractErrorMessage(error),
-      })
+      toast.error(
+        m.token_transaction_failed(),
+        getContractErrorMessage(error),
+      )
     } finally {
       setPendingAction(null)
     }
@@ -290,35 +287,31 @@ export function TokenPresale({
 
   const handleSubscribe = async () => {
     if (!isPresaleActive || parsedAmount === null || parsedAmount <= 0n) {
-      toast.add({
-        type: 'error',
-        title: m.token_invalid_amount(),
-        description: m.token_invalid_amount_description(),
-      })
+      toast.error(
+        m.token_invalid_amount(),
+        m.token_invalid_amount_description(),
+      )
       return
     }
     if (gate.presalePrice <= 0n) {
-      toast.add({
-        type: 'error',
-        title: m.token_presale_unavailable_title(),
-        description: m.token_presale_price_unavailable(),
-      })
+      toast.error(
+        m.token_presale_unavailable_title(),
+        m.token_presale_price_unavailable(),
+      )
       return
     }
     if (walletBalance !== null && parsedAmount > walletBalance) {
-      toast.add({
-        type: 'error',
-        title: m.token_insufficient_balance(),
-        description: m.token_insufficient_balance_description(),
-      })
+      toast.error(
+        m.token_insufficient_balance(),
+        m.token_insufficient_balance_description(),
+      )
       return
     }
     if (isAmountOverLimit) {
-      toast.add({
-        type: 'error',
-        title: m.token_amount_over_limit(),
-        description: m.token_amount_over_limit_description(),
-      })
+      toast.error(
+        m.token_amount_over_limit(),
+        m.token_amount_over_limit_description(),
+      )
       return
     }
     await transact('subscribe', parsedAmount)
