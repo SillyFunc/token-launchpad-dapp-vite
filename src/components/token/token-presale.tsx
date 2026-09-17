@@ -12,16 +12,16 @@ import { formatEther, parseEther, zeroAddress } from 'viem'
 import { presaleAbi } from '@sillyfunc/launchpad-contracts'
 
 import type { TokenGateResult } from '@/hooks/use-token-gate'
+import { PresaleProgress } from '@/components/common/presale-progress'
 import { Web3ActionButton } from '@/components/common/web3-action-button'
-import { Progress } from '@/components/ui/progress'
 import { toast } from '@/components/ui/toast'
 import { getContractErrorMessage } from '@/lib/contract-error'
 import {
   formatBnbAmount,
-  formatDecimal,
   formatDuration,
   formatTokenAmount,
 } from '@/lib/format'
+import { getPresaleProgress } from '@/lib/presale'
 import { PLATFORM_CHAIN_ID } from '@/lib/web3'
 import { m } from '@/paraglide/messages.js'
 
@@ -44,13 +44,10 @@ function parseBnbInput(value: string): bigint | null {
 function minimum(values: Array<bigint | null>): bigint | null {
   const validValues = values.filter((value): value is bigint => value !== null)
   return validValues.length > 0
-    ? validValues.reduce((current, value) => (value < current ? value : current))
+    ? validValues.reduce((current, value) =>
+        value < current ? value : current,
+      )
     : null
-}
-
-function getProgress(value: bigint, total: bigint): number {
-  if (total <= 0n) return 0
-  return Math.min(100, Number((value * 10_000n) / total) / 100)
 }
 
 function formatCountdown(seconds: number): string {
@@ -70,33 +67,6 @@ function PresaleRow({ label, value }: { label: string; value: string }) {
     <div className="flex items-center justify-between gap-4 py-2 text-xs">
       <span className="text-[#A0A3A7]">{label}</span>
       <span className="text-right font-mono text-foreground">{value}</span>
-    </div>
-  )
-}
-
-function PresaleProgress({
-  label,
-  value,
-  detail,
-  highlight = false,
-}: {
-  label: string
-  value: number
-  detail: string
-  highlight?: boolean
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <div className="flex items-center justify-between gap-3 text-xs">
-        <span className="text-[#A0A3A7]">{label}</span>
-        <span className="min-w-0 truncate text-right font-mono text-foreground">
-          {detail}{' '}
-          <strong className={highlight ? 'text-[#0ECB81]' : 'text-[#FFA546]'}>
-            {formatDecimal(value, { maximumFractionDigits: 2 })}%
-          </strong>
-        </span>
-      </div>
-      <Progress value={value} className="w-full" />
     </div>
   )
 }
@@ -129,7 +99,9 @@ export function TokenPresale({
   const publicClient = usePublicClient({ chainId: PLATFORM_CHAIN_ID })
   const contractWriter = useWriteContract()
   const [subscribeAmount, setSubscribeAmount] = useState('')
-  const [nowSeconds, setNowSeconds] = useState(() => Math.floor(Date.now() / 1_000))
+  const [nowSeconds, setNowSeconds] = useState(() =>
+    Math.floor(Date.now() / 1_000),
+  )
   const [pendingAction, setPendingAction] = useState<
     'subscribe' | 'refund' | 'settle' | null
   >(null)
@@ -178,9 +150,13 @@ export function TokenPresale({
   const startTimeSeconds = Number(gate.startTime ?? 0n)
   const endTimeSeconds = Number(gate.endTime ?? 0n)
   const hasNotStarted =
-    gate.presaleStatus === 1 && startTimeSeconds > 0 && nowSeconds < startTimeSeconds
+    gate.presaleStatus === 1 &&
+    startTimeSeconds > 0 &&
+    nowSeconds < startTimeSeconds
   const hasEnded =
-    gate.presaleStatus === 1 && endTimeSeconds > 0 && nowSeconds >= endTimeSeconds
+    gate.presaleStatus === 1 &&
+    endTimeSeconds > 0 &&
+    nowSeconds >= endTimeSeconds
   const isPresaleActive =
     gate.presaleStatus === 1 && !hasNotStarted && !hasEnded && !gate.isSoldOut
   const countdownSeconds = hasNotStarted
@@ -382,17 +358,21 @@ export function TokenPresale({
           label={m.token_presale_allocation()}
           value={
             gate.presaleShare > 0n
-              ? `${formatTokenAmount(gate.presaleShare)} ${symbol}`
+              ? `${formatTokenAmount(gate.presaleShare, gate.tokenDecimals)} ${symbol}`
               : '--'
           }
         />
         <PresaleRow
           label={m.token_presale_price()}
-          value={gate.presalePrice > 0n ? formatBnbAmount(gate.presalePrice) : '--'}
+          value={
+            gate.presalePrice > 0n ? formatBnbAmount(gate.presalePrice) : '--'
+          }
         />
         <PresaleRow
           label={m.token_wallet_limit()}
-          value={walletLimitBnb !== null ? formatBnbAmount(walletLimitBnb) : '--'}
+          value={
+            walletLimitBnb !== null ? formatBnbAmount(walletLimitBnb) : '--'
+          }
         />
         <PresaleRow
           label={m.token_soft_cap()}
@@ -424,24 +404,30 @@ export function TokenPresale({
           <section className="flex flex-col gap-3 border border-foreground/10 bg-foreground/3 p-3">
             <PresaleProgress
               label={m.token_token_progress()}
-              value={getProgress(gate.tokensSubscribed, gate.presaleShare)}
-              detail={`${formatTokenAmount(gate.tokensSubscribed)} / ${formatTokenAmount(gate.presaleShare)} ${symbol}`}
+              value={getPresaleProgress(
+                gate.tokensSubscribed,
+                gate.presaleShare,
+              )}
+              detail={`${formatTokenAmount(gate.tokensSubscribed, gate.tokenDecimals)} / ${formatTokenAmount(gate.presaleShare, gate.tokenDecimals)} ${symbol}`}
+              showPercentage
             />
             <PresaleProgress
               label={m.token_soft_cap_progress()}
-              value={getProgress(gate.bnbAccumulated, gate.softCap)}
+              value={getPresaleProgress(gate.bnbAccumulated, gate.softCap)}
               detail={
                 gate.softCap > 0n
                   ? `${formatBnbAmount(gate.bnbAccumulated)} / ${formatBnbAmount(gate.softCap)}`
                   : '--'
               }
               highlight={gate.isSoftCapReached}
+              showPercentage
             />
             {gate.hardCap > 0n && (
               <PresaleProgress
                 label={m.token_hard_cap_progress()}
-                value={getProgress(gate.bnbAccumulated, gate.hardCap)}
+                value={getPresaleProgress(gate.bnbAccumulated, gate.hardCap)}
                 detail={`${formatBnbAmount(gate.bnbAccumulated)} / ${formatBnbAmount(gate.hardCap)}`}
+                showPercentage
               />
             )}
           </section>
@@ -451,7 +437,9 @@ export function TokenPresale({
               <div className="flex items-start gap-2">
                 <Clock className="mt-0.5 size-4 shrink-0 text-amber-300" />
                 <div className="flex flex-col gap-1 text-xs">
-                  <strong className="text-amber-200">{m.token_presale_ended_title()}</strong>
+                  <strong className="text-amber-200">
+                    {m.token_presale_ended_title()}
+                  </strong>
                   <span className="leading-5 text-[#A0A3A7]">
                     {gate.isSoftCapReached
                       ? m.token_presale_ended_success_description()
@@ -471,20 +459,30 @@ export function TokenPresale({
           ) : hasNotStarted ? (
             <StatusMessage
               title={m.token_presale_not_started_title()}
-              description={m.token_starts_in({ time: formatCountdown(countdownSeconds) })}
+              description={m.token_starts_in({
+                time: formatCountdown(countdownSeconds),
+              })}
             />
           ) : (
             <section className="flex flex-col gap-3 border border-foreground/10 bg-foreground/3 p-3">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-[#A0A3A7]">{m.token_ends_in({ time: '' }).replace(/\s*$/, '')}</span>
+                <span className="text-[#A0A3A7]">
+                  {m.token_ends_in({ time: '' }).replace(/\s*$/, '')}
+                </span>
                 <strong className="font-mono text-[#FFA546]">
                   {formatCountdown(countdownSeconds)}
                 </strong>
               </div>
               <div className="flex items-center justify-between text-xs">
-                <span className="text-[#A0A3A7]">{m.token_wallet_balance({ amount: '' }).replace(/：?\s*$/, '')}</span>
+                <span className="text-[#A0A3A7]">
+                  {m
+                    .token_wallet_balance({ amount: '' })
+                    .replace(/：?\s*$/, '')}
+                </span>
                 <span className="font-mono text-foreground">
-                  {walletBalance === null ? '--' : formatBnbAmount(walletBalance)}
+                  {walletBalance === null
+                    ? '--'
+                    : formatBnbAmount(walletBalance)}
                 </span>
               </div>
               <div className="flex h-11 items-center border border-foreground/15 bg-background px-3 focus-within:border-primary">
@@ -501,7 +499,9 @@ export function TokenPresale({
                   placeholder={m.token_amount_placeholder()}
                   className="min-w-0 flex-1 bg-transparent font-mono text-sm text-foreground outline-none placeholder:text-[#84888C]"
                 />
-                <span className="ml-2 text-xs font-semibold text-[#FFA546]">BNB</span>
+                <span className="ml-2 text-xs font-semibold text-[#FFA546]">
+                  BNB
+                </span>
               </div>
               {amountError && (
                 <span className="text-xs text-red-400">{amountError}</span>
@@ -525,9 +525,12 @@ export function TokenPresale({
                 ))}
               </div>
               <div className="flex items-center justify-between text-xs">
-                <span className="text-[#A0A3A7]">{m.token_estimated_tokens()}</span>
+                <span className="text-[#A0A3A7]">
+                  {m.token_estimated_tokens()}
+                </span>
                 <span className="font-mono text-foreground">
-                  {formatTokenAmount(estimatedTokens)} {symbol}
+                  {formatTokenAmount(estimatedTokens, gate.tokenDecimals)}{' '}
+                  {symbol}
                 </span>
               </div>
               <Web3ActionButton
@@ -567,12 +570,18 @@ export function TokenPresale({
             <AlertTriangle className="mt-0.5 size-4 shrink-0 text-red-300" />
             <div className="flex flex-col gap-1 text-xs">
               <strong className="text-red-200">{m.token_refund_title()}</strong>
-              <span className="leading-5 text-[#A0A3A7]">{m.token_refund_description()}</span>
+              <span className="leading-5 text-[#A0A3A7]">
+                {m.token_refund_description()}
+              </span>
             </div>
           </div>
           <div className="flex items-center justify-between text-xs">
-            <span className="text-[#A0A3A7]">{m.token_refundable_amount()}</span>
-            <span className="font-mono text-foreground">{formatBnbAmount(userContribution)}</span>
+            <span className="text-[#A0A3A7]">
+              {m.token_refundable_amount()}
+            </span>
+            <span className="font-mono text-foreground">
+              {formatBnbAmount(userContribution)}
+            </span>
           </div>
           <Web3ActionButton
             onAction={() => transact('refund')}
@@ -581,7 +590,9 @@ export function TokenPresale({
             disabled={Boolean(userAddress) && userContribution <= 0n}
             className="h-10 w-full bg-red-400 text-sm font-semibold text-black hover:bg-red-300"
           >
-            {userContribution > 0n ? m.token_request_refund() : m.token_nothing_to_refund()}
+            {userContribution > 0n
+              ? m.token_request_refund()
+              : m.token_nothing_to_refund()}
           </Web3ActionButton>
         </section>
       )}

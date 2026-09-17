@@ -14,12 +14,10 @@ import {
 import { isAddress, type Address } from 'viem'
 
 import type { BoardItemResponse } from '@/api/board'
+import { PresaleProgress } from '@/components/common/presale-progress'
 import { useTokenGate } from '@/hooks/use-token-gate'
-import {
-  formatBnbAmount,
-  formatDecimal,
-  formatTokenAmount,
-} from '@/lib/format'
+import { formatBnbAmount, formatDecimal, formatTokenAmount } from '@/lib/format'
+import { getPresaleProgress } from '@/lib/presale'
 import { getExplorerAddressUrl } from '@/lib/web3'
 import { formatAddress } from '@/lib/utils'
 import { m } from '@/paraglide/messages.js'
@@ -33,7 +31,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Progress } from '@/components/ui/progress'
 
 interface TokenCardProps {
   token: BoardItemResponse
@@ -96,12 +93,6 @@ function getTokenAddress(token: BoardItemResponse): Address | undefined {
   return address as Address | undefined
 }
 
-function getProgress(numerator: bigint, denominator: bigint) {
-  if (denominator <= 0n) return 0
-  const percentage = Number((numerator * 10_000n) / denominator) / 100
-  return Math.min(100, Math.max(0, percentage))
-}
-
 function formatDays(value: number | undefined) {
   return value === undefined || value === null || value <= 0
     ? '--'
@@ -143,30 +134,12 @@ function DetailRow({
   )
 }
 
-function ProgressRow({
-  label,
-  value,
-  detail,
-}: {
-  label: string
-  value: number
-  detail: string
-}) {
-  return (
-    <div className="flex flex-col gap-1.5 border-t border-white/5 pt-2 first:border-t-0 first:pt-0">
-      <div className="flex items-center justify-between gap-3 text-xs">
-        <span className="flex min-w-0 items-center gap-1.5 text-neutral-400">
-          <span className="size-1.5 shrink-0 bg-[#FFA546]" aria-hidden="true" />
-          <span className="truncate">{label}</span>
-        </span>
-        <span className="shrink-0 font-mono text-neutral-300">{detail}</span>
-      </div>
-      <Progress value={value} />
-    </div>
-  )
-}
-
-export function TokenCard({ token, onEdit, onPresale, onView }: TokenCardProps) {
+export function TokenCard({
+  token,
+  onEdit,
+  onPresale,
+  onView,
+}: TokenCardProps) {
   const [copied, setCopied] = useState(false)
   const tokenAddress = getTokenAddress(token)
   const gate = useTokenGate(tokenAddress, token.presaleAddress)
@@ -217,9 +190,12 @@ export function TokenCard({ token, onEdit, onPresale, onView }: TokenCardProps) 
         : '--'
   const shouldShowPresale =
     Boolean(tokenAddress) && (gate.presaleConfigured || gate.presaleEnabled)
-  const presaleProgress = getProgress(gate.tokensSubscribed, gate.presaleShare)
-  const softCapProgress = getProgress(gate.bnbAccumulated, gate.softCap)
-  const hardCapProgress = getProgress(gate.bnbAccumulated, gate.hardCap)
+  const presaleProgress = getPresaleProgress(
+    gate.tokensSubscribed,
+    gate.presaleShare,
+  )
+  const softCapProgress = getPresaleProgress(gate.bnbAccumulated, gate.softCap)
+  const hardCapProgress = getPresaleProgress(gate.bnbAccumulated, gate.hardCap)
 
   const handleCopy = async () => {
     if (!tokenAddress || !navigator.clipboard) return
@@ -263,7 +239,10 @@ export function TokenCard({ token, onEdit, onPresale, onView }: TokenCardProps) 
                   }}
                 />
               ) : (
-                <CoinsIcon className="size-6 text-[#FFA546]" aria-hidden="true" />
+                <CoinsIcon
+                  className="size-6 text-[#FFA546]"
+                  aria-hidden="true"
+                />
               )}
             </div>
             <div className="min-w-0 flex-1">
@@ -278,7 +257,9 @@ export function TokenCard({ token, onEdit, onPresale, onView }: TokenCardProps) 
               <CardDescription className="mt-1 flex items-center gap-1 text-xs text-neutral-400">
                 <span className="truncate">
                   {m.dashboard_ca({
-                    address: tokenAddress ? formatAddress(tokenAddress) : m.dashboard_token_not_issued(),
+                    address: tokenAddress
+                      ? formatAddress(tokenAddress)
+                      : m.dashboard_token_not_issued(),
                   })}
                 </span>
                 {tokenAddress && (
@@ -292,7 +273,10 @@ export function TokenCard({ token, onEdit, onPresale, onView }: TokenCardProps) 
                       className="text-neutral-400 hover:text-white"
                     >
                       {copied ? (
-                        <CheckIcon className="size-3 text-green-400" aria-hidden="true" />
+                        <CheckIcon
+                          className="size-3 text-green-400"
+                          aria-hidden="true"
+                        />
                       ) : (
                         <CopyIcon className="size-3" aria-hidden="true" />
                       )}
@@ -343,7 +327,9 @@ export function TokenCard({ token, onEdit, onPresale, onView }: TokenCardProps) 
             <DetailRow
               icon={CoinsIcon}
               label={m.dashboard_total_supply()}
-              value={tokenAddress ? totalSupply : m.dashboard_token_not_issued()}
+              value={
+                tokenAddress ? totalSupply : m.dashboard_token_not_issued()
+              }
             />
             <DetailRow
               icon={WalletIcon}
@@ -383,24 +369,30 @@ export function TokenCard({ token, onEdit, onPresale, onView }: TokenCardProps) 
               </div>
 
               {gate.presaleShare > 0n && (
-                <ProgressRow
+                <PresaleProgress
                   label={m.dashboard_token_progress()}
                   value={presaleProgress}
                   detail={`${formatTokenAmount(gate.tokensSubscribed, gate.tokenDecimals)} / ${formatTokenAmount(gate.presaleShare, gate.tokenDecimals)} ${tokenSymbol}`}
+                  showMarker
+                  showDivider
                 />
               )}
               {gate.softCap > 0n && (
-                <ProgressRow
+                <PresaleProgress
                   label={m.dashboard_soft_cap_progress()}
                   value={softCapProgress}
                   detail={`${formatBnbAmount(gate.bnbAccumulated)} / ${formatBnbAmount(gate.softCap)}`}
+                  showMarker
+                  showDivider
                 />
               )}
               {gate.hardCap > 0n && (
-                <ProgressRow
+                <PresaleProgress
                   label={m.dashboard_hard_cap_progress()}
                   value={hardCapProgress}
                   detail={`${formatBnbAmount(gate.bnbAccumulated)} / ${formatBnbAmount(gate.hardCap)}`}
+                  showMarker
+                  showDivider
                 />
               )}
             </div>
@@ -451,7 +443,9 @@ export function TokenCard({ token, onEdit, onPresale, onView }: TokenCardProps) 
         <Button
           type="button"
           onClick={handlePrimaryAction}
-          disabled={stage === 'syncing' || (stage !== 'notIssued' && !tokenAddress)}
+          disabled={
+            stage === 'syncing' || (stage !== 'notIssued' && !tokenAddress)
+          }
           className="border-transparent bg-linear-to-r from-[#FE810B] via-[#FFA546] to-[#FE810B] font-bold text-white transition-transform active:translate-y-0.5"
         >
           <RocketIcon aria-hidden="true" />
