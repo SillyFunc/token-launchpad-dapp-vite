@@ -44,10 +44,7 @@ function encodeParams(data: object): URLSearchParams {
   return params
 }
 
-async function request<T>(
-  url: string,
-  config: AxiosRequestConfig,
-): Promise<T> {
+async function request<T>(url: string, config: AxiosRequestConfig): Promise<T> {
   try {
     const response = await client.request<ApiEnvelope<T>>({ url, ...config })
 
@@ -89,5 +86,17 @@ export function postForm<T>(
     data: encodeParams(data),
     signal,
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  })
+}
+
+export function postMultipart<T>(
+  url: string,
+  data: FormData,
+  signal?: AbortSignal,
+): Promise<T> {
+  return request<T>(url, {
+    method: 'POST',
+    data,
+    signal,
   })
 }
