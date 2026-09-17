@@ -110,6 +110,8 @@
   "dashboard_anti_farmer": "Anti-farmer protection",
   "dashboard_total_supply": "Total supply",
   "dashboard_fee_recipient": "Fee recipient",
+  "dashboard_reserved_ca": "Reserved CA",
+  "dashboard_copy_reserved_ca": "Copy reserved CA",
   "dashboard_presale_price": "Presale price",
   "dashboard_wallet_limit": "Per-wallet subscription limit",
   "dashboard_raised": "Raised",

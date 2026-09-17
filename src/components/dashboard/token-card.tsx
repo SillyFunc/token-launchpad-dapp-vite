@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   CheckIcon,
@@ -109,14 +109,21 @@ const stageStyles: Record<
 }
 
 function getTokenAddress(token: BoardItemResponse): Address | undefined {
-  const candidates = [
-    token.coinContractAddress,
-    token.contractAddress,
-    token.address,
-  ]
+  const candidates = [token.coinContractAddress, token.contractAddress]
 
   const address = candidates.find((candidate) => isAddress(candidate))
   return address as Address | undefined
+}
+
+function getReservedAddress(
+  token: BoardItemResponse,
+  issuedTokenAddress?: Address,
+): Address | undefined {
+  if (issuedTokenAddress || !token.salt || !isAddress(token.coinContractAddress)) {
+    return undefined
+  }
+
+  return token.coinContractAddress
 }
 
 function formatDays(value: number | undefined) {
@@ -142,7 +149,7 @@ function DetailRow({
 }: {
   icon: typeof CoinsIcon
   label: string
-  value: string
+  value: ReactNode
   mono?: boolean
 }) {
   return (
@@ -151,11 +158,11 @@ function DetailRow({
         <Icon className="size-3.5 shrink-0 text-[#FE810B]" aria-hidden="true" />
         <span className="truncate">{label}</span>
       </span>
-      <span
+      <div
         className={`shrink-0 text-right font-semibold text-white ${mono ? 'font-mono' : ''}`}
       >
         {value}
-      </span>
+      </div>
     </div>
   )
 }
@@ -166,15 +173,18 @@ export function TokenCard({
   onPresale,
   onView,
 }: TokenCardProps) {
-  const [copied, setCopied] = useState(false)
+  const [copiedAddress, setCopiedAddress] = useState<Address>()
   const [issuedAddress, setIssuedAddress] = useState<Address>()
   const [isIssuing, setIsIssuing] = useState(false)
   const config = useConfig()
   const { address: connectedAddress } = useConnection()
   const queryClient = useQueryClient()
   const { createToken } = useCreateToken()
-  const tokenAddress = issuedAddress ?? getTokenAddress(token)
-  const gate = useTokenGate(tokenAddress, token.presaleAddress)
+  const tokenAddressCandidate = issuedAddress ?? getTokenAddress(token)
+  const gate = useTokenGate(tokenAddressCandidate, token.presaleAddress)
+  const tokenAddress =
+    issuedAddress ?? (gate.tokenExists ? tokenAddressCandidate : undefined)
+  const reservedAddress = getReservedAddress(token, tokenAddress)
   const stage = getStage(gate)
   const stageStyle = stageStyles[stage]
 
@@ -229,15 +239,15 @@ export function TokenCard({
   const softCapProgress = getPresaleProgress(gate.bnbAccumulated, gate.softCap)
   const hardCapProgress = getPresaleProgress(gate.bnbAccumulated, gate.hardCap)
 
-  const handleCopy = async () => {
-    if (!tokenAddress || !navigator.clipboard) return
+  const handleCopy = async (address: Address) => {
+    if (!navigator.clipboard) return
 
     try {
-      await navigator.clipboard.writeText(tokenAddress)
-      setCopied(true)
-      window.setTimeout(() => setCopied(false), 2_000)
+      await navigator.clipboard.writeText(address)
+      setCopiedAddress(address)
+      window.setTimeout(() => setCopiedAddress(undefined), 2_000)
     } catch {
-      setCopied(false)
+      setCopiedAddress(undefined)
     }
   }
 
@@ -369,16 +379,16 @@ export function TokenCard({
                       variant="ghost"
                       size="icon-xs"
                       aria-label={m.dashboard_copy_address()}
-                      onClick={() => void handleCopy()}
+                      onClick={() => void handleCopy(tokenAddress)}
                       className="text-neutral-400 hover:text-white"
                     >
-                      {copied ? (
+                      {copiedAddress === tokenAddress ? (
                         <CheckIcon
-                          className="size-3 text-green-400"
+                          className="text-green-400"
                           aria-hidden="true"
                         />
                       ) : (
-                        <CopyIcon className="size-3" aria-hidden="true" />
+                        <CopyIcon aria-hidden="true" />
                       )}
                     </Button>
                     <a
@@ -437,6 +447,36 @@ export function TokenCard({
               value={formatAddress(token.feeRecipient)}
               mono
             />
+            {reservedAddress && (
+              <DetailRow
+                icon={WalletIcon}
+                label={m.dashboard_reserved_ca()}
+                value={
+                  <div className="flex items-center justify-end gap-1">
+                    <span className="font-mono" title={reservedAddress}>
+                      {formatAddress(reservedAddress)}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-xs"
+                      aria-label={m.dashboard_copy_reserved_ca()}
+                      onClick={() => void handleCopy(reservedAddress)}
+                      className="text-neutral-400 hover:text-white"
+                    >
+                      {copiedAddress === reservedAddress ? (
+                        <CheckIcon
+                          className="text-green-400"
+                          aria-hidden="true"
+                        />
+                      ) : (
+                        <CopyIcon aria-hidden="true" />
+                      )}
+                    </Button>
+                  </div>
+                }
+              />
+            )}
           </div>
 
           {shouldShowPresale && (

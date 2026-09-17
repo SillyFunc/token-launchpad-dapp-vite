@@ -110,6 +110,8 @@
   "dashboard_anti_farmer": "防夾／砸盤保護期",
   "dashboard_total_supply": "發行總量",
   "dashboard_fee_recipient": "稅費接收地址",
+  "dashboard_reserved_ca": "預留 CA",
+  "dashboard_copy_reserved_ca": "複製預留 CA",
   "dashboard_presale_price": "預售價格",
   "dashboard_wallet_limit": "單錢包認購上限",
   "dashboard_raised": "已募集",
