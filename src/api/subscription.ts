@@ -13,7 +13,7 @@ export function listSubscription(
   signal?: AbortSignal,
 ) {
   return get<PageResult<SubscriptionItemResponse>>(
-    'deposit/exSwap/swapCoinIssuedPage',
+    'deposit/buyTokenRecord/presalePage',
     params,
     signal,
   )
