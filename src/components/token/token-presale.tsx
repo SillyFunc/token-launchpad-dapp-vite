@@ -21,7 +21,7 @@ import {
   formatDuration,
   formatTokenAmount,
 } from '@/lib/format'
-import { getPresaleProgress } from '@/lib/presale'
+import { getPresaleProgress } from '@/lib/utils'
 import { PLATFORM_CHAIN_ID } from '@/lib/web3'
 import { m } from '@/paraglide/messages.js'
 
