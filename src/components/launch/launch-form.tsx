@@ -7,6 +7,7 @@ import {
 } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useForm } from '@tanstack/react-form'
+import { useQueryClient } from '@tanstack/react-query'
 import { isAddress } from 'viem'
 import { useConfig, useConnection } from 'wagmi'
 import { ArrowRightIcon } from 'lucide-react'
@@ -23,6 +24,7 @@ import { FormInput } from '@/components/common/form-input'
 import { FormSectionTitle } from '@/components/common/form-section-title'
 import { Slider } from '@/components/common/slider'
 import { Web3ActionButton } from '@/components/common/web3-action-button'
+import { boardKeys } from '@/hooks/use-board'
 import { toast } from '@/lib/toast'
 import { requestAuthSignature } from '@/lib/auth'
 import { m } from '@/paraglide/messages.js'
@@ -151,6 +153,7 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
   const navigate = useNavigate()
   const { address } = useConnection()
   const config = useConfig()
+  const queryClient = useQueryClient()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [logoPreview, setLogoPreview] = useState<string | null>(
@@ -212,11 +215,21 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
           }
 
           if (isEditMode && editId) {
-            await updateTokenInfo({ id: editId, ...payload })
-            return
+            const updatedToken = await updateTokenInfo({
+              id: editId,
+              ...payload,
+            })
+            queryClient.setQueryData(['tokenDetail', editId], updatedToken)
+          } else {
+            await saveTokenInfo(payload)
           }
 
-          await saveTokenInfo(payload)
+          await queryClient
+            .invalidateQueries({
+              queryKey: boardKeys.all,
+              refetchType: 'all',
+            })
+            .catch(() => undefined)
         })()
 
         if (isEditMode && editId) {
