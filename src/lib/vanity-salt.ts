@@ -3,6 +3,7 @@ import {
   hexToBytes,
   bytesToHex,
   getAddress,
+  isAddress,
   type Hex,
 } from 'viem'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -35,6 +36,19 @@ export function predictTokenAddress(
       options.flapImplementation ?? deployment.flapTaxTokenImplementation,
     salt,
   })
+}
+
+export function isPredictedTokenAddress(
+  salt: string | null | undefined,
+  address: string | null | undefined,
+): boolean {
+  if (!/^0x[\da-fA-F]{64}$/.test(salt ?? '') || !isAddress(address ?? '')) {
+    return false
+  }
+
+  return (
+    predictTokenAddress(salt as Hex).toLowerCase() === address?.toLowerCase()
+  )
 }
 
 export function isVanity8888(address: string): boolean {

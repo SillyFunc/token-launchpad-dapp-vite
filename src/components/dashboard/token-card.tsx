@@ -34,6 +34,7 @@ import { useTokenGate } from '@/hooks/use-token-gate'
 import { requestAuthSignature } from '@/lib/auth'
 import { getContractErrorMessage } from '@/lib/contract-error'
 import { formatBnbAmount, formatDecimal, formatTokenAmount } from '@/lib/format'
+import { isPredictedTokenAddress } from '@/lib/vanity-salt'
 import { PLATFORM_CHAIN_ID, getExplorerAddressUrl } from '@/lib/web3'
 import { formatAddress, getPresaleProgress } from '@/lib/utils'
 import { m } from '@/paraglide/messages.js'
@@ -119,11 +120,14 @@ function getReservedAddress(
   token: BoardItemResponse,
   issuedTokenAddress?: Address,
 ): Address | undefined {
-  if (issuedTokenAddress || !token.salt || !isAddress(token.coinContractAddress)) {
+  if (
+    issuedTokenAddress ||
+    !isPredictedTokenAddress(token.salt, token.coinContractAddress)
+  ) {
     return undefined
   }
 
-  return token.coinContractAddress
+  return token.coinContractAddress as Address
 }
 
 function formatDays(value: number | undefined) {

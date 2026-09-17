@@ -94,7 +94,7 @@ export const DashboardPage = () => {
   }, [highlightedTokenId])
 
   return (
-    <div className="relative mx-auto flex w-full flex-col pb-24 pt-6 text-white">
+    <div className="relative mx-auto flex w-full flex-col py-6 text-white">
       <div className="mb-6 flex items-center justify-between gap-4">
         <PageTitle
           title={m.dashboard_page_title()}

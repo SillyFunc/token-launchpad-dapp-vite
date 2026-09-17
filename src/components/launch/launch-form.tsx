@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ChangeEvent,
@@ -24,9 +25,16 @@ import { FormInput } from '@/components/common/form-input'
 import { FormSectionTitle } from '@/components/common/form-section-title'
 import { Slider } from '@/components/common/slider'
 import { Web3ActionButton } from '@/components/common/web3-action-button'
+import { ReservedAddressSelect } from '@/components/launch/reserved-address-select'
 import { boardKeys } from '@/hooks/use-board'
+import {
+  reservedAddressKeys,
+  useReservedAddressOptions,
+  type ReservedAddressOption,
+} from '@/hooks/use-reserved-addresses'
 import { toast } from '@/lib/toast'
 import { requestAuthSignature } from '@/lib/auth'
+import { findVanitySalt, isPredictedTokenAddress } from '@/lib/vanity-salt'
 import { m } from '@/paraglide/messages.js'
 
 const optionalUrl = z.union([z.literal(''), z.url()])
@@ -87,6 +95,7 @@ interface LaunchFormProps {
 }
 
 interface LaunchFormValues {
+  reservedAddress: ReservedAddressOption | null
   name: string
   symbol: string
   description: string
@@ -102,11 +111,47 @@ interface LaunchFormValues {
   }
 }
 
+function getInitialReservedAddress(
+  initialData: TokenDetail | null | undefined,
+  reservedAddressOptions: ReservedAddressOption[],
+): ReservedAddressOption | null {
+  const initialSalt = String(initialData?.salt ?? '').toLowerCase()
+  const initialContractAddress = initialData?.coinContractAddress ?? ''
+  const normalizedContractAddress = initialContractAddress.toLowerCase()
+
+  const matchedOption = initialSalt
+    ? reservedAddressOptions.find(
+        (option) => option.salt.toLowerCase() === initialSalt,
+      )
+    : reservedAddressOptions.find(
+        (option) =>
+          isAddress(initialContractAddress) &&
+          option.address.toLowerCase() === normalizedContractAddress,
+      )
+
+  if (matchedOption) return matchedOption
+
+  if (!isPredictedTokenAddress(initialData?.salt, initialContractAddress)) {
+    return null
+  }
+
+  return {
+    address: initialContractAddress,
+    salt: String(initialData?.salt),
+    coinStatus: 1,
+  }
+}
+
 function getInitialValues(
   initialData: TokenDetail | null | undefined,
   address: string | undefined,
+  reservedAddressOptions: ReservedAddressOption[],
 ): LaunchFormValues {
   return {
+    reservedAddress: getInitialReservedAddress(
+      initialData,
+      reservedAddressOptions,
+    ),
     name: initialData?.name ?? '',
     symbol: initialData?.symbol ?? '',
     description: initialData?.meta || initialData?.zhIntroduction || '',
@@ -125,6 +170,12 @@ function getInitialValues(
 
 function normalizeValues(value: LaunchFormValues) {
   return {
+    reservedAddress: value.reservedAddress
+      ? {
+          address: value.reservedAddress.address.toLowerCase(),
+          salt: value.reservedAddress.salt.toLowerCase(),
+        }
+      : null,
     name: value.name.trim(),
     symbol: value.symbol.trim(),
     description: value.description.trim(),
@@ -154,13 +205,17 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
   const { address } = useConnection()
   const config = useConfig()
   const queryClient = useQueryClient()
+  const { data: reservedAddressOptions } = useReservedAddressOptions()
+  const initialValues = useMemo(
+    () => getInitialValues(initialData, address, reservedAddressOptions),
+    [address, initialData, reservedAddressOptions],
+  )
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [logoPreview, setLogoPreview] = useState<string | null>(
     initialData?.coinImg || null,
   )
   const [isEditSubmitting, setIsEditSubmitting] = useState(false)
-  const [initialValues] = useState(() => getInitialValues(initialData, address))
 
   useEffect(
     () => () => {
@@ -186,11 +241,49 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
         return
       }
 
+      const selectedReservedAddress = value.reservedAddress
+      const isCurrentReservedAddress = Boolean(
+        isEditMode &&
+          selectedReservedAddress &&
+          ((initialData?.salt &&
+            initialData.salt.toLowerCase() ===
+              selectedReservedAddress.salt.toLowerCase()) ||
+            (isAddress(initialData?.coinContractAddress ?? '') &&
+              initialData?.coinContractAddress.toLowerCase() ===
+                selectedReservedAddress.address.toLowerCase())),
+      )
+
+      if (
+        selectedReservedAddress &&
+        selectedReservedAddress.coinStatus !== 0 &&
+        !isCurrentReservedAddress
+      ) {
+        showError(null, m.launch_reserved_address_unavailable())
+        return
+      }
+
       const usePromiseToast = isEditMode && Boolean(editId)
       if (usePromiseToast) setIsEditSubmitting(true)
 
       try {
         const submission = (async () => {
+          let salt: string
+          if (selectedReservedAddress) {
+            salt = selectedReservedAddress.salt
+          } else if (
+            isEditMode &&
+            initialData?.salt &&
+            !initialValues.reservedAddress
+          ) {
+            salt = initialData.salt
+          } else {
+            try {
+              salt = (await findVanitySalt()).salt
+            } catch {
+              throw new Error(m.launch_salt_failed())
+            }
+          }
+
           const coinImg = logoFile
             ? await uploadTokenLogo(logoFile)
             : logoPreview || ''
@@ -210,7 +303,12 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
             website: value.links.website.trim(),
             telegram: value.links.telegram.trim(),
             twitter: value.links.twitter.trim(),
-            ...(initialData?.salt ? { salt: initialData.salt } : {}),
+            salt,
+            ...(selectedReservedAddress
+              ? { coinContractAddress: selectedReservedAddress.address }
+              : isEditMode
+                ? { coinContractAddress: '' }
+                : {}),
             ...auth,
           }
 
@@ -224,12 +322,16 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
             await saveTokenInfo(payload)
           }
 
-          await queryClient
-            .invalidateQueries({
+          await Promise.allSettled([
+            queryClient.invalidateQueries({
               queryKey: boardKeys.all,
               refetchType: 'all',
-            })
-            .catch(() => undefined)
+            }),
+            queryClient.invalidateQueries({
+              queryKey: reservedAddressKeys.byUser(address),
+              refetchType: 'all',
+            }),
+          ])
         })()
 
         if (isEditMode && editId) {
@@ -401,6 +503,17 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
                 </span>
               </div>
             </div>
+
+            <form.Field name="reservedAddress">
+              {(field) => (
+                <ReservedAddressSelect
+                  id={field.name}
+                  value={field.state.value}
+                  currentValue={initialValues.reservedAddress}
+                  onChange={field.handleChange}
+                />
+              )}
+            </form.Field>
 
             <form.Field
               name="name"
