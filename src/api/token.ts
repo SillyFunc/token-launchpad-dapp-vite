@@ -32,3 +32,11 @@ export function getTokenByContractAddress(
     signal,
   )
 }
+
+export function getTokenById(id: string | null, signal?: AbortSignal) {
+  return postForm<TokenDetail>(
+    'deposit/exSwap/swapCoinIssuedDetail',
+    { id },
+    signal,
+  )
+}
