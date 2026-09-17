@@ -247,7 +247,12 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
           toast.success(m.launch_create_success())
         }
 
-        navigate('/dashboard')
+        navigate('/dashboard', {
+          state:
+            isEditMode && editId
+              ? { focusTokenId: String(editId) }
+              : undefined,
+        })
       } catch (error) {
         if (usePromiseToast) return
         showError(error, m.launch_submit_failed())

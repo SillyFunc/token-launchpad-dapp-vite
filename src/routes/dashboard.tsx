@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router'
 import { ConnectKitButton } from 'connectkit'
 import {
   CoinsIcon,
@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { useConnection } from 'wagmi'
 
+import type { BoardItemResponse } from '@/api/board'
 import { TokenCard } from '@/components/dashboard/token-card'
 import { PageTitle } from '@/components/common/page-title'
 import { Button } from '@/components/ui/button'
@@ -24,14 +25,73 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useBoardList } from '@/hooks/use-board'
 import { m } from '@/paraglide/messages.js'
 
+const EMPTY_TOKEN_LIST: BoardItemResponse[] = []
+
 export const DashboardPage = () => {
   const { address } = useConnection()
+  const location = useLocation()
   const navigate = useNavigate()
   const { data, isLoading, isError, isFetching, refetch } = useBoardList(
     { model: 0, address },
     { enabled: Boolean(address) },
   )
-  const tokenList = data?.content ?? []
+  const tokenList = data?.content ?? EMPTY_TOKEN_LIST
+  const focusTokenId = getFocusTokenId(location.state)
+  const focusedTokenRef = useRef<HTMLDivElement>(null)
+  const [highlightedTokenId, setHighlightedTokenId] = useState<string>()
+
+  useEffect(() => {
+    if (!focusTokenId || isLoading || isFetching || isError) return
+
+    const hasFocusedToken = tokenList.some(
+      (token) => String(token.id) === focusTokenId,
+    )
+
+    if (!hasFocusedToken) {
+      navigate(
+        { pathname: location.pathname, search: location.search },
+        { replace: true, state: null },
+      )
+      return
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      const prefersReducedMotion = window.matchMedia(
+        '(prefers-reduced-motion: reduce)',
+      ).matches
+
+      focusedTokenRef.current?.scrollIntoView({
+        behavior: prefersReducedMotion ? 'auto' : 'smooth',
+        block: 'center',
+      })
+      setHighlightedTokenId(focusTokenId)
+      navigate(
+        { pathname: location.pathname, search: location.search },
+        { replace: true, state: null },
+      )
+    })
+
+    return () => window.cancelAnimationFrame(frame)
+  }, [
+    focusTokenId,
+    isError,
+    isFetching,
+    isLoading,
+    location.pathname,
+    location.search,
+    navigate,
+    tokenList,
+  ])
+
+  useEffect(() => {
+    if (!highlightedTokenId) return
+
+    const timeout = window.setTimeout(
+      () => setHighlightedTokenId(undefined),
+      2_000,
+    )
+    return () => window.clearTimeout(timeout)
+  }, [highlightedTokenId])
 
   return (
     <div className="relative mx-auto flex w-full flex-col pb-24 pt-6 text-white">
@@ -90,24 +150,50 @@ export const DashboardPage = () => {
       {address && !isLoading && !isError && tokenList.length > 0 && (
         <div className="flex flex-col gap-4">
           {tokenList.map((token) => (
-            <TokenCard
-              key={token.id || token.coinContractAddress || token.contractAddress}
-              token={token}
-              onEdit={(item) => navigate(`/launch?id=${item.id}`)}
-              onPresale={(item, tokenAddress, options) =>
-                navigate(`/presale?address=${tokenAddress}&id=${item.id}`, {
-                  state: options?.allowEditAfterRelaunch
-                    ? { allowEditAfterRelaunch: true }
-                    : undefined,
-                })
+            <div
+              key={
+                token.id || token.coinContractAddress || token.contractAddress
               }
-              onView={(tokenAddress) => navigate(`/token/${tokenAddress}`)}
-            />
+              ref={
+                String(token.id) === focusTokenId
+                  ? focusedTokenRef
+                  : undefined
+              }
+              className={`scroll-mt-6 transition-shadow duration-500 ${
+                String(token.id) === highlightedTokenId
+                  ? 'shadow-[0_0_0_2px_#FE810B,0_0_28px_rgba(254,129,11,0.32)]'
+                  : ''
+              }`}
+            >
+              <TokenCard
+                token={token}
+                onEdit={(item) => navigate(`/launch?id=${item.id}`)}
+                onPresale={(item, tokenAddress, options) =>
+                  navigate(`/presale?address=${tokenAddress}&id=${item.id}`, {
+                    state: options?.allowEditAfterRelaunch
+                      ? { allowEditAfterRelaunch: true }
+                      : undefined,
+                  })
+                }
+                onView={(tokenAddress) => navigate(`/token/${tokenAddress}`)}
+              />
+            </div>
           ))}
         </div>
       )}
     </div>
   )
+}
+
+function getFocusTokenId(state: unknown) {
+  if (!state || typeof state !== 'object' || !('focusTokenId' in state)) {
+    return undefined
+  }
+
+  const focusTokenId = state.focusTokenId
+  return typeof focusTokenId === 'string' || typeof focusTokenId === 'number'
+    ? String(focusTokenId)
+    : undefined
 }
 
 function ConnectWalletEmptyState() {
