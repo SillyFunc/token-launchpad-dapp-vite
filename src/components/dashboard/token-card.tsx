@@ -11,6 +11,7 @@ import {
   RocketIcon,
   SendIcon,
   ShieldCheckIcon,
+  TriangleAlertIcon,
   WalletIcon,
 } from 'lucide-react'
 import { isAddress, type Address } from 'viem'
@@ -26,6 +27,11 @@ import { formatBnbAmount, formatDecimal, formatTokenAmount } from '@/lib/format'
 import { PLATFORM_CHAIN_ID, getExplorerAddressUrl } from '@/lib/web3'
 import { formatAddress, getPresaleProgress } from '@/lib/utils'
 import { m } from '@/paraglide/messages.js'
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -215,13 +221,19 @@ export function TokenCard({
     }
   }
 
+  const canSetupFailedPresale =
+    stage === 'failed' && gate.bnbAccumulated === 0n
+  const isSetupAction = stage === 'prelaunch' || canSetupFailedPresale
+  const isSecondaryAction =
+    stage === 'presale' || (stage === 'failed' && !canSetupFailedPresale)
+
   const handlePrimaryAction = () => {
     if (stage === 'notIssued') {
       onEdit(token)
       return
     }
 
-    if (stage === 'prelaunch' && tokenAddress) {
+    if (isSetupAction && tokenAddress) {
       onPresale(token, tokenAddress)
       return
     }
@@ -452,15 +464,18 @@ export function TokenCard({
             onSettled={gate.refetch}
           />
         )}
+        {stage === 'failed' && (
+          <FailedPresaleNotice outstanding={gate.bnbAccumulated} />
+        )}
         <Button
           type="button"
-          variant={stage === 'presale' ? 'outline' : 'default'}
+          variant={isSecondaryAction ? 'outline' : 'default'}
           onClick={handlePrimaryAction}
           disabled={
             stage === 'syncing' || (stage !== 'notIssued' && !tokenAddress)
           }
           className={
-            stage === 'presale'
+            isSecondaryAction
               ? 'border-[#484b51] bg-[#131516] font-bold text-white hover:bg-white/10'
               : 'border-transparent bg-linear-to-r from-[#FE810B] via-[#FFA546] to-[#FE810B] font-bold text-white transition-transform active:translate-y-0.5'
           }
@@ -469,7 +484,7 @@ export function TokenCard({
           <span>
             {stage === 'notIssued'
               ? m.dashboard_edit_token()
-              : stage === 'prelaunch'
+              : isSetupAction
                 ? m.dashboard_setup_presale()
                 : m.dashboard_view_token()}
           </span>
@@ -492,11 +507,46 @@ function getStage(
   // Background refetch must not flip the badge or hide actions.
   if (gate.isLoading) return 'syncing'
   if (!gate.tokenExists) return 'notIssued'
+
+  const claimed = gate.tokensClaimed || (gate.tokenState ?? 0) >= 2
+  if (claimed) return 'live'
   if (gate.presaleStatus === 4) return 'failed'
-  if (gate.presaleStatus === 3 || (gate.tokenState ?? 0) >= 2) return 'live'
   if (gate.presaleStatus === 2) return 'waitingLaunch'
   if (gate.presaleStatus === 1) return 'presale'
+  if (
+    (gate.presaleConfigured || gate.presaleEnabled) &&
+    gate.presaleStatus === undefined
+  ) {
+    return 'syncing'
+  }
   return 'prelaunch'
+}
+
+function FailedPresaleNotice({ outstanding }: { outstanding: bigint }) {
+  return (
+    <div className="flex w-full flex-col gap-2.5">
+      <Alert
+        variant="destructive"
+        className="border-red-500/25 bg-red-500/10 text-red-400"
+      >
+        <TriangleAlertIcon />
+        <AlertTitle className="text-red-400">
+          {m.dashboard_failed_title()}
+        </AlertTitle>
+        <AlertDescription className="text-neutral-400">
+          {m.dashboard_failed_description()}
+        </AlertDescription>
+      </Alert>
+      <div className="flex items-center justify-between text-xs">
+        <span className="text-neutral-400">
+          {m.dashboard_failed_outstanding()}
+        </span>
+        <span className="font-mono font-medium text-[#FFA546]">
+          {formatBnbAmount(outstanding)}
+        </span>
+      </div>
+    </div>
+  )
 }
 
 function EndPresaleButton({

@@ -52,6 +52,29 @@ export function formatPercent(value: number | null) {
   return `${sign}${formatDecimal(value, { maximumFractionDigits: 2 })}%`
 }
 
+export function formatTokenSupply(supply: bigint, decimals = 18) {
+  return formatCompactNumber(formatUnits(supply, decimals))
+}
+
+export function formatDecimalText(
+  value: string | number | null | undefined,
+  maxSignificantDigits = 12,
+) {
+  const n = Number(value)
+  if (!Number.isFinite(n)) return '--'
+  if (n === 0) return '0'
+  const cleaned = Number(n.toPrecision(maxSignificantDigits))
+  const decimals = Math.min(
+    20,
+    Math.max(
+      0,
+      maxSignificantDigits - 1 - Math.floor(Math.log10(Math.abs(cleaned))),
+    ),
+  )
+  const text = cleaned.toFixed(decimals)
+  return text.includes('.') ? text.replace(/0+$/, '').replace(/\.$/, '') : text
+}
+
 export function formatDuration(seconds: bigint) {
   const value = Number(seconds)
   if (!Number.isFinite(value) || value <= 0) return '--'

@@ -23,6 +23,16 @@ export interface TokenDetail {
   salt?: string
   zhIntroduction?: string
   enIntroduction?: string
+  hardcap?: number | string
+  softcap?: number | string
+  soft?: number | string
+  maxBuyPerWallet?: number | string
+  presaleTokenPrice?: number | string
+  vestingDelay?: number | string
+  vestingRate?: number | string
+  slippage?: number | string
+  creatorBuyTokens?: number | string
+  creatorBuyBnb?: number | string
 }
 
 export interface SaveTokenParams {
