@@ -94,6 +94,8 @@ async function main() {
   start('wrangler', [
     'node_modules/wrangler/bin/wrangler.js',
     'dev',
+    '--config',
+    'wrangler.test.toml',
     '--port',
     '8787',
     '--var',

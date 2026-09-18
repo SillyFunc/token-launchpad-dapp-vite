@@ -15,5 +15,14 @@ CACHE_TTL_SECONDS = "60"
 # Max token addresses accepted per request (DEX Screener batch limit is 30).
 MAX_TOKENS_PER_REQUEST = "30"
 
+# Per-IP rate limiting for /quotes, enforced by the Workers runtime (no extra
+# cost, no external store). Counters are per Cloudflare location and
+# intentionally permissive; they exist to stop quota-draining abuse.
+[[unsafe.bindings]]
+name = "QUOTES_RATE_LIMITER"
+type = "ratelimit"
+namespace_id = "1001"
+simple = { limit = 30, period = 60 }
+
 [observability]
 enabled = true

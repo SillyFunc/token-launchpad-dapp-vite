@@ -2,6 +2,7 @@ import { Redis } from '@upstash/redis/cloudflare'
 import { zValidator } from '@hono/zod-validator'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
+import { createMiddleware } from 'hono/factory'
 import { z } from 'zod'
 
 import {
@@ -27,6 +28,11 @@ export interface Env {
   MAX_TOKENS_PER_REQUEST: string
   /** Optional override, mainly for local testing against a mock upstream. */
   DEX_API_BASE?: string
+  /**
+   * Workers runtime rate limiter for /quotes (see the unsafe binding in
+   * wrangler.toml). Optional so the worker still runs if it is ever unbound.
+   */
+  QUOTES_RATE_LIMITER?: RateLimit
 }
 
 interface QuoteResponse {
@@ -79,6 +85,46 @@ function createRedis(env: Env): Redis | null {
   }
 }
 
+/**
+ * Cloudflare always sets CF-Connecting-IP for internet traffic. The fallbacks
+ * keep local development working; such requests share a single bucket.
+ */
+function clientIp(request: Request): string {
+  const connectingIp = request.headers.get('CF-Connecting-IP')
+  if (connectingIp) return connectingIp
+
+  const forwarded = request.headers.get('X-Forwarded-For')
+  if (forwarded) return forwarded.split(',')[0]?.trim() || 'unknown'
+
+  return 'unknown'
+}
+
+/**
+ * Per-IP gate on /quotes, enforced by the Workers runtime limiter.
+ * Fails open when the binding is absent so a config mistake can never take the
+ * price feed down — it only ever costs us the abuse protection.
+ */
+const rateLimitQuotes = createMiddleware<{ Bindings: Env }>(async (c, next) => {
+  const limiter = c.env.QUOTES_RATE_LIMITER
+  if (!limiter) {
+    console.warn('QUOTES_RATE_LIMITER binding missing; serving without a rate limit')
+    await next()
+    return
+  }
+
+  const ip = clientIp(c.req.raw)
+  const { success } = await limiter.limit({ key: ip })
+
+  if (!success) {
+    console.warn('Rate limited /quotes request', { ip })
+    return c.json({ error: 'Too many requests. Please slow down.' }, 429, {
+      'Retry-After': '60',
+    })
+  }
+
+  await next()
+})
+
 app.use(
   '*',
   cors({
@@ -101,6 +147,7 @@ app.get('/health', (c) => {
 
 app.get(
   '/quotes',
+  rateLimitQuotes,
   zValidator('query', tokensQuerySchema, (result, c) => {
     if (!result.success) {
       return c.json(

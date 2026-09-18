@@ -39,6 +39,7 @@
 - Worker response contract: `{ quotes: Record<lowercasedTokenAddress, TokenQuote>, cache: 'HIT' | 'MISS' | 'STALE', timestamp }` plus an `x-cache` header. Only *opened* tokens are returned (real price **and** non-zero liquidity); one quote per token, taken from the highest-liquidity pool.
 - A missing key in `quotes` means "no live market yet" — render `--`, not `0`.
 - Worker changes must keep `npm test` (in `workers/dex-cache/`) green; it covers aggregation, filtering, validation, the DexTokenQuote field contract, and the MISS → HIT → STALE cache paths.
+- `/quotes` is rate limited per IP (30/min) by a Workers runtime binding; see `wrangler.toml`. `test/run-all.mjs` runs against `wrangler.test.toml`, which disables the limit so the functional suites don't trip it — verify the 429 path against the real deployment instead.
 
 ### Cache backend: Upstash Redis (do not swap without re-reading this)
 

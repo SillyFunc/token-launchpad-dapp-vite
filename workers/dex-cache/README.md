@@ -50,12 +50,16 @@ Responses carry `x-cache: HIT | MISS | STALE`.
   not-yet-launched tokens are filtered out, so a missing key means "no market".
 - **One quote per token.** A token can have many pools; the highest-liquidity
   pair wins.
+- **Per-IP rate limiting.** `/quotes` is limited to 30 requests/minute per IP by
+  the Workers runtime limiter (see below); over-limit requests get `429` with a
+  `Retry-After` header. `/health` is never limited.
 - **Two-tier cache.** The fresh entry lives `CACHE_TTL_SECONDS` (default 60); a
   backup copy lives `CACHE_TTL_SECONDS × 10` and is served with
   `x-cache: STALE` when the upstream is rate-limited (429), errors, or is
   unreachable.
-- **Fail-fast Redis.** Cache reads/writes are capped at 1s. If Redis is slow,
-  the request still proceeds to the upstream instead of hanging.
+- **Fail-fast Redis.** Cache reads/writes are capped at 1s. If Redis is slow or
+  misconfigured, the request still proceeds to the upstream instead of failing
+  (see `/health` → `redisConfigured`).
 - **Upstream timeout** is 8s; a network failure is normalized to an upstream
   error so it degrades to STALE rather than returning 500.
 
@@ -63,6 +67,21 @@ Responses carry `x-cache: HIT | MISS | STALE`.
 
 Non-secret vars live in `wrangler.toml`: `DEX_CHAIN_SLUG`, `CACHE_TTL_SECONDS`,
 `MAX_TOKENS_PER_REQUEST`.
+
+The rate limiter is a Workers runtime binding (no extra cost, no external store):
+
+```toml
+[[unsafe.bindings]]
+name = "QUOTES_RATE_LIMITER"
+type = "ratelimit"
+namespace_id = "1001"
+simple = { limit = 30, period = 60 }
+```
+
+Per Cloudflare's docs the counters are **per Cloudflare location**, eventually
+consistent and intentionally permissive — good enough to stop quota-draining
+abuse, not an accurate accounting system. The middleware fails open if the
+binding is missing so a config mistake cannot take the price feed down.
 
 Secrets are **never** committed:
 

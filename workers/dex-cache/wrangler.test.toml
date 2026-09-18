@@ -1,0 +1,14 @@
+# Config used only by `npm test` (test/run-all.mjs).
+# Mirrors wrangler.toml, except the rate limiter is effectively disabled:
+# the functional suites fire ~21 requests from a single local "IP", which would
+# sit dangerously close to the 30/min production limit. The 429 path is verified
+# against the real deployment instead (see README).
+name = "dex-cache"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+
+[[unsafe.bindings]]
+name = "QUOTES_RATE_LIMITER"
+type = "ratelimit"
+namespace_id = "1001"
+simple = { limit = 100000, period = 60 }
