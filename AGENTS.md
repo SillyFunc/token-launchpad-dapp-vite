@@ -27,6 +27,11 @@
 
 - Platform chain is defined once in `src/lib/web3.ts` (`PLATFORM_CHAIN` / `PLATFORM_CHAIN_ID`). Deployment/contract addresses come from `src/lib/contracts.ts` accessors (`getCoordinatorFactory()`, `getDeployment()`) — never index `contracts[CHAIN_ID]` at module top-level in new code.
 - All backend HTTP goes through `src/lib/http/client.ts` (`get` / `postForm` / `postMultipart`); never call `axios`/`fetch` directly.
+- **Contract writes go through `src/hooks/use-contract-tx.ts`**, the single place where we decide how writes are executed and confirmed. It owns the "send → wait for receipt" flow:
+  - In React components: use `useWriteContractTx()` — it wraps wagmi's `useWriteContract` so `isPending` is tracked automatically (prevents double-clicks) and returns `{ hash, receipt }`.
+  - In hooks or non-React code (or when you already hold a wagmi `Config`): use `executeContractTx(config, params)`.
+  - Use `mutate` / `mutateAsync` from `useWriteContract()` (wagmi v3). `writeContract` and `writeContractAsync` are **deprecated** aliases — never call them, or `waitForTransactionReceipt`, directly in new code.
+  - Left to the caller on purpose: toasts (wording is business-specific), query invalidation, parsing event logs from the receipt, and any post-transaction side effects (e.g. syncing to the backend).
 
 ## Market data (DEX Screener)
 

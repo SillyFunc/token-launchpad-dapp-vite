@@ -1,10 +1,8 @@
 import { useConfig } from 'wagmi'
-import {
-  readContract,
-  waitForTransactionReceipt,
-  writeContract,
-} from 'wagmi/actions'
+import { readContract } from 'wagmi/actions'
 import { decodeEventLog, type Address, type Hex } from 'viem'
+
+import { executeContractTx } from '@/hooks/use-contract-tx'
 import { getCoordinatorFactory } from '@/lib/contracts'
 import { findVanitySalt } from '@/lib/vanity-salt'
 import { PLATFORM_CHAIN_ID } from '@/lib/web3'
@@ -63,11 +61,10 @@ export function useCreateToken() {
         : findVanitySalt().then((result) => result.salt),
     ])
 
-    const txHash = await writeContract(config, {
+    const { hash: txHash, receipt } = await executeContractTx(config, {
       ...coordinator,
       functionName: 'createToken',
       account: params.account,
-      chainId: PLATFORM_CHAIN_ID,
       args: [
         {
           name: params.name.trim(),
@@ -83,11 +80,6 @@ export function useCreateToken() {
         salt,
       ],
       value: creationFee,
-    })
-
-    const receipt = await waitForTransactionReceipt(config, {
-      hash: txHash,
-      chainId: PLATFORM_CHAIN_ID,
     })
 
     for (const log of receipt.logs) {

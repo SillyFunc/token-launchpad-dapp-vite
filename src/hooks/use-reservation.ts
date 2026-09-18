@@ -1,11 +1,8 @@
 import { useConfig, useReadContract } from 'wagmi'
-import {
-  readContract,
-  waitForTransactionReceipt,
-  writeContract,
-} from 'wagmi/actions'
+import { readContract } from 'wagmi/actions'
 import { formatEther, type Hex } from 'viem'
 
+import { executeContractTx } from '@/hooks/use-contract-tx'
 import { getCoordinatorFactory } from '@/lib/contracts'
 import { PLATFORM_CHAIN_ID } from '@/lib/web3'
 
@@ -109,20 +106,12 @@ export function useReserveTokenAddress() {
     }
     if (fee === undefined) fee = FALLBACK_RESERVATION_FEE_WEI
 
-    const hash = await writeContract(config, {
+    return executeContractTx(config, {
       ...coordinator,
       functionName: 'reserveTokenAddress',
-      chainId: PLATFORM_CHAIN_ID,
       args: [salt],
       value: fee,
     })
-
-    const receipt = await waitForTransactionReceipt(config, {
-      hash,
-      chainId: PLATFORM_CHAIN_ID,
-    })
-
-    return { hash, receipt }
   }
 
   return {
