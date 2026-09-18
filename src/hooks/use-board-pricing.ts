@@ -35,7 +35,10 @@ export type BoardStage =
 export interface BoardTokenPricing {
   totalSupply: bigint | undefined
   stage: BoardStage
+  /** BNB price (on-chain reserves, or DEX when the pair is WBNB-quoted). */
   priceBNB: number | null
+  /** USD price straight from the aggregator; null when there is no market. */
+  priceUsd: number | null
   bnbReserve: bigint | null
   /** Real 24h change from the DEX aggregator; null when no market data. */
   changePercent: number | null
@@ -233,6 +236,7 @@ export function useBoardPricing(
         totalSupply: s.totalSupply,
         stage: 'not_launched',
         priceBNB: null,
+        priceUsd: null,
         bnbReserve: null,
         changePercent: null,
         volume24h: null,
@@ -251,6 +255,7 @@ export function useBoardPricing(
           totalSupply: s.totalSupply,
           stage: 'live',
           priceBNB: null,
+          priceUsd: null,
           bnbReserve: null,
           changePercent: null,
           volume24h: null,
@@ -266,6 +271,7 @@ export function useBoardPricing(
           priceBNB: s.presalePrice
             ? Number(formatUnits(s.presalePrice, 18))
             : null,
+          priceUsd: null,
           bnbReserve: null,
           changePercent: null,
           volume24h: null,
@@ -279,6 +285,7 @@ export function useBoardPricing(
           totalSupply: s.totalSupply,
           stage: 'failed',
           priceBNB: null,
+          priceUsd: null,
           bnbReserve: null,
           changePercent: null,
           volume24h: null,
@@ -308,6 +315,7 @@ export function useBoardPricing(
         priceBNB:
           Number(formatUnits(bnbReserve, 18)) /
           Number(formatUnits(tokenReserve, s.tokenDecimals)),
+        priceUsd: null,
         bnbReserve,
         changePercent: null,
         volume24h: null,
@@ -339,6 +347,7 @@ export function useBoardPricing(
       out[key] = {
         ...pricing,
         priceBNB: dexPriceBNB ?? pricing.priceBNB,
+        priceUsd: quote?.priceUsd ?? null,
         // Real 24h change; null means "no live market" and renders as --.
         changePercent: quote?.change24h ?? null,
         volume24h: quote?.volume24h ?? null,
