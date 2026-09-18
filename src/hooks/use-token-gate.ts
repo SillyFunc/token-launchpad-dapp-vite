@@ -1,13 +1,13 @@
 import { useReadContracts } from 'wagmi'
 import {
-  contracts,
   flapTaxTokenV3Abi,
   presaleAbi,
 } from '@sillyfunc/launchpad-contracts'
 import { isAddress, zeroAddress, type Address } from 'viem'
+import { getCoordinatorFactory } from '@/lib/contracts'
 import { PLATFORM_CHAIN_ID } from '@/lib/web3'
 
-const coordinator = contracts[PLATFORM_CHAIN_ID].coordinatorFactory
+const coordinator = getCoordinatorFactory()
 
 function validAddress(value?: string | null): Address | undefined {
   if (!value || !isAddress(value) || value.toLowerCase() === zeroAddress) {

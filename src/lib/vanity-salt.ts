@@ -6,11 +6,9 @@ import {
   isAddress,
   type Hex,
 } from 'viem'
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { addresses } from '@sillyfunc/launchpad-contracts'
 
+import { getDeployment } from '@/lib/contracts'
 import { getInitCodeHash, predictCloneAddress } from '@/lib/eip1167'
-import { PLATFORM_CHAIN_ID } from '@/lib/web3'
 import type {
   VanityWorkerError,
   VanityWorkerInput,
@@ -18,8 +16,6 @@ import type {
 } from '@/workers/vanity-salt.worker'
 
 export const VANITY_SUFFIX = 0x8888
-
-const deployment = addresses[PLATFORM_CHAIN_ID]
 
 export interface PredictTokenAddressOptions {
   tokenFactory?: Hex
@@ -30,6 +26,7 @@ export function predictTokenAddress(
   salt: Hex,
   options: PredictTokenAddressOptions = {},
 ): Hex {
+  const deployment = getDeployment()
   return predictCloneAddress({
     tokenFactory: options.tokenFactory ?? deployment.tokenFactory,
     flapImplementation:
@@ -72,6 +69,7 @@ export function findVanitySaltSync(
   options: FindVanitySaltOptions = {},
 ): VanitySaltResult {
   const start = performance.now()
+  const deployment = getDeployment()
   const tokenFactory = options.tokenFactory ?? deployment.tokenFactory
   const flapImplementation =
     options.flapImplementation ?? deployment.flapTaxTokenImplementation
@@ -115,6 +113,7 @@ export async function findVanitySaltChunked(
   options: FindVanitySaltOptions = {},
 ): Promise<VanitySaltResult> {
   const start = performance.now()
+  const deployment = getDeployment()
   const tokenFactory = options.tokenFactory ?? deployment.tokenFactory
   const flapImplementation =
     options.flapImplementation ?? deployment.flapTaxTokenImplementation
@@ -168,6 +167,7 @@ export async function findVanitySaltChunked(
 export async function findVanitySalt(
   options: FindVanitySaltOptions = {},
 ): Promise<VanitySaltResult> {
+  const deployment = getDeployment()
   const tokenFactory = options.tokenFactory ?? deployment.tokenFactory
   const flapImplementation =
     options.flapImplementation ?? deployment.flapTaxTokenImplementation
@@ -227,69 +227,4 @@ export async function findVanitySalt(
   }
 
   return findVanitySaltChunked(options)
-}
-
-export function useVanitySalt(options: PredictTokenAddressOptions = {}) {
-  const [salt, setSalt] = useState<Hex | null>(null)
-  const [predictedAddress, setPredictedAddress] = useState<Hex | null>(null)
-  const [isSearching, setIsSearching] = useState(false)
-  const [attempts, setAttempts] = useState(0)
-  const [durationMs, setDurationMs] = useState(0)
-  const [error, setError] = useState<string | null>(null)
-  const abortControllerRef = useRef<AbortController | null>(null)
-
-  const startSearch = useCallback(() => {
-    abortControllerRef.current?.abort()
-    const controller = new AbortController()
-    abortControllerRef.current = controller
-
-    setIsSearching(true)
-    setError(null)
-
-    findVanitySalt({
-      tokenFactory: options.tokenFactory,
-      flapImplementation: options.flapImplementation,
-      signal: controller.signal,
-    })
-      .then((result) => {
-        if (controller.signal.aborted) return
-        setSalt(result.salt)
-        setPredictedAddress(result.predictedAddress)
-        setAttempts(result.attempts)
-        setDurationMs(result.durationMs)
-        setIsSearching(false)
-      })
-      .catch((err) => {
-        if (controller.signal.aborted) return
-        setError(err instanceof Error ? err.message : 'Vanity salt search failed')
-        setIsSearching(false)
-      })
-  }, [options.tokenFactory, options.flapImplementation])
-
-  const reset = useCallback(() => {
-    abortControllerRef.current?.abort()
-    setSalt(null)
-    setPredictedAddress(null)
-    setIsSearching(false)
-    setAttempts(0)
-    setDurationMs(0)
-    setError(null)
-  }, [])
-
-  useEffect(() => {
-    return () => {
-      abortControllerRef.current?.abort()
-    }
-  }, [])
-
-  return {
-    salt,
-    predictedAddress,
-    isSearching,
-    attempts,
-    durationMs,
-    error,
-    regenerate: startSearch,
-    reset,
-  }
 }

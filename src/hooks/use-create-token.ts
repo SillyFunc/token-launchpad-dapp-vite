@@ -5,12 +5,11 @@ import {
   writeContract,
 } from 'wagmi/actions'
 import { decodeEventLog, type Address, type Hex } from 'viem'
-import { contracts } from '@sillyfunc/launchpad-contracts'
-
+import { getCoordinatorFactory } from '@/lib/contracts'
 import { findVanitySalt } from '@/lib/vanity-salt'
 import { PLATFORM_CHAIN_ID } from '@/lib/web3'
 
-const coordinator = contracts[PLATFORM_CHAIN_ID].coordinatorFactory
+const coordinator = getCoordinatorFactory()
 const SECONDS_PER_DAY = 86_400
 
 export interface CreateTokenParams {

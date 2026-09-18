@@ -4,12 +4,12 @@ import {
   waitForTransactionReceipt,
   writeContract,
 } from 'wagmi/actions'
-import { contracts } from '@sillyfunc/launchpad-contracts'
 import { formatEther, type Hex } from 'viem'
 
+import { getCoordinatorFactory } from '@/lib/contracts'
 import { PLATFORM_CHAIN_ID } from '@/lib/web3'
 
-const coordinator = contracts[PLATFORM_CHAIN_ID].coordinatorFactory
+const coordinator = getCoordinatorFactory()
 
 /** Mainnet fallback when reservationFee cannot be read. Matches current on-chain 0.001 BNB. */
 export const FALLBACK_RESERVATION_FEE_WEI = 1_000_000_000_000_000n

@@ -14,6 +14,14 @@ import boardBanner from '@/assets/images/board-banner.png'
 import { usePopularTokens } from '@/hooks/use-board'
 import { useBoardPricing } from '@/hooks/use-board-pricing'
 import { TokenRow } from '@/components/board/token-row'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { m } from '@/paraglide/messages.js'
 
 const FILTER_OPTIONS = [
@@ -171,69 +179,90 @@ export const BoardPage = () => {
       )}
 
       <div className="w-full overflow-hidden border border-[#484B51] bg-background">
-        <div className="flex h-9 items-center justify-between border-b border-white/10 bg-[#131516] px-3 text-xs text-[#A0A3A7]">
-          <div className="flex items-center gap-3">
-            <span>{m.board_column_market_cap_status()}</span>
-            <span>{m.board_column_tax()}</span>
-          </div>
-          <div className="flex items-center gap-4 text-right">
-            <span className="w-14">{m.board_column_price()}</span>
-            <span className="w-20">{m.board_column_change()}</span>
-          </div>
-        </div>
-
-        <div className="divide-y divide-white/10">
-          {isLoading ? (
-            Array.from({ length: 6 }).map((_, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between px-3 py-2.5"
-              >
-                <div className="flex min-w-0 items-center gap-2.5">
-                  <div className="size-8 shrink-0 animate-pulse rounded-sm bg-[#2F3737]" />
-                  <div className="flex flex-col gap-1.5">
-                    <div className="h-3 w-20 animate-pulse rounded bg-[#2F3737]" />
-                    <div className="h-2.5 w-32 animate-pulse rounded bg-[#2F3737]" />
+        <Table className="w-full table-fixed text-xs text-white">
+          <TableHeader className="bg-[#131516] text-[#A0A3A7]">
+            <TableRow className="border-white/10 hover:bg-transparent">
+              <TableHead className="h-12 w-[45%] px-3 text-[#A0A3A7]">
+                {m.board_column_market_cap_status()}
+              </TableHead>
+              <TableHead className="h-12 w-[15%] px-2 text-[#A0A3A7]">
+                {m.board_column_tax()}
+              </TableHead>
+              <TableHead className="h-12 w-[25%] px-2 text-right text-[#A0A3A7]">
+                {m.board_column_price()} (BNB)
+              </TableHead>
+              <TableHead className="h-12 w-[15%] px-1 text-right text-[#A0A3A7]">
+                {m.board_column_change()}
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody className="divide-y divide-white/10">
+            {isLoading ? (
+              Array.from({ length: 6 }).map((_, index) => (
+                <TableRow
+                  key={index}
+                  className="border-white/10 hover:bg-transparent"
+                >
+                  <TableCell colSpan={4} className="p-2.5">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex min-w-0 items-center gap-2.5">
+                        <div className="size-8 shrink-0 animate-pulse rounded-sm bg-[#2F3737]" />
+                        <div className="flex flex-col gap-1.5">
+                          <div className="h-3 w-20 animate-pulse rounded bg-[#2F3737]" />
+                          <div className="h-2.5 w-32 animate-pulse rounded bg-[#2F3737]" />
+                        </div>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-3">
+                        <div className="h-3 w-14 animate-pulse rounded bg-[#2F3737]" />
+                        <div className="h-5 w-20 animate-pulse rounded bg-[#2F3737]" />
+                      </div>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : isError ? (
+              <TableRow className="border-white/10 hover:bg-transparent">
+                <TableCell colSpan={4} className="p-0">
+                  <div className="flex flex-col items-center justify-center p-12 text-center text-xs text-neutral-500">
+                    <Coins className="mb-2 size-6 text-neutral-600" />
+                    <span>{m.board_load_error()}</span>
+                    <button
+                      type="button"
+                      onClick={() => void refetch()}
+                      className="mt-3 rounded border border-[#FE810B]/60 bg-[#FD810B1A] px-4 py-1.5 text-xs font-medium text-[#FB5F16] transition-all hover:bg-[#FD810B33] active:translate-y-0.5"
+                    >
+                      {m.board_reload()}
+                    </button>
                   </div>
-                </div>
-                <div className="flex shrink-0 items-center gap-3">
-                  <div className="h-3 w-14 animate-pulse rounded bg-[#2F3737]" />
-                  <div className="h-5 w-20 animate-pulse rounded bg-[#2F3737]" />
-                </div>
-              </div>
-            ))
-          ) : isError ? (
-            <div className="flex flex-col items-center justify-center p-12 text-center text-xs text-neutral-500">
-              <Coins className="mb-2 size-6 text-neutral-600" />
-              <span>{m.board_load_error()}</span>
-              <button
-                type="button"
-                onClick={() => void refetch()}
-                className="mt-3 rounded border border-[#FE810B]/60 bg-[#FD810B1A] px-4 py-1.5 text-xs font-medium text-[#FB5F16] transition-all hover:bg-[#FD810B33] active:translate-y-0.5"
-              >
-                {m.board_reload()}
-              </button>
-            </div>
-          ) : displayedTokens.length === 0 ? (
-            <div className="flex flex-col items-center justify-center p-12 text-center text-xs text-neutral-500">
-              <Coins className="size-6 mb-2 text-neutral-600" />
-              <span>
-                {searchKeyword ? m.board_empty_search() : m.board_empty()}
-              </span>
-            </div>
-          ) : (
-            displayedTokens.map((token) => {
-              const key = String(token.coinContractAddress || '').toLowerCase()
-              return (
-                <TokenRow
-                  key={token.id}
-                  token={token}
-                  pricing={pricingMap[key]}
-                />
-              )
-            })
-          )}
-        </div>
+                </TableCell>
+              </TableRow>
+            ) : displayedTokens.length === 0 ? (
+              <TableRow className="border-white/10 hover:bg-transparent">
+                <TableCell colSpan={4} className="p-0">
+                  <div className="flex flex-col items-center justify-center p-12 text-center text-xs text-neutral-500">
+                    <Coins className="mb-2 size-6 text-neutral-600" />
+                    <span>
+                      {searchKeyword ? m.board_empty_search() : m.board_empty()}
+                    </span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : (
+              displayedTokens.map((token) => {
+                const key = String(
+                  token.coinContractAddress || '',
+                ).toLowerCase()
+                return (
+                  <TokenRow
+                    key={token.id}
+                    token={token}
+                    pricing={pricingMap[key]}
+                  />
+                )
+              })
+            )}
+          </TableBody>
+        </Table>
       </div>
     </div>
   )

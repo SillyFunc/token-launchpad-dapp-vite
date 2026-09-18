@@ -9,16 +9,16 @@ import {
   type ContractFunctionParameters,
 } from 'viem'
 import {
-  contracts,
   flapTaxTokenV3Abi,
   presaleAbi,
 } from '@sillyfunc/launchpad-contracts'
 
 import type { BoardItemResponse } from '@/api/board'
+import { getCoordinatorFactory } from '@/lib/contracts'
 import { PLATFORM_CHAIN_ID } from '@/lib/web3'
 import { readStoredBaseline, storeBaseline } from '@/lib/pricing'
 
-const coordinator = contracts[PLATFORM_CHAIN_ID].coordinatorFactory
+const coordinator = getCoordinatorFactory()
 
 // This is the external PancakeSwap V2 pair interface. Launchpad ABIs come from
 // @sillyfunc/launchpad-contracts.
@@ -78,6 +78,12 @@ export function useBoardPricing(
           chainId: PLATFORM_CHAIN_ID,
         },
         {
+          address: e.address,
+          abi: flapTaxTokenV3Abi,
+          functionName: 'decimals',
+          chainId: PLATFORM_CHAIN_ID,
+        },
+        {
           ...coordinator,
           functionName: 'tokenPresales',
           args: [e.address],
@@ -100,14 +106,17 @@ export function useBoardPricing(
 
   const tokenStates = useMemo(() => {
     return entries.map((e, i) => {
-      // Slot order matches the flatMap layout: 3 reads per token.
-      const supply = slot(phase1Data, i * 3)
-      const presale = slot(phase1Data, i * 3 + 1)
-      const state = slot(phase1Data, i * 3 + 2)
+      // Slot order matches the flatMap layout: 4 reads per token.
+      const supply = slot(phase1Data, i * 4)
+      const decimals = slot(phase1Data, i * 4 + 1)
+      const presale = slot(phase1Data, i * 4 + 2)
+      const state = slot(phase1Data, i * 4 + 3)
       return {
         key: e.key,
         totalSupply:
           supply?.status === 'success' ? (supply.result as bigint) : undefined,
+        tokenDecimals:
+          decimals?.status === 'success' ? Number(decimals.result) : 18,
         presale:
           presale?.status === 'success' && presale.result !== zeroAddress
             ? (presale.result as Address)
@@ -307,7 +316,7 @@ export function useBoardPricing(
           stage: 'live',
           priceBNB:
             Number(formatUnits(bnbReserve, 18)) /
-            Number(formatUnits(tokenReserve, 18)),
+            Number(formatUnits(tokenReserve, s.tokenDecimals)),
           bnbReserve,
           changePercent: null,
         },

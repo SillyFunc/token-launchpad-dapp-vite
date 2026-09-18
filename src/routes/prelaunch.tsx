@@ -31,7 +31,7 @@ import { useReservedAddresses } from '@/hooks/use-reserved-addresses'
 import { requestAuthSignature, type AuthSignature } from '@/lib/auth'
 import { getContractErrorMessage } from '@/lib/contract-error'
 import { ApiError } from '@/lib/http/error'
-import { useVanitySalt } from '@/lib/vanity-salt'
+import { useVanitySalt } from '@/hooks/use-vanity-salt'
 import { PLATFORM_CHAIN_ID, getExplorerAddressUrl } from '@/lib/web3'
 import { m } from '@/paraglide/messages.js'
 

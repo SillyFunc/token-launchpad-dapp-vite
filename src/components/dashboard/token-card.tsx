@@ -15,7 +15,7 @@ import {
   TriangleAlertIcon,
   WalletIcon,
 } from 'lucide-react'
-import { isAddress, type Address, type Hex } from 'viem'
+import { getAddress, isAddress, type Address, type Hex } from 'viem'
 import {
   useConfig,
   useConnection,
@@ -113,7 +113,7 @@ function getTokenAddress(token: BoardItemResponse): Address | undefined {
   const candidates = [token.coinContractAddress, token.contractAddress]
 
   const address = candidates.find((candidate) => isAddress(candidate))
-  return address as Address | undefined
+  return address ? getAddress(address) : undefined
 }
 
 function getReservedAddress(
@@ -127,7 +127,7 @@ function getReservedAddress(
     return undefined
   }
 
-  return token.coinContractAddress as Address
+  return getAddress(token.coinContractAddress)
 }
 
 function formatDays(value: number | undefined) {

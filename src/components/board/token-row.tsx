@@ -7,7 +7,9 @@ import type {
   BoardStage,
   BoardTokenPricing,
 } from '@/hooks/use-board-pricing'
+import { formatDecimalText } from '@/lib/format'
 import { m } from '@/paraglide/messages.js'
+import { TableCell, TableRow } from '@/components/ui/table'
 
 export interface TokenRowProps {
   token: BoardItemResponse
@@ -61,70 +63,86 @@ export function TokenRow({ token, pricing }: TokenRowProps) {
       ? `${isPositive ? '+' : ''}${changePercent.toFixed(2)}%`
       : '--'
 
+  const handleNavigate = () => {
+    if (tokenAddress) {
+      navigate(`/token/${tokenAddress}`)
+    }
+  }
+
   return (
-    <div
-      onClick={() => {
-        if (tokenAddress) {
-          navigate(`/token/${tokenAddress}`)
+    <TableRow
+      role={tokenAddress ? 'link' : undefined}
+      tabIndex={tokenAddress ? 0 : undefined}
+      onClick={handleNavigate}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          handleNavigate()
         }
       }}
-      className="flex items-center justify-between px-3 py-2.5 transition-colors hover:bg-white/5 cursor-pointer"
+      className={tokenAddress ? 'cursor-pointer hover:bg-white/5' : undefined}
     >
-      <div className="flex min-w-0 items-center gap-2.5">
-        <div className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-sm border border-white/30 bg-[#1a1c1e]">
-          {token.coinImg ? (
-            <img
-              src={token.coinImg}
-              alt={token.name}
-              className="size-full object-cover"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none'
-              }}
-            />
-          ) : (
-            <Coins className="size-4 text-[#FFA546]" />
-          )}
-        </div>
-        <div className="flex min-w-0 flex-col">
-          <span className="truncate text-xs font-bold leading-tight text-[#F0F0F0]">
-            {token.name}
-          </span>
-          <div className="flex items-center gap-1 text-xs leading-normal text-white/60">
-            <span
-              className={`rounded px-1 py-0.5 text-xs leading-none font-medium ${statusMeta.className}`}
-            >
-              {statusMeta.label()}
-            </span>
-            {isLowLiquidity && (
-              <span className="rounded bg-amber-500/15 px-1 py-0.5 text-xs text-amber-400">
-                {m.board_low_liquidity()}
-              </span>
+      <TableCell className="w-[45%] px-3 py-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-sm border border-white/30 bg-[#1a1c1e]">
+            {token.coinImg ? (
+              <img
+                src={token.coinImg}
+                alt={token.name}
+                className="size-full object-cover"
+                onError={(event) => {
+                  event.currentTarget.style.display = 'none'
+                }}
+              />
+            ) : (
+              <Coins className="size-4 text-[#FFA546]" />
             )}
-            <span className="ml-1 text-white/70">
-              {token.buyTax}%/{token.sellTax}%
+          </div>
+          <div className="flex min-w-0 flex-col">
+            <span className="truncate text-xs font-bold leading-tight text-[#F0F0F0]">
+              {token.name}
+              {token.symbol ? (
+                <span className="ml-1 font-normal text-white/50">
+                  ({token.symbol})
+                </span>
+              ) : null}
             </span>
+            <div className="flex items-center gap-1 text-xs leading-normal text-white/60">
+              <span
+                className={`rounded px-1 py-0.5 text-xs leading-none font-medium ${statusMeta.className}`}
+              >
+                {statusMeta.label()}
+              </span>
+              {isLowLiquidity && (
+                <span className="rounded bg-amber-500/15 px-1 py-0.5 text-xs text-amber-400">
+                  {m.board_low_liquidity()}
+                </span>
+              )}
+            </div>
           </div>
         </div>
-      </div>
-
-      <div className="flex shrink-0 items-center gap-3">
-        <span className="w-14 text-right font-mono text-xs font-bold text-[#AAAAAA]">
-          --
+      </TableCell>
+      <TableCell className="w-[15%] px-2 py-3 text-white/70">
+        {token.buyTax}% / {token.sellTax}%
+      </TableCell>
+      <TableCell className="w-[25%] px-2 py-3 text-right font-mono text-[11px] font-bold text-[#AAAAAA]">
+        {pricing?.priceBNB !== null && pricing?.priceBNB !== undefined
+          ? formatDecimalText(pricing.priceBNB, 5)
+          : '--'}
+      </TableCell>
+      <TableCell className="w-[15%] px-1 py-3 text-right">
+        <span
+          className={`inline-flex h-8 w-full min-w-0 items-center justify-center px-1 text-xs font-medium leading-none ${
+            isPositive
+              ? 'bg-[#2bc235] text-white'
+              : changePercent !== null
+                ? 'bg-[#ff4a55] text-white'
+                : 'bg-neutral-800 text-neutral-500'
+          }`}
+        >
+          {changeText}
         </span>
-        <div className="flex w-20 justify-end">
-          <span
-            className={`inline-flex items-center justify-center h-7 px-1 text-xs font-medium leading-none ${
-              isPositive
-                ? 'bg-[#2bc235] text-white'
-                : changePercent !== null
-                  ? 'bg-[#ff4a55] text-white'
-                  : 'bg-neutral-800 text-neutral-500'
-            }`}
-          >
-            {changeText}
-          </span>
-        </div>
-      </div>
-    </div>
+      </TableCell>
+    </TableRow>
   )
 }
