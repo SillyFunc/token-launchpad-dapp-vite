@@ -355,11 +355,11 @@ function BoardListRow({
             <span className="truncate">
               {marketCap !== null ? `$${formatCompactNumber(marketCap)}` : '--'}
             </span>
-            <div className="h-3 w-px bg-[#484B51]"></div>
+            <div className="h-1.75 w-px bg-[#484B51]"></div>
             <span className="truncate">
               {volume24h !== null ? `$${formatCompactNumber(volume24h)}` : '--'}
             </span>
-            <div className="h-3 w-px bg-[#484B51]"></div>
+            <div className="h-1.75 w-px bg-[#484B51]"></div>
             <span className="truncate">{taxText}</span>
           </div>
         </div>
