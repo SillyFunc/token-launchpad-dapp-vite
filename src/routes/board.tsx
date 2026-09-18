@@ -207,12 +207,12 @@ export const BoardPage = () => {
                 <div className="flex items-center gap-2.5">
                   <div className="size-7.5 shrink-0 animate-pulse bg-[#2F3737]" />
                   <div className="flex flex-1 flex-col gap-1.5">
-                    <div className="h-3 w-20 animate-pulse rounded bg-[#2F3737]" />
-                    <div className="h-2.5 w-32 animate-pulse rounded bg-[#2F3737]" />
+                    <div className="h-3 w-20 animate-pulse bg-[#2F3737]" />
+                    <div className="h-2.5 w-32 animate-pulse bg-[#2F3737]" />
                   </div>
                 </div>
-                <div className="h-3 w-12 animate-pulse rounded bg-[#2F3737] justify-self-end" />
-                <div className="h-6 w-full animate-pulse rounded bg-[#2F3737]" />
+                <div className="h-3 w-12 animate-pulse bg-[#2F3737] justify-self-end" />
+                <div className="h-6 w-full animate-pulse bg-[#2F3737]" />
               </div>
             ))
           ) : isError ? (
@@ -222,7 +222,7 @@ export const BoardPage = () => {
               <button
                 type="button"
                 onClick={() => void refetch()}
-                className="mt-3 rounded border border-[#FE810B]/60 bg-[#FD810B1A] px-4 py-1.5 text-xs font-medium text-[#FB5F16] transition-all hover:bg-[#FD810B33] active:translate-y-0.5"
+                className="mt-3 border border-[#FE810B]/60 bg-[#FD810B1A] px-4 py-1.5 text-xs font-medium text-[#FB5F16] transition-all hover:bg-[#FD810B33] active:translate-y-0.5"
               >
                 {m.board_reload()}
               </button>
@@ -254,7 +254,7 @@ export const BoardPage = () => {
 
 function TaxBadge({ showPresale }: { showPresale: boolean }) {
   return (
-    <span className="inline-flex shrink-0 items-center gap-0.5">
+    <>
       <button
         type="button"
         className="h-3.5 text-[0.625rem] shrink-0 flex items-center leading-none border border-[#FE810B] text-[#FE810B]"
@@ -278,7 +278,7 @@ function TaxBadge({ showPresale }: { showPresale: boolean }) {
           预售中
         </span>
       )}
-    </span>
+    </>
   )
 }
 
