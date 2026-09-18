@@ -10,6 +10,7 @@ import {
   X,
 } from 'lucide-react'
 
+import SortIcon from '@/assets/svgs/sort-default.svg'
 import boardBanner from '@/assets/images/board-banner.png'
 import { usePopularTokens } from '@/hooks/use-board'
 import { useBoardPricing } from '@/hooks/use-board-pricing'
@@ -38,12 +39,7 @@ export const BoardPage = () => {
   const [searchKeyword, setSearchKeyword] = useState('')
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
 
-  const {
-    data: tokens,
-    isLoading,
-    isError,
-    refetch,
-  } = usePopularTokens()
+  const { data: tokens, isLoading, isError, refetch } = usePopularTokens()
 
   const tokenList = Array.isArray(tokens?.content) ? tokens.content : []
 
@@ -178,91 +174,80 @@ export const BoardPage = () => {
         </div>
       )}
 
-      <div className="w-full overflow-hidden border border-[#484B51] bg-background">
-        <Table className="w-full table-fixed text-xs text-white">
-          <TableHeader className="bg-[#131516] text-[#A0A3A7]">
-            <TableRow className="border-white/10 hover:bg-transparent">
-              <TableHead className="h-12 w-[45%] px-3 text-[#A0A3A7]">
-                {m.board_column_market_cap_status()}
-              </TableHead>
-              <TableHead className="h-12 w-[15%] px-2 text-[#A0A3A7]">
-                {m.board_column_tax()}
-              </TableHead>
-              <TableHead className="h-12 w-[25%] px-2 text-right text-[#A0A3A7]">
-                {m.board_column_price()} (BNB)
-              </TableHead>
-              <TableHead className="h-12 w-[15%] px-1 text-right text-[#A0A3A7]">
-                {m.board_column_change()}
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody className="divide-y divide-white/10">
-            {isLoading ? (
-              Array.from({ length: 6 }).map((_, index) => (
-                <TableRow
-                  key={index}
-                  className="border-white/10 hover:bg-transparent"
-                >
-                  <TableCell colSpan={4} className="p-2.5">
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex min-w-0 items-center gap-2.5">
-                        <div className="size-8 shrink-0 animate-pulse rounded-sm bg-[#2F3737]" />
-                        <div className="flex flex-col gap-1.5">
-                          <div className="h-3 w-20 animate-pulse rounded bg-[#2F3737]" />
-                          <div className="h-2.5 w-32 animate-pulse rounded bg-[#2F3737]" />
-                        </div>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-3">
-                        <div className="h-3 w-14 animate-pulse rounded bg-[#2F3737]" />
-                        <div className="h-5 w-20 animate-pulse rounded bg-[#2F3737]" />
-                      </div>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : isError ? (
-              <TableRow className="border-white/10 hover:bg-transparent">
-                <TableCell colSpan={4} className="p-0">
-                  <div className="flex flex-col items-center justify-center p-12 text-center text-xs text-neutral-500">
-                    <Coins className="mb-2 size-6 text-neutral-600" />
-                    <span>{m.board_load_error()}</span>
-                    <button
-                      type="button"
-                      onClick={() => void refetch()}
-                      className="mt-3 rounded border border-[#FE810B]/60 bg-[#FD810B1A] px-4 py-1.5 text-xs font-medium text-[#FB5F16] transition-all hover:bg-[#FD810B33] active:translate-y-0.5"
+      <div className="w-full border-x border-b border-[#484B51] bg-background">
+        <div className="sticky top-14.5 z-20 h-10 grid grid-cols-[minmax(0,1fr)_64px_64px] gap-5 items-center border-y border-y-[#484B51] bg-[#131516] px-2 text-[#A0A3A7] text-[0.625rem]">
+          <span className="truncate min-w-0">市值/24H 交易額/稅率</span>
+          <span className="text-right">价格</span>
+          <button
+            type="button"
+            aria-label="24h 涨跌幅"
+            className="inline-flex min-w-0 items-center gap-0.5 uppercase transition-colors hover:text-white justify-end text-right"
+          >
+            <span className="truncate">24h 涨跌幅</span>
+            <img
+              alt=""
+              aria-hidden
+              src={SortIcon}
+              className="shrink-0 size-3.5"
+            />
+          </button>
+        </div>
+        <div className="divide-y divide-[#1F2023] bg-transparent">
+          <div className="grid h-13 items-center bg-background px-2 text-white [content-visibility:auto] [contain-intrinsic-size:auto_52px] cursor-pointer grid-cols-[minmax(0,1fr)_64px_64px] gap-5">
+            <div className="h-full flex items-center gap-2.5">
+              <div className="shrink-0 overflow-hidden border border-[#313131] relative size-7.5 bg-[#111]">
+                <img
+                  src=""
+                  alt="MarsCoin"
+                  fetchPriority="low"
+                  loading="lazy"
+                  decoding="async"
+                  className="absolute inset-0 size-full object-cover transition-opacity duration-150 opacity-100"
+                />
+              </div>
+              <div className="min-w-0 flex-1 flex flex-col gap-0.5">
+                <div className="flex items-center min-w-0 gap-1">
+                  <span className="min-w-0 max-w-28 truncate text-sm font-medium uppercase tracking-0 text-foreground">
+                    $MarsCoin
+                  </span>
+                  <button
+                    type="button"
+                    className="h-3.5 text-[0.625rem] shrink-0 flex items-center leading-none border border-[#FE810B] text-[#FE810B]"
+                  >
+                    <span>税收</span>
+                    <svg
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      aria-hidden="true"
+                      className="ml-px size-3.5 shrink-0"
                     >
-                      {m.board_reload()}
-                    </button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : displayedTokens.length === 0 ? (
-              <TableRow className="border-white/10 hover:bg-transparent">
-                <TableCell colSpan={4} className="p-0">
-                  <div className="flex flex-col items-center justify-center p-12 text-center text-xs text-neutral-500">
-                    <Coins className="mb-2 size-6 text-neutral-600" />
-                    <span>
-                      {searchKeyword ? m.board_empty_search() : m.board_empty()}
-                    </span>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : (
-              displayedTokens.map((token) => {
-                const key = String(
-                  token.coinContractAddress || '',
-                ).toLowerCase()
-                return (
-                  <TokenRow
-                    key={token.id}
-                    token={token}
-                    pricing={pricingMap[key]}
-                  />
-                )
-              })
-            )}
-          </TableBody>
-        </Table>
+                      <path
+                        d="M11.7712 3.62846C11.9304 3.62846 12.0832 3.69179 12.1957 3.80432C12.3082 3.91684 12.3715 4.06963 12.3715 4.22876V9.88562H11.1709V5.67796L4.41751 12.4314L3.56861 11.5825L10.322 4.82907L6.11438 4.82907L6.11438 3.62846H11.7712Z"
+                        fill="currentColor"
+                      ></path>
+                    </svg>
+                  </button>
+                </div>
+                <div className="flex items-center gap-1 text-[0.625rem] text-[#A0A3A7] min-w-0">
+                  <span className="truncate">$108.97M</span>
+                  <div className="h-3 w-px bg-[#484B51]"></div>
+                  <span className="truncate">$816.83K</span>
+                  <div className="h-3 w-px bg-[#484B51]"></div>
+                  <span className=" truncate">3%/3%</span>
+                </div>
+              </div>
+            </div>
+            <div className="min-w-0 truncate text-right font-medium tracking-normal text-foreground text-xs">
+              $0.10878
+            </div>
+            <div className="text-right">
+              <span className="inline-flex h-7 items-center justify-center font-medium tracking-normal text-white bg-[#FF4A55] text-xs w-full">
+                -2.39%
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )
