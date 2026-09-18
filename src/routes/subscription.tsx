@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/empty'
 import { Spinner } from '@/components/ui/spinner'
 import { formatAddress } from '@/lib/utils'
+import { getExplorerTransactionUrl } from '@/lib/web3'
 import { m } from '@/paraglide/messages.js'
 
 const PAGE_SIZE = 10
@@ -51,9 +52,7 @@ function SubscriptionDetail({ label, value }: { label: string; value: string }) 
 }
 
 function SubscriptionCard({ item }: { item: SubscriptionItemResponse }) {
-  const transactionUrl = item.txHash
-    ? `https://bscscan.com/tx/${encodeURIComponent(item.txHash)}`
-    : undefined
+  const transactionUrl = getExplorerTransactionUrl(item.txHash)
 
   return (
     <Card size="sm" className="h-full">
