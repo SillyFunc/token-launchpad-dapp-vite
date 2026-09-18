@@ -27,3 +27,10 @@ dist-ssr
 .codegraph
 .codex
 .openchamber
+
+# Cloudflare Workers
+.dev.vars
+.wrangler
+workers/**/.dev.vars
+workers/**/.wrangler
+workers/**/node_modules

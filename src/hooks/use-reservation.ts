@@ -9,8 +9,6 @@ import { formatEther, type Hex } from 'viem'
 import { getCoordinatorFactory } from '@/lib/contracts'
 import { PLATFORM_CHAIN_ID } from '@/lib/web3'
 
-const coordinator = getCoordinatorFactory()
-
 /** Mainnet fallback when reservationFee cannot be read. Matches current on-chain 0.001 BNB. */
 export const FALLBACK_RESERVATION_FEE_WEI = 1_000_000_000_000_000n
 
@@ -71,6 +69,7 @@ function toCoordinatorError(err: unknown): CoordinatorError {
 }
 
 export function useReservationFee() {
+  const coordinator = getCoordinatorFactory()
   const query = useReadContract({
     ...coordinator,
     functionName: 'reservationFee',
@@ -92,6 +91,7 @@ export function useReservationFee() {
 
 export function useReserveTokenAddress() {
   const config = useConfig()
+  const coordinator = getCoordinatorFactory()
   const { fee: reservationFee } = useReservationFee()
 
   const execute = async (salt: Hex) => {

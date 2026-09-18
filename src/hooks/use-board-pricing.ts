@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useReadContracts } from 'wagmi'
 import {
   formatUnits,
@@ -14,11 +14,9 @@ import {
 } from '@sillyfunc/launchpad-contracts'
 
 import type { BoardItemResponse } from '@/api/board'
+import { useDexQuotes } from '@/hooks/use-dex-quotes'
 import { getCoordinatorFactory } from '@/lib/contracts'
-import { PLATFORM_CHAIN_ID } from '@/lib/web3'
-import { readStoredBaseline, storeBaseline } from '@/lib/pricing'
-
-const coordinator = getCoordinatorFactory()
+import { PLATFORM_CHAIN_ID, WRAPPED_NATIVE_ADDRESS } from '@/lib/web3'
 
 // This is the external PancakeSwap V2 pair interface. Launchpad ABIs come from
 // @sillyfunc/launchpad-contracts.
@@ -39,7 +37,10 @@ export interface BoardTokenPricing {
   stage: BoardStage
   priceBNB: number | null
   bnbReserve: bigint | null
+  /** Real 24h change from the DEX aggregator; null when no market data. */
   changePercent: number | null
+  volume24h: number | null
+  liquidityUsd: number | null
 }
 
 type LaunchStatus = readonly [boolean, bigint, bigint, bigint, boolean, boolean]
@@ -57,6 +58,7 @@ function slot(data: unknown, index: number): MulticallSlot | undefined {
 export function useBoardPricing(
   tokens: BoardItemResponse[],
 ): Record<string, BoardTokenPricing> {
+  const coordinator = useMemo(() => getCoordinatorFactory(), [])
   const entries = useMemo(() => {
     const list: { key: string; address: Address }[] = []
     for (const t of tokens) {
@@ -96,7 +98,7 @@ export function useBoardPricing(
           chainId: PLATFORM_CHAIN_ID,
         },
       ]),
-    [entries],
+    [entries, coordinator],
   )
 
   const { data: phase1Data } = useReadContracts({
@@ -225,20 +227,16 @@ export function useBoardPricing(
   })
 
   const aggregated = useMemo(() => {
-    const map: Record<
-      string,
-      { pricing: BoardTokenPricing; baselinePriceBNB: number | null }
-    > = {}
+    const map: Record<string, BoardTokenPricing> = {}
     for (const s of tokenStates) {
       map[s.key] = {
-        baselinePriceBNB: null,
-        pricing: {
-          totalSupply: s.totalSupply,
-          stage: 'not_launched',
-          priceBNB: null,
-          bnbReserve: null,
-          changePercent: null,
-        },
+        totalSupply: s.totalSupply,
+        stage: 'not_launched',
+        priceBNB: null,
+        bnbReserve: null,
+        changePercent: null,
+        volume24h: null,
+        liquidityUsd: null,
       }
     }
 
@@ -250,44 +248,41 @@ export function useBoardPricing(
 
       if (claimed) {
         map[s.key] = {
-          baselinePriceBNB: null,
-          pricing: {
-            totalSupply: s.totalSupply,
-            stage: 'live',
-            priceBNB: null,
-            bnbReserve: null,
-            changePercent: null,
-          },
+          totalSupply: s.totalSupply,
+          stage: 'live',
+          priceBNB: null,
+          bnbReserve: null,
+          changePercent: null,
+          volume24h: null,
+          liquidityUsd: null,
         }
         continue
       }
 
       if (launchEnabled && launchStep >= 0 && launchStep <= 2) {
         map[s.key] = {
-          baselinePriceBNB: null,
-          pricing: {
-            totalSupply: s.totalSupply,
-            stage: launchStep === 2 ? 'awaiting_launch' : 'presale',
-            priceBNB: s.presalePrice
-              ? Number(formatUnits(s.presalePrice, 18))
-              : null,
-            bnbReserve: null,
-            changePercent: null,
-          },
+          totalSupply: s.totalSupply,
+          stage: launchStep === 2 ? 'awaiting_launch' : 'presale',
+          priceBNB: s.presalePrice
+            ? Number(formatUnits(s.presalePrice, 18))
+            : null,
+          bnbReserve: null,
+          changePercent: null,
+          volume24h: null,
+          liquidityUsd: null,
         }
         continue
       }
 
       if (launchEnabled && launchStep === 4) {
         map[s.key] = {
-          baselinePriceBNB: null,
-          pricing: {
-            totalSupply: s.totalSupply,
-            stage: 'failed',
-            priceBNB: null,
-            bnbReserve: null,
-            changePercent: null,
-          },
+          totalSupply: s.totalSupply,
+          stage: 'failed',
+          priceBNB: null,
+          bnbReserve: null,
+          changePercent: null,
+          volume24h: null,
+          liquidityUsd: null,
         }
       }
     }
@@ -308,62 +303,49 @@ export function useBoardPricing(
       if (tokenReserve <= 0n) return
 
       map[s.key] = {
-        baselinePriceBNB: s.presalePrice
-          ? Number(formatUnits(s.presalePrice, 18))
-          : null,
-        pricing: {
-          totalSupply: s.totalSupply,
-          stage: 'live',
-          priceBNB:
-            Number(formatUnits(bnbReserve, 18)) /
-            Number(formatUnits(tokenReserve, s.tokenDecimals)),
-          bnbReserve,
-          changePercent: null,
-        },
+        totalSupply: s.totalSupply,
+        stage: 'live',
+        priceBNB:
+          Number(formatUnits(bnbReserve, 18)) /
+          Number(formatUnits(tokenReserve, s.tokenDecimals)),
+        bnbReserve,
+        changePercent: null,
+        volume24h: null,
+        liquidityUsd: null,
       }
     })
 
     return map
   }, [tokenStates, pairStates, liveCandidates, phase3Data])
 
-  const [firstSeenBaselines, setFirstSeenBaselines] = useState<
-    Record<string, number>
-  >({})
-
-  useEffect(() => {
-    const additions: Record<string, number> = {}
-    for (const [key, agg] of Object.entries(aggregated)) {
-      const { pricing, baselinePriceBNB } = agg
-      if (pricing.stage !== 'live' || !pricing.priceBNB || pricing.priceBNB <= 0)
-        continue
-      if (baselinePriceBNB || key in firstSeenBaselines) continue
-      const stored = readStoredBaseline(key)
-      if (stored !== null) {
-        additions[key] = stored
-      } else {
-        storeBaseline(key, pricing.priceBNB)
-        additions[key] = pricing.priceBNB
-      }
-    }
-    if (Object.keys(additions).length > 0) {
-      setFirstSeenBaselines((prev) => ({ ...prev, ...additions }))
-    }
-  }, [aggregated, firstSeenBaselines])
+  // Market data comes from the DEX aggregator (through the dex-cache worker).
+  // The on-chain reads above stay authoritative for the launch stage.
+  const { data: dexData } = useDexQuotes(entries.map((entry) => entry.address))
 
   return useMemo(() => {
+    const quotes = dexData?.quotes ?? {}
     const out: Record<string, BoardTokenPricing> = {}
-    for (const [key, agg] of Object.entries(aggregated)) {
-      const { pricing, baselinePriceBNB } = agg
-      const baseline =
-        pricing.stage === 'live'
-          ? (baselinePriceBNB ?? firstSeenBaselines[key] ?? null)
+
+    for (const [key, pricing] of Object.entries(aggregated)) {
+      const quote = quotes[key]
+      // priceNative is only a BNB price when the pair is quoted in WBNB.
+      const dexPriceBNB =
+        quote?.priceNative != null &&
+        quote.quoteTokenAddress.toLowerCase() ===
+          WRAPPED_NATIVE_ADDRESS.toLowerCase()
+          ? quote.priceNative
           : null
-      const changePercent =
-        baseline && baseline > 0 && pricing.priceBNB
-          ? ((pricing.priceBNB - baseline) / baseline) * 100
-          : null
-      out[key] = { ...pricing, changePercent }
+
+      out[key] = {
+        ...pricing,
+        priceBNB: dexPriceBNB ?? pricing.priceBNB,
+        // Real 24h change; null means "no live market" and renders as --.
+        changePercent: quote?.change24h ?? null,
+        volume24h: quote?.volume24h ?? null,
+        liquidityUsd: quote?.liquidityUsd ?? null,
+      }
     }
+
     return out
-  }, [aggregated, firstSeenBaselines])
+  }, [aggregated, dexData])
 }

@@ -1,0 +1,4 @@
+# Copy this file to .dev.vars and fill in your Upstash credentials.
+# .dev.vars is gitignored. Get these from https://console.upstash.com/
+UPSTASH_REDIS_REST_URL=https://your-db.upstash.io
+UPSTASH_REDIS_REST_TOKEN=your_token_here

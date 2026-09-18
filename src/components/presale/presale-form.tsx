@@ -7,7 +7,6 @@ import { formatEther, isAddress, parseEther, type Address } from 'viem'
 import { hoursToSeconds, minutesToSeconds } from 'date-fns'
 import { Calculator, Coins } from 'lucide-react'
 import {
-  contracts,
   flapTaxTokenV3Abi,
 } from '@sillyfunc/launchpad-contracts'
 
@@ -24,10 +23,10 @@ import { formatTokenSupply } from '@/lib/format'
 import { sanitizeDecimal, sanitizeInteger } from '@/lib/presale-input'
 import { calculatePresaleTokenPrice } from '@/lib/presale-price'
 import { cn } from '@/lib/utils'
+import { getCoordinatorFactory } from '@/lib/contracts'
 import { PLATFORM_CHAIN_ID } from '@/lib/web3'
 import { m } from '@/paraglide/messages.js'
 
-const coordinator = contracts[PLATFORM_CHAIN_ID].coordinatorFactory
 const DURATION_MIN_SEC = hoursToSeconds(1)
 const DURATION_MAX_SEC = hoursToSeconds(90)
 const VESTING_DELAY_MIN_SEC = minutesToSeconds(5)
@@ -48,6 +47,7 @@ export function PresaleForm({
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const config = useConfig()
+  const coordinator = getCoordinatorFactory()
   const resolvedTokenAddress = tokenAddress || token?.coinContractAddress || ''
 
   const { data: totalSupplyData } = useReadContract({

@@ -16,6 +16,9 @@ export interface TokenRowProps {
   pricing?: BoardTokenPricing
 }
 
+/** Pairs with less than this much USD liquidity are flagged as thin. */
+const LOW_LIQUIDITY_USD = 200
+
 const STATUS_META: Record<BoardStage, { label: () => string; className: string }> = {
   live: {
     label: () => m.board_status_live(),
@@ -47,13 +50,16 @@ export function TokenRow({ token, pricing }: TokenRowProps) {
     stage = 'not_launched',
     bnbReserve = null,
     changePercent = null,
+    liquidityUsd = null,
   } = pricing ?? {}
 
+  // Prefer the aggregator's USD TVL; fall back to the on-chain BNB reserve.
   // Pool TVL (both sides combined) below 1 BNB is treated as low liquidity.
   const isLowLiquidity =
     stage === 'live' &&
-    bnbReserve !== null &&
-    Number(formatUnits(bnbReserve, 18)) * 2 < 1
+    (liquidityUsd !== null
+      ? liquidityUsd < LOW_LIQUIDITY_USD
+      : bnbReserve !== null && Number(formatUnits(bnbReserve, 18)) * 2 < 1)
 
   const statusMeta = STATUS_META[stage]
 

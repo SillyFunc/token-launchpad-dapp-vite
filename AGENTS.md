@@ -18,12 +18,34 @@
 ## External links & env
 
 - Never hardcode external URLs (explorer, pancakeswap, defined.fi, RPC). Use helpers from `src/lib/web3.ts` (`getExplorerAddressUrl`, `getExplorerTransactionUrl`) and `src/lib/links.ts` (`getPairChartUrl`, `getPancakeSwapUrl`).
-- Environment values are validated in `src/env/client.ts`. Add new `VITE_*` vars there and in `.env.example`. Optional overrides: `VITE_APP_RPC_URL`, `VITE_APP_RPC_WS_URL`.
+- Environment values are validated in `src/env/client.ts`. Add new `VITE_*` vars there and in `.env.example`. Optional overrides: `VITE_APP_DEX_API_URL`, `VITE_APP_RPC_URL`, `VITE_APP_RPC_WS_URL`.
+- **`.env` files must be UTF-8 *without* a BOM.** On Windows, `Set-Content -Encoding UTF8` (PowerShell 5.1) writes a BOM, which makes Vite's `loadEnv` mis-parse the **first** key (it becomes `\uFEFFVITE_…`), so that variable resolves to `undefined` and env validation fails with `expected string, received undefined`. Write env files with `[System.IO.File]::WriteAllText(path, text, [System.Text.UTF8Encoding]::new($false))` instead.
+  - This is easy to miss: `Get-Content`/`ReadAllText` silently strip the BOM, so a naive re-read looks fine. Verify with a byte check (`EF BB BF`) or by inspecting `loadEnv()` output.
+  - `wrangler` tolerates a BOM in `workers/dex-cache/.dev.vars`, but keep those BOM-free too for consistency.
 
 ## Web3 conventions
 
 - Platform chain is defined once in `src/lib/web3.ts` (`PLATFORM_CHAIN` / `PLATFORM_CHAIN_ID`). Deployment/contract addresses come from `src/lib/contracts.ts` accessors (`getCoordinatorFactory()`, `getDeployment()`) — never index `contracts[CHAIN_ID]` at module top-level in new code.
 - All backend HTTP goes through `src/lib/http/client.ts` (`get` / `postForm` / `postMultipart`); never call `axios`/`fetch` directly.
+
+## Market data (DEX Screener)
+
+- Never call `api.dexscreener.com` from the browser. All DEX Screener access goes through the `dex-cache` Worker in `workers/dex-cache/` (CORS proxy + Upstash Redis cache) so the SPA cannot be rate-limited and credentials stay server-side.
+- On the client, DEX data is fetched by `src/api/dex.ts` (`useDexQuotes` hook wraps it). This module talks to the Worker, **not** the platform backend, so it does not use the `{ code, message, data }` envelope client — do not route it through `@/lib/http/client.ts`. It throws `DexApiError` (not `ApiError`) so failures stay silent in the global query error handler and callers fall back to on-chain pricing.
+- `VITE_APP_DEX_API_URL` configures the Worker origin; when unset, the board falls back to on-chain pricing only.
+- `priceNative` is relative to the pair's quote token: only treat it as a BNB price when `quoteTokenAddress` equals `WRAPPED_NATIVE_ADDRESS` (`src/lib/web3.ts`). Otherwise use the on-chain price.
+- `changePercent` on the board is the aggregator's real `change24h`. Never synthesize a baseline (the removed `localStorage` approach showed different numbers per browser). A token with no live market renders `--`.
+- The Upstash token is a full read/write credential. It must only ever live in Worker secrets (`workers/dex-cache/.dev.vars` locally, `wrangler secret put …` in production). **Never** add it to `src/env/client.ts` or any `VITE_*` variable — Vite inlines those into the shipped bundle.
+- Worker response contract: `{ quotes: Record<lowercasedTokenAddress, TokenQuote>, cache: 'HIT' | 'MISS' | 'STALE', timestamp }` plus an `x-cache` header. Only *opened* tokens are returned (real price **and** non-zero liquidity); one quote per token, taken from the highest-liquidity pool.
+- A missing key in `quotes` means "no live market yet" — render `--`, not `0`.
+- Worker changes must keep `npm test` (in `workers/dex-cache/`) green; it covers aggregation, filtering, validation, the DexTokenQuote field contract, and the MISS → HIT → STALE cache paths.
+
+### Cache backend: Upstash Redis (do not swap without re-reading this)
+
+The cache lives in Upstash Redis so one upstream call serves every user globally. Two alternatives were evaluated and rejected — don't re-propose them without addressing the points below:
+
+- **Workers KV** — same platform (no second account), but the free plan allows only **1,000 writes/day** (vs ~16K/day equivalent on Upstash free), and it is **eventually consistent with cached negative lookups**: after a MISS + write, a read may still report "key not found" for up to 60s. Cloudflare's own docs say KV is "not an ideal fit" for write-heavy, Redis-type workloads. It would *weaken* the hit rate and therefore increase upstream calls — the opposite of what this worker exists for.
+- **Workers Cache API (`caches.default`)** — free and built in, but it relies on a **zone-level cache and therefore does not work on `*.workers.dev`** (confirmed in Cloudflare docs). It would silently never hit. Using it requires attaching the worker to a custom domain on a Cloudflare zone. It also does not collapse concurrent requests for the same resource.
 
 ## Layout conventions
 

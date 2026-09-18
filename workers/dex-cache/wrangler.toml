@@ -1,0 +1,19 @@
+name = "dex-cache"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+
+# Secrets are NOT stored here. Set them with:
+#   wrangler secret put UPSTASH_REDIS_REST_URL
+#   wrangler secret put UPSTASH_REDIS_REST_TOKEN
+# For local dev, create .dev.vars (gitignored) with the same keys.
+
+[vars]
+# DEX Screener chain slug for the platform (bsc).
+DEX_CHAIN_SLUG = "bsc"
+# Cache TTL in seconds for aggregated pair data.
+CACHE_TTL_SECONDS = "60"
+# Max token addresses accepted per request (DEX Screener batch limit is 30).
+MAX_TOKENS_PER_REQUEST = "30"
+
+[observability]
+enabled = true

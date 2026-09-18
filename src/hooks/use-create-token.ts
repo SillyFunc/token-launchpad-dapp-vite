@@ -9,7 +9,6 @@ import { getCoordinatorFactory } from '@/lib/contracts'
 import { findVanitySalt } from '@/lib/vanity-salt'
 import { PLATFORM_CHAIN_ID } from '@/lib/web3'
 
-const coordinator = getCoordinatorFactory()
 const SECONDS_PER_DAY = 86_400
 
 export interface CreateTokenParams {
@@ -37,6 +36,7 @@ function percentToBps(percent: number) {
 
 export function useCreateToken() {
   const config = useConfig()
+  const coordinator = getCoordinatorFactory()
 
   const createToken = async (
     params: CreateTokenParams,

@@ -18,6 +18,7 @@ import { walletConnect } from 'wagmi/connectors'
 import { Toaster } from '@/components/ui/toast'
 import { env } from '@/env/client'
 import { ApiError } from '@/lib/http/error'
+import { DEFAULT_RPC_HTTP, DEFAULT_RPC_WS } from '@/lib/web3'
 import { toast } from '@/lib/toast'
 import { m } from '@/paraglide/messages.js'
 
@@ -32,8 +33,8 @@ const config = createConfig({
   ],
   transports: {
     [bsc.id]: fallback([
-      webSocket('wss://bsc-rpc.publicnode.com'),
-      http('https://bsc-rpc.publicnode.com'),
+      webSocket(env.VITE_APP_RPC_WS_URL ?? DEFAULT_RPC_WS),
+      http(env.VITE_APP_RPC_URL ?? DEFAULT_RPC_HTTP),
     ]),
   },
 })

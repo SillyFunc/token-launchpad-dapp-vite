@@ -7,8 +7,6 @@ import { isAddress, zeroAddress, type Address } from 'viem'
 import { getCoordinatorFactory } from '@/lib/contracts'
 import { PLATFORM_CHAIN_ID } from '@/lib/web3'
 
-const coordinator = getCoordinatorFactory()
-
 function validAddress(value?: string | null): Address | undefined {
   if (!value || !isAddress(value) || value.toLowerCase() === zeroAddress) {
     return undefined
@@ -56,6 +54,7 @@ export function useTokenGate(
   address?: string,
   backendPresaleAddress?: string | null,
 ): TokenGateResult {
+  const coordinator = getCoordinatorFactory()
   const tokenAddress = validAddress(address)
   const queryTokenAddress = tokenAddress ?? zeroAddress
 
