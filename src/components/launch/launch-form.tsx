@@ -74,7 +74,10 @@ const feeRecipientSchema = z
   .string()
   .trim()
   .min(1, m.launch_fee_recipient())
-  .refine((value) => isAddress(value), 'Enter a valid EVM address')
+  // The refine also runs for empty values (zod does not short-circuit
+  // across chained validators), so skip it to avoid a duplicate error
+  // alongside the min(1) message.
+  .refine((value) => !value || isAddress(value), 'Enter a valid EVM address')
 
 function sanitizeDaysInput(value: string) {
   return value
@@ -611,7 +614,6 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
                   </span>
                 </div>
                 <Checkbox checked className="size-4" />
-                {/* <div className="flex size-4 items-center justify-center border border-[#a0a3a7] text-transparent shrink-0"></div> */}
               </div>
             </button>
             <div className="mt-4">
@@ -841,7 +843,11 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
             <form.Field
               name="feeRecipient"
               validators={{
-                onMount: feeRecipientSchema,
+                // No onMount: the wallet address backfills asynchronously
+                // after mount, and an onMount error recorded against the
+                // empty initial value is never cleared by later change/blur
+                // validations, so it would surface as a stale error on blur.
+                onBlur: feeRecipientSchema,
                 onChange: feeRecipientSchema,
               }}
             >
@@ -858,7 +864,7 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
                     onBlur={field.handleBlur}
                     onChange={(event) => field.handleChange(event.target.value)}
                   />
-                  <FieldInfo field={field} />
+                  <FieldInfo field={field} showBeforeBlur />
                 </div>
               )}
             </form.Field>
@@ -1022,7 +1028,7 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
               disabled={!canSubmit}
               loading={isSubmitting && !isEditMode}
               loadingText={m.launch_creating()}
-              className="flex h-10.5 text-background w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-linear-to-r from-[#FE810B] via-[#FFA546] to-[#FE810B] text-base font-bold [clip-path:polygon(10px_0,100%_0,100%_calc(100%-10px),calc(100%-10px)_100%,0_100%,0_10px)] transition-[transform,opacity] active:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFA546]"
+              className="flex h-10.5 text-foreground w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-[#FE810B] text-base font-bold [clip-path:polygon(10px_0,100%_0,100%_calc(100%-10px),calc(100%-10px)_100%,0_100%,0_10px)] transition-[transform,opacity] active:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFA546]"
             >
               <span>
                 {isEditMode ? m.launch_save_action() : m.launch_create_action()}
