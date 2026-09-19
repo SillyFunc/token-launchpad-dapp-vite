@@ -31,7 +31,7 @@ export type FormSectionTitleProps =
   | OptionalSectionTitleProps
   | PlainSectionTitleProps
 
-export function FormSectionTitle(props: FormSectionTitleProps) {
+export const FormSectionTitle: React.FC<FormSectionTitleProps> = (props) => {
   const { title } = props
   const required = props.required ?? false
   const optional = props.optional ?? false

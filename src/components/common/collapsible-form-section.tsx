@@ -2,7 +2,7 @@ import { useId, useState, type ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 import { FormSectionTitle } from '@/components/common/form-section-title'
 
-interface CollapsibleFormSectionProps {
+export interface CollapsibleFormSectionProps {
   title: string
   defaultOpen?: boolean
   className?: string
@@ -14,12 +14,12 @@ interface CollapsibleFormSectionProps {
  * expands when its title is clicked. The collapsed marker icon flips to the
  * expanded marker icon while open.
  */
-export function CollapsibleFormSection({
+export const CollapsibleFormSection: React.FC<CollapsibleFormSectionProps> = ({
   title,
   defaultOpen = false,
   className,
   children,
-}: CollapsibleFormSectionProps) {
+}) => {
   const [isOpen, setIsOpen] = useState(defaultOpen)
   const contentId = useId()
 

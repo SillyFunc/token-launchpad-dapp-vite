@@ -1,7 +1,8 @@
 import { Crop } from 'lucide-react'
-import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent, type DragEvent, type MouseEvent } from 'react'
 import { m } from '@/paraglide/messages.js'
 import { toast } from '@/lib/toast'
+import { LogoCropDialog } from './logo-crop-dialog'
 
 const MAX_LOGO_SIZE = 3 * 1024 * 1024
 
@@ -15,8 +16,12 @@ export const TokenLogoUploader: React.FC<TokenLogoUploaderProps> = ({
   onFileChange,
 }) => {
   const inputRef = useRef<HTMLInputElement>(null)
+  // Last locally picked (uncropped) image, kept so "adjust crop" can start over.
+  const rawFileRef = useRef<File | null>(null)
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(initialPreview)
+  const [cropSourceUrl, setCropSourceUrl] = useState<string | null>(null)
+  const [isCropDialogOpen, setIsCropDialogOpen] = useState(false)
 
   // Revoke the object URL only when the preview is replaced/unmounted, so the
   // <img> never renders a revoked blob URL.
@@ -26,6 +31,20 @@ export const TokenLogoUploader: React.FC<TokenLogoUploaderProps> = ({
     },
     [preview],
   )
+
+  // Same for the crop dialog source, which is always an object URL we created.
+  useEffect(
+    () => () => {
+      if (cropSourceUrl) URL.revokeObjectURL(cropSourceUrl)
+    },
+    [cropSourceUrl],
+  )
+
+  const openCropDialogWith = (sourceFile: File) => {
+    rawFileRef.current = sourceFile
+    setCropSourceUrl(URL.createObjectURL(sourceFile))
+    setIsCropDialogOpen(true)
+  }
 
   const applyFile = (nextFile: File | null) => {
     if (!nextFile) return
@@ -37,9 +56,31 @@ export const TokenLogoUploader: React.FC<TokenLogoUploaderProps> = ({
       toast.error(m.request_failed(), m.launch_image_too_large())
       return
     }
-    setFile(nextFile)
-    setPreview(URL.createObjectURL(nextFile))
-    onFileChange?.(nextFile)
+    // A newly picked local image goes straight into the crop dialog; the
+    // committed logo only changes once the crop is confirmed.
+    openCropDialogWith(nextFile)
+  }
+
+  const handleCropConfirm = (croppedFile: File) => {
+    setFile(croppedFile)
+    setPreview(URL.createObjectURL(croppedFile))
+    onFileChange?.(croppedFile)
+  }
+
+  const handleCropClose = () => {
+    setIsCropDialogOpen(false)
+    // Keep the source URL alive through the exit animation; it is revoked on
+    // unmount or when the next image is picked (effect cleanup above).
+  }
+
+  const handleAdjustCrop = () => {
+    // Re-crop from the original picked image; fall back to the picker when the
+    // logo came from the server (edit mode) and no local file exists.
+    if (rawFileRef.current) {
+      openCropDialogWith(rawFileRef.current)
+      return
+    }
+    inputRef.current?.click()
   }
 
   const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -56,9 +97,10 @@ export const TokenLogoUploader: React.FC<TokenLogoUploaderProps> = ({
   const isUploaded = preview !== null
 
   return (
-    <button
-      type="button"
-      aria-label={m.launch_upload_logo()}
+    <>
+      <button
+        type="button"
+        aria-label={m.launch_upload_logo()}
       onClick={() => inputRef.current?.click()}
       onDragOver={(event) => event.preventDefault()}
       onDrop={handleDrop}
@@ -137,10 +179,17 @@ export const TokenLogoUploader: React.FC<TokenLogoUploaderProps> = ({
               <span className="block truncate text-xs text-foreground/65">
                 {file?.name ?? initialPreview}
               </span>
-              <div className="mt-2 flex items-center gap-1.5 text-xs text-[#FE810B]">
+              <button
+                type="button"
+                onClick={(event: MouseEvent<HTMLButtonElement>) => {
+                  event.stopPropagation()
+                  handleAdjustCrop()
+                }}
+                className="mt-2 flex cursor-pointer items-center gap-1.5 text-xs text-[#FE810B]"
+              >
                 <Crop className="size-3.5 shrink-0" />
                 {m.launch_adjust_crop()}
-              </div>
+              </button>
             </>
           ) : (
             <>
@@ -158,5 +207,13 @@ export const TokenLogoUploader: React.FC<TokenLogoUploaderProps> = ({
         </div>
       </div>
     </button>
+      <LogoCropDialog
+        open={isCropDialogOpen}
+        onClose={handleCropClose}
+        imageSrc={cropSourceUrl}
+        onChooseOther={() => inputRef.current?.click()}
+        onConfirm={handleCropConfirm}
+      />
+    </>
   )
 }

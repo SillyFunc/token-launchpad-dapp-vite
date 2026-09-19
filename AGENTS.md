@@ -54,6 +54,15 @@ The cache lives in Upstash Redis so one upstream call serves every user globally
 - **Workers KV** — same platform (no second account), but the free plan allows only **1,000 writes/day** (vs ~16K/day equivalent on Upstash free), and it is **eventually consistent with cached negative lookups**: after a MISS + write, a read may still report "key not found" for up to 60s. Cloudflare's own docs say KV is "not an ideal fit" for write-heavy, Redis-type workloads. It would *weaken* the hit rate and therefore increase upstream calls — the opposite of what this worker exists for.
 - **Workers Cache API (`caches.default`)** — free and built in, but it relies on a **zone-level cache and therefore does not work on `*.workers.dev`** (confirmed in Cloudflare docs). It would silently never hit. Using it requires attaching the worker to a custom domain on a Cloudflare zone. It also does not collapse concurrent requests for the same resource.
 
+## Component conventions
+
+- Define components as arrow functions typed with `React.FC`, with an exported props interface named after the component:
+  ```tsx
+  export interface MyComponentProps {}
+  export const MyComponent: React.FC<MyComponentProps> = () => {}
+  ```
+  (No `import React` needed — the `React` UMD namespace covers type usage.)
+
 ## Layout conventions
 
 - `src/lib/` holds pure, framework-agnostic functions only. React hooks live in `src/hooks/` (e.g. `useVanitySalt` is in `src/hooks/use-vanity-salt.ts`, not `lib/`).
