@@ -38,11 +38,11 @@ export const Slider: React.FC<TaxSliderProps> = ({
           className="flex items-center gap-0.5 text-sm text-white"
         >
           <span>{label}</span>
-          {required && (
+          {/* {required && (
             <span aria-hidden="true" className="text-sm text-[#f7594b]">
               *
             </span>
-          )}
+          )} */}
         </label>
         <output
           htmlFor={inputId}

@@ -38,6 +38,7 @@ import { requestAuthSignature } from '@/lib/auth'
 import { findVanitySalt, isPredictedTokenAddress } from '@/lib/vanity-salt'
 import { m } from '@/paraglide/messages.js'
 import { Checkbox } from '../ui/checkbox'
+import { CollapsibleFormSection } from '../common/collapsible-form-section'
 
 const optionalUrl = z.union([z.literal(''), z.url()])
 
@@ -590,8 +591,7 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
             </form.Field>
           </div>
 
-          <div className="flex flex-col">
-            <FormSectionTitle title="選擇 VAULT (可選)" />
+          <CollapsibleFormSection title="選擇 VAULT">
             <button
               type="button"
               aria-label="選擇金庫"
@@ -779,10 +779,10 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
                 </div>
               </div>
             </div>
-          </div>
+          </CollapsibleFormSection>
 
           <div className="flex flex-col gap-6">
-            <FormSectionTitle title={m.launch_tax_settings()} />
+            <FormSectionTitle title={m.launch_tax_settings()} required />
             <form.Field name="buyTax">
               {(field) => (
                 <Slider
@@ -843,10 +843,6 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
             <form.Field
               name="feeRecipient"
               validators={{
-                // No onMount: the wallet address backfills asynchronously
-                // after mount, and an onMount error recorded against the
-                // empty initial value is never cleared by later change/blur
-                // validations, so it would surface as a stale error on blur.
                 onBlur: feeRecipientSchema,
                 onChange: feeRecipientSchema,
               }}
@@ -870,8 +866,7 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
             </form.Field>
           </div>
 
-          <div className="flex flex-col">
-            <FormSectionTitle title={m.launch_anti_farmer()} required />
+          <CollapsibleFormSection title={m.launch_anti_farmer()}>
             <form.Field
               name="antiFarmerDuration"
               validators={{
@@ -913,10 +908,9 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
             <p className="mt-2 text-xs text-[#84888c]">
               {m.launch_anti_farmer_description()}
             </p>
-          </div>
+          </CollapsibleFormSection>
 
-          <div className="flex flex-col">
-            <FormSectionTitle title={m.launch_optional_links()} />
+          <CollapsibleFormSection title={m.launch_optional_links()}>
             <div className="mt-6 flex flex-col gap-6">
               <form.Field
                 name="links.telegram"
@@ -1006,7 +1000,7 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
                 )}
               </form.Field>
             </div>
-          </div>
+          </CollapsibleFormSection>
         </div>
       </div>
 
