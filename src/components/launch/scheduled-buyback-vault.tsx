@@ -5,9 +5,27 @@ import { CollapsibleFormSection } from '../common/collapsible-form-section'
 import { Checkbox } from '../ui/checkbox'
 import BuybackVaultLogo from '@/assets/svgs/scheduled-buyback-vault-logo.svg'
 import { cn } from '@/lib/utils'
+import { Button } from '../ui/button'
 
 type BuybackMode = 'token' | 'lp'
 type ExecutionCondition = 'time' | 'balance' | 'time-and-balance'
+type IntervalUnit = 'minutes' | 'hours' | 'days'
+
+const INTERVAL_UNITS: { value: IntervalUnit; label: string }[] = [
+  { value: 'minutes', label: '分钟' },
+  { value: 'hours', label: '小时' },
+  { value: 'days', label: '天' },
+]
+
+const configInputClassName =
+  'h-10 w-full min-w-0 max-w-full border border-foreground/15 bg-background/30 px-3 text-sm text-white outline-none focus:border-[#FE810B]'
+
+function conditionIncludes(
+  condition: ExecutionCondition,
+  kind: 'time' | 'balance',
+) {
+  return condition === kind || condition === 'time-and-balance'
+}
 
 function optionClassName(isSelected: boolean) {
   return cn(
@@ -30,6 +48,10 @@ export const ScheduledBuybackVault: React.FC = () => {
   const [buybackMode, setBuybackMode] = useState<BuybackMode>('token')
   const [executionCondition, setExecutionCondition] =
     useState<ExecutionCondition>('time')
+  const [intervalUnit, setIntervalUnit] = useState<IntervalUnit>('minutes')
+
+  const showFirstExecutionTime = conditionIncludes(executionCondition, 'time')
+  const showTriggerBalance = conditionIncludes(executionCondition, 'balance')
 
   return (
     <CollapsibleFormSection title="選擇 VAULT">
@@ -89,7 +111,9 @@ export const ScheduledBuybackVault: React.FC = () => {
                     onClick={() => setBuybackMode('token')}
                     className={optionClassName(buybackMode === 'token')}
                   >
-                    <strong className={optionTitleClassName(buybackMode === 'token')}>
+                    <strong
+                      className={optionTitleClassName(buybackMode === 'token')}
+                    >
                       Token 回購銷燬
                     </strong>
                     <small className="mt-1 text-muted-foreground text-xs">
@@ -103,7 +127,9 @@ export const ScheduledBuybackVault: React.FC = () => {
                     onClick={() => setBuybackMode('lp')}
                     className={optionClassName(buybackMode === 'lp')}
                   >
-                    <strong className={optionTitleClassName(buybackMode === 'lp')}>
+                    <strong
+                      className={optionTitleClassName(buybackMode === 'lp')}
+                    >
                       LP 回购销毁
                     </strong>
                     <small className="mt-1 text-muted-foreground text-xs">
@@ -125,7 +151,11 @@ export const ScheduledBuybackVault: React.FC = () => {
                     onClick={() => setExecutionCondition('time')}
                     className={optionClassName(executionCondition === 'time')}
                   >
-                    <strong className={optionTitleClassName(executionCondition === 'time')}>
+                    <strong
+                      className={optionTitleClassName(
+                        executionCondition === 'time',
+                      )}
+                    >
                       時間
                     </strong>
                     <small className="mt-1 text-muted-foreground text-xs">
@@ -137,9 +167,15 @@ export const ScheduledBuybackVault: React.FC = () => {
                     aria-label="金庫餘額"
                     aria-pressed={executionCondition === 'balance'}
                     onClick={() => setExecutionCondition('balance')}
-                    className={optionClassName(executionCondition === 'balance')}
+                    className={optionClassName(
+                      executionCondition === 'balance',
+                    )}
                   >
-                    <strong className={optionTitleClassName(executionCondition === 'balance')}>
+                    <strong
+                      className={optionTitleClassName(
+                        executionCondition === 'balance',
+                      )}
+                    >
                       金庫餘額
                     </strong>
                     <small className="mt-1 text-muted-foreground text-xs">
@@ -177,22 +213,43 @@ export const ScheduledBuybackVault: React.FC = () => {
                     设置首次执行时间和/或金库开始执行回购前所需的余额。
                   </p>
                 </div>
-                <label className="block min-w-0">
-                  <span className="mb-2 font-medium text-foreground/70 text-xs block">
-                    预计首次可执行时间（UTC+8）
-                  </span>
-                  <div className="relative min-w-0">
-                    <LucideClock3 className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/40 size-4" />
+                {showFirstExecutionTime && (
+                  <label className="block min-w-0">
+                    <span className="mb-2 font-medium text-foreground/70 text-xs block">
+                      预计首次可执行时间（UTC+8）
+                    </span>
+                    <div className="relative min-w-0">
+                      <LucideClock3 className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/40 size-4" />
+                      <input
+                        type="datetime-local"
+                        step={60}
+                        className={cn(
+                          configInputClassName,
+                          'block appearance-none overflow-hidden pl-10',
+                        )}
+                      />
+                    </div>
+                    <p className="mt-1 text-xs text-foreground/40">
+                      固定使用 UTC+8，不跟随浏览器时区变化。
+                    </p>
+                  </label>
+                )}
+                {showTriggerBalance && (
+                  <label className="block min-w-0">
+                    <span className="mb-2 font-medium text-foreground/70 text-xs block">
+                      触发金额（BNB）
+                    </span>
                     <input
-                      type="datetime-local"
-                      step={60}
-                      className="block h-10 w-full min-w-0 max-w-full appearance-none overflow-hidden border border-foreground/15 bg-background/30 pl-10 pr-3 text-sm text-foreground outline-none"
+                      inputMode="decimal"
+                      min="0.001"
+                      max="10"
+                      step="0.001"
+                      className={configInputClassName}
+                      type="number"
+                      defaultValue="1"
                     />
-                  </div>
-                  <p className="mt-1 text-xs text-foreground/40">
-                    固定使用 UTC+8，不跟随浏览器时区变化。
-                  </p>
-                </label>
+                  </label>
+                )}
               </section>
               <section className="flex flex-col gap-4 p-3 border bg-foreground/3">
                 <div className="flex flex-col gap-1">
@@ -207,16 +264,34 @@ export const ScheduledBuybackVault: React.FC = () => {
                   <span className="mb-2 font-medium text-foreground/70 text-xs block">
                     最短执行间隔
                   </span>
-                  <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-2 max-sm:grid-cols-1">
+                  <div className="grid min-w-0 grid-cols-1 gap-2">
                     <input
                       inputMode="numeric"
                       min="1"
                       max="525600"
                       step="1"
-                      className="h-10 w-full min-w-0 max-w-full border border-foreground/15 bg-background/30 px-3 text-sm text-white outline-none focus:border-[#D0FF00]"
+                      className={configInputClassName}
                       type="number"
                       defaultValue="1"
                     />
+                    <div className="flex h-8 items-stretch overflow-hidden border border-foreground/15 bg-background/30 w-full p-0.5">
+                      {INTERVAL_UNITS.map((unit) => (
+                        <button
+                          key={unit.value}
+                          type="button"
+                          aria-pressed={intervalUnit === unit.value}
+                          onClick={() => setIntervalUnit(unit.value)}
+                          className={cn(
+                            'cursor-pointer px-3 text-xs transition-colors flex-1',
+                            intervalUnit === unit.value
+                              ? 'bg-[#FE810B] text-foreground'
+                              : 'text-foreground/60 hover:text-foreground',
+                          )}
+                        >
+                          {unit.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                   <p className="mt-1 text-xs text-foreground/40">请输入整数</p>
                 </label>
@@ -229,7 +304,7 @@ export const ScheduledBuybackVault: React.FC = () => {
                     min="0.001"
                     max="10"
                     step="0.001"
-                    className="h-10 w-full min-w-0 max-w-full border border-foreground/15 bg-background/30 px-3 text-sm text-white outline-none focus:border-[#D0FF00]"
+                    className={configInputClassName}
                     type="number"
                     defaultValue="0.001"
                   />
@@ -238,6 +313,17 @@ export const ScheduledBuybackVault: React.FC = () => {
                   </p>
                 </label>
               </section>
+            </div>
+            <div className="flex justify-end gap-2 mt-5">
+              <Button
+                onClick={() => setSelected(false)}
+                className="text-sm px-4 bg-background border border-input text-foreground hover:bg-accent h-10"
+              >
+                取消配置
+              </Button>
+              <Button className="bg-[#FE810B] text-foreground text-sm px-4 border-none outline-none hover:bg-[#FE810B]/85 h-10">
+                配置复核
+              </Button>
             </div>
           </div>
         </div>
