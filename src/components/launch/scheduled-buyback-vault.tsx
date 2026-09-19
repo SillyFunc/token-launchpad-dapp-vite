@@ -82,7 +82,7 @@ export const ScheduledBuybackVault: React.FC = () => {
             checked={selected}
             render={<span aria-hidden="true" />}
             tabIndex={-1}
-            className="pointer-events-none size-4"
+            className="pointer-events-none size-4 data-checked:border-[#FE810B] data-checked:bg-[#FE810B] data-checked:text-black dark:data-checked:bg-[#FE810B]"
           />
         </div>
       </button>
