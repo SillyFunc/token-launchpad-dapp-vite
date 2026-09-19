@@ -1,11 +1,4 @@
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ChangeEvent,
-  type ReactNode,
-} from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useForm } from '@tanstack/react-form'
 import { useQueryClient } from '@tanstack/react-query'
@@ -38,6 +31,7 @@ import { findVanitySalt, isPredictedTokenAddress } from '@/lib/vanity-salt'
 import { m } from '@/paraglide/messages.js'
 import { CollapsibleFormSection } from '../common/collapsible-form-section'
 import { ScheduledBuybackVault } from './scheduled-buyback-vault'
+import { TokenLogoUploader } from './token-logo-uploader'
 
 const optionalUrl = z.union([z.literal(''), z.url()])
 
@@ -215,19 +209,8 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
     () => getInitialValues(initialData, address, reservedAddressOptions),
     [address, initialData, reservedAddressOptions],
   )
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const [logoFile, setLogoFile] = useState<File | null>(null)
-  const [logoPreview, setLogoPreview] = useState<string | null>(
-    initialData?.coinImg || null,
-  )
   const [isEditSubmitting, setIsEditSubmitting] = useState(false)
-
-  useEffect(
-    () => () => {
-      if (logoPreview?.startsWith('blob:')) URL.revokeObjectURL(logoPreview)
-    },
-    [logoPreview],
-  )
 
   const form = useForm({
     defaultValues: initialValues,
@@ -241,7 +224,7 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
         return
       }
 
-      if (!logoFile && !logoPreview) {
+      if (!logoFile && !initialData?.coinImg) {
         showError(null, m.launch_upload_logo_error())
         return
       }
@@ -291,7 +274,7 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
 
           const coinImg = logoFile
             ? await uploadTokenLogo(logoFile)
-            : logoPreview || ''
+            : initialData?.coinImg || ''
           const auth = await requestAuthSignature(config, address)
           const payload = {
             name: value.name.trim(),
@@ -367,24 +350,6 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
     },
   })
 
-  const handleImageUpload = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    if (!file.type.startsWith('image/')) {
-      showError(null, m.launch_invalid_image())
-      return
-    }
-
-    if (file.size > 3 * 1024 * 1024) {
-      showError(null, m.launch_image_too_large())
-      return
-    }
-
-    setLogoFile(file)
-    setLogoPreview(URL.createObjectURL(file))
-  }
-
   return (
     <form
       className="relative mx-auto flex w-full flex-col pb-28"
@@ -421,91 +386,10 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
         <div className="flex flex-col space-y-10 p-4">
           <div className="flex flex-col gap-6">
             <FormSectionTitle title={m.launch_basic_info()} />
-            <div className="flex items-center gap-4">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-              />
-              <button
-                type="button"
-                aria-label={m.launch_upload_logo()}
-                onClick={() => fileInputRef.current?.click()}
-                className="group relative isolate flex h-25 w-25 shrink-0 cursor-pointer flex-col items-center justify-center text-[#84888c] transition-colors hover:text-white"
-              >
-                {logoPreview ? (
-                  <img
-                    src={logoPreview}
-                    alt={m.launch_upload_logo()}
-                    width={80}
-                    height={80}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 200 200"
-                    fill="none"
-                    preserveAspectRatio="none"
-                    aria-hidden="true"
-                    className="absolute inset-0 -z-10"
-                  >
-                    <rect
-                      x="0.5"
-                      y="0.5"
-                      width="199"
-                      height="199"
-                      rx="3.5"
-                      stroke="currentColor"
-                    />
-                    <path d="M12 172L12 188L28 188" stroke="currentColor" />
-                    <path d="M172 188L188 188L188 172" stroke="currentColor" />
-                    <path d="M28 12L12 12L12 28" stroke="currentColor" />
-                    <path d="M188 28L188 12L172 12" stroke="currentColor" />
-                    <path
-                      d="M94.3333 130H76.6667C74.8986 130 73.2029 129.298 71.9526 128.047C70.7024 126.797 70 125.101 70 123.333V76.6667C70 74.8986 70.7024 73.2029 71.9526 71.9526C73.2029 70.7024 74.8986 70 76.6667 70H123.333C125.101 70 126.797 70.7024 128.047 71.9526C129.298 73.2029 130 74.8986 130 76.6667V110L119.667 99.6667C118.412 98.4373 116.723 97.7525 114.967 97.7613C113.211 97.77 111.529 98.4715 110.287 99.7133L80 130"
-                      stroke="#FE810B"
-                      strokeWidth="1.25"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M106.668 125L116.668 115L126.668 125"
-                      stroke="#FE810B"
-                      strokeWidth="1.25"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M116.668 133.333V115"
-                      stroke="#FE810B"
-                      strokeWidth="1.25"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M89.9987 96.6668C93.6806 96.6668 96.6654 93.6821 96.6654 90.0002C96.6654 86.3183 93.6806 83.3335 89.9987 83.3335C86.3168 83.3335 83.332 86.3183 83.332 90.0002C83.332 93.6821 86.3168 96.6668 89.9987 96.6668Z"
-                      stroke="#FE810B"
-                      strokeWidth="1.25"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                )}
-              </button>
-              <div className="flex flex-col">
-                <span className="text-sm font-bold text-[#FB5F16]">
-                  // {m.launch_supported_formats()}
-                </span>
-                <span className="mt-4 text-xs leading-relaxed text-[#a0a3a7]">
-                  {m.launch_logo_formats_line1()}
-                  <br />
-                  {m.launch_logo_formats_line2()}
-                </span>
-              </div>
-            </div>
+            <TokenLogoUploader
+              initialPreview={initialData?.coinImg || null}
+              onFileChange={setLogoFile}
+            />
 
             <form.Field name="reservedAddress">
               {(field) => (
