@@ -12,6 +12,24 @@ function stripExtension(name: string) {
   return dot > 0 ? name.slice(0, dot) : name
 }
 
+/**
+ * Logos loaded from the backend are stored as full URLs, so edit mode would
+ * otherwise print the whole URL. Show the last path segment instead, decoded
+ * when it is percent-encoded.
+ */
+function fileNameFromUrl(url: string) {
+  const path = url.split(/[?#]/, 1)[0]
+  const segment = path.slice(path.lastIndexOf('/') + 1)
+  if (!segment) return url
+
+  try {
+    return decodeURIComponent(segment)
+  } catch {
+    // Malformed escape sequence: fall back to the raw segment.
+    return segment
+  }
+}
+
 export interface TokenLogoUploaderProps {
   /** Existing remote logo URL (edit mode). */
   initialPreview?: string | null
@@ -191,7 +209,8 @@ export const TokenLogoUploader: React.FC<TokenLogoUploaderProps> = ({
           {isUploaded ? (
             <>
               <span className="block truncate text-xs text-foreground/65">
-                {file?.name ?? initialPreview}
+                {file?.name ??
+                  (initialPreview ? fileNameFromUrl(initialPreview) : '')}
               </span>
               <button
                 type="button"
