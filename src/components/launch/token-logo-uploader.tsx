@@ -6,6 +6,12 @@ import { LogoCropDialog } from './logo-crop-dialog'
 
 const MAX_LOGO_SIZE = 3 * 1024 * 1024
 
+/** "cat.jpg" -> "cat" (a name with no extension is returned as-is). */
+function stripExtension(name: string) {
+  const dot = name.lastIndexOf('.')
+  return dot > 0 ? name.slice(0, dot) : name
+}
+
 export interface TokenLogoUploaderProps {
   /** Existing remote logo URL (edit mode). */
   initialPreview?: string | null
@@ -62,9 +68,17 @@ export const TokenLogoUploader: React.FC<TokenLogoUploaderProps> = ({
   }
 
   const handleCropConfirm = (croppedFile: File) => {
-    setFile(croppedFile)
-    setPreview(URL.createObjectURL(croppedFile))
-    onFileChange?.(croppedFile)
+    // The dialog always exports PNG; keep the user's file name so the card
+    // shows the real name instead of the dialog's placeholder.
+    const originalName = rawFileRef.current?.name
+    const namedFile = originalName
+      ? new File([croppedFile], `${stripExtension(originalName)}.png`, {
+          type: croppedFile.type,
+        })
+      : croppedFile
+    setFile(namedFile)
+    setPreview(URL.createObjectURL(namedFile))
+    onFileChange?.(namedFile)
   }
 
   const handleCropClose = () => {
