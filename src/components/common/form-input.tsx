@@ -7,7 +7,7 @@ export function FormInput({
   ...props
 }: ComponentProps<'input'> & { rightAdornment?: React.ReactNode }) {
   const inputClass = cn(
-    'box-border h-10.5 w-full appearance-none rounded-xs border border-[#84888c] bg-transparent px-3 text-sm text-white placeholder:text-[#84888c] focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#FE810B] disabled:cursor-not-allowed disabled:opacity-50',
+    'box-border h-10.5 w-full appearance-none border border-[#84888c] bg-transparent px-3 text-sm text-white placeholder:text-[#84888c] focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#FE810B] disabled:cursor-not-allowed disabled:opacity-50',
     className,
   )
 
