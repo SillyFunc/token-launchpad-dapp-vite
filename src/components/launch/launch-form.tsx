@@ -163,8 +163,8 @@ function getInitialValues(
     feeRecipient: initialData?.feeRecipient || address || '',
     buyTax: initialData?.buyTax ?? 0,
     sellTax: initialData?.sellTax ?? 0,
-    taxDuration: String(initialData?.taxDuration ?? 30),
-    antiFarmerDuration: String(initialData?.antiFarmerDuration ?? 0),
+    taxDuration: String(initialData?.taxDuration ?? 365),
+    antiFarmerDuration: String(initialData?.antiFarmerDuration ?? 30),
     links: {
       telegram: initialData?.telegram ?? '',
       twitter: initialData?.twitter ?? '',
