@@ -5,7 +5,6 @@ import { decodeEventLog, type Address, type Hex } from 'viem'
 import { executeContractTx } from '@/hooks/use-contract-tx'
 import { getCoordinatorFactory } from '@/lib/contracts'
 import { findVanitySalt } from '@/lib/vanity-salt'
-import { PLATFORM_CHAIN_ID } from '@/lib/web3'
 
 const SECONDS_PER_DAY = 86_400
 
@@ -54,7 +53,6 @@ export function useCreateToken() {
       readContract(config, {
         ...coordinator,
         functionName: 'creationFee',
-        chainId: PLATFORM_CHAIN_ID,
       }),
       params.salt
         ? Promise.resolve(params.salt)

@@ -56,7 +56,6 @@ export function PresaleForm({
       : undefined,
     abi: flapTaxTokenV3Abi,
     functionName: 'totalSupply',
-    chainId: PLATFORM_CHAIN_ID,
     query: {
       enabled: isAddress(resolvedTokenAddress),
       staleTime: Infinity,
@@ -65,13 +64,11 @@ export function PresaleForm({
   const { data: allocationData } = useReadContract({
     ...coordinator,
     functionName: 'presaleBps',
-    chainId: PLATFORM_CHAIN_ID,
     query: { staleTime: Infinity },
   })
   const { data: poolBpsData } = useReadContract({
     ...coordinator,
     functionName: 'poolBps',
-    chainId: PLATFORM_CHAIN_ID,
     query: { staleTime: Infinity },
   })
 

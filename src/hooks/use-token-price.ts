@@ -1,6 +1,5 @@
 import { useReadContracts } from 'wagmi'
 import { formatUnits, parseAbi, zeroAddress, type Address } from 'viem'
-import { PLATFORM_CHAIN_ID } from '@/lib/web3'
 
 // This is the external PancakeSwap V2 pair interface. Launchpad ABIs come from
 // @sillyfunc/launchpad-contracts in use-token-gate.ts.
@@ -31,13 +30,11 @@ export function useTokenPrice({
         address: queryPairAddress,
         abi: pairAbi,
         functionName: 'token0',
-        chainId: PLATFORM_CHAIN_ID,
       },
       {
         address: queryPairAddress,
         abi: pairAbi,
         functionName: 'getReserves',
-        chainId: PLATFORM_CHAIN_ID,
       },
     ] as const,
     query: {

@@ -4,7 +4,6 @@ import { formatEther, type Hex } from 'viem'
 
 import { executeContractTx } from '@/hooks/use-contract-tx'
 import { getCoordinatorFactory } from '@/lib/contracts'
-import { PLATFORM_CHAIN_ID } from '@/lib/web3'
 
 /** Mainnet fallback when reservationFee cannot be read. Matches current on-chain 0.001 BNB. */
 export const FALLBACK_RESERVATION_FEE_WEI = 1_000_000_000_000_000n
@@ -70,7 +69,6 @@ export function useReservationFee() {
   const query = useReadContract({
     ...coordinator,
     functionName: 'reservationFee',
-    chainId: PLATFORM_CHAIN_ID,
     query: {
       enabled: Boolean(coordinator.address),
       staleTime: 30_000,
@@ -98,7 +96,6 @@ export function useReserveTokenAddress() {
         fee = await readContract(config, {
           ...coordinator,
           functionName: 'reservationFee',
-          chainId: PLATFORM_CHAIN_ID,
         })
       } catch (error) {
         console.warn('Direct reservationFee read failed:', error)

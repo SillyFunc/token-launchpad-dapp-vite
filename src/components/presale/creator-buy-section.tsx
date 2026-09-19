@@ -6,7 +6,6 @@ import { ArrowLeftRight, Coins } from 'lucide-react'
 import bnbIcon from '@/assets/bnb-icon.svg'
 import { FormSectionTitle } from '@/components/common/form-section-title'
 import { cn } from '@/lib/utils'
-import { PLATFORM_CHAIN_ID } from '@/lib/web3'
 import { m } from '@/paraglide/messages.js'
 
 export interface CreatorBuySectionProps {
@@ -50,7 +49,6 @@ export function CreatorBuySection({
 
   const { data: balanceData } = useBalance({
     address,
-    chainId: PLATFORM_CHAIN_ID,
     query: {
       enabled: Boolean(address),
       staleTime: 10_000,

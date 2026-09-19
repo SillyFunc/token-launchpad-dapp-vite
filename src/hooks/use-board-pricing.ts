@@ -16,7 +16,7 @@ import {
 import type { BoardItemResponse } from '@/api/board'
 import { useDexQuotes } from '@/hooks/use-dex-quotes'
 import { getCoordinatorFactory } from '@/lib/contracts'
-import { PLATFORM_CHAIN_ID, WRAPPED_NATIVE_ADDRESS } from '@/lib/web3'
+import { WRAPPED_NATIVE_ADDRESS } from '@/lib/web3'
 
 // This is the external PancakeSwap V2 pair interface. Launchpad ABIs come from
 // @sillyfunc/launchpad-contracts.
@@ -80,25 +80,21 @@ export function useBoardPricing(
           address: e.address,
           abi: flapTaxTokenV3Abi,
           functionName: 'totalSupply',
-          chainId: PLATFORM_CHAIN_ID,
         },
         {
           address: e.address,
           abi: flapTaxTokenV3Abi,
           functionName: 'decimals',
-          chainId: PLATFORM_CHAIN_ID,
         },
         {
           ...coordinator,
           functionName: 'tokenPresales',
           args: [e.address],
-          chainId: PLATFORM_CHAIN_ID,
         },
         {
           address: e.address,
           abi: flapTaxTokenV3Abi,
           functionName: 'state',
-          chainId: PLATFORM_CHAIN_ID,
         },
       ]),
     [entries, coordinator],
@@ -147,19 +143,16 @@ export function useBoardPricing(
           address: s.presale,
           abi: presaleAbi,
           functionName: 'lpAddress',
-          chainId: PLATFORM_CHAIN_ID,
         },
         {
           address: s.presale,
           abi: presaleAbi,
           functionName: 'getLaunchStatus',
-          chainId: PLATFORM_CHAIN_ID,
         },
         {
           address: s.presale,
           abi: presaleAbi,
           functionName: 'presaleTokenPrice',
-          chainId: PLATFORM_CHAIN_ID,
         },
       ]),
     [presaleStates],
@@ -208,13 +201,11 @@ export function useBoardPricing(
           address: s.pair,
           abi: pairAbi,
           functionName: 'token0',
-          chainId: PLATFORM_CHAIN_ID,
         },
         {
           address: s.pair,
           abi: pairAbi,
           functionName: 'getReserves',
-          chainId: PLATFORM_CHAIN_ID,
         },
       ]),
     [liveCandidates],

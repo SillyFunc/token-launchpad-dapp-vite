@@ -94,7 +94,6 @@ export const PrelaunchPage = () => {
     useReservationFee()
   const { data: balanceData } = useBalance({
     address,
-    chainId: PLATFORM_CHAIN_ID,
     query: {
       enabled: Boolean(address),
       staleTime: 10_000,

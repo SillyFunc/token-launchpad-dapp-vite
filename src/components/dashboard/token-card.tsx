@@ -720,7 +720,7 @@ function RelaunchPresaleButton({
   disabled: boolean
   onRelaunched: () => void
 }) {
-  const publicClient = usePublicClient({ chainId: PLATFORM_CHAIN_ID })
+  const publicClient = usePublicClient()
   const { mutateAsync: writeContract } = useWriteContract()
   const queryClient = useQueryClient()
   const [isRelaunching, setIsRelaunching] = useState(false)
@@ -775,7 +775,7 @@ function OpenPresaleButton({
 }: {
   presaleAddress: Address
 }) {
-  const publicClient = usePublicClient({ chainId: PLATFORM_CHAIN_ID })
+  const publicClient = usePublicClient()
   const { mutateAsync: writeContract } = useWriteContract()
   const queryClient = useQueryClient()
   const [isOpening, setIsOpening] = useState(false)
@@ -829,7 +829,7 @@ function EndPresaleButton({
   presaleAddress?: Address
   onSettled: () => Promise<void>
 }) {
-  const publicClient = usePublicClient({ chainId: PLATFORM_CHAIN_ID })
+  const publicClient = usePublicClient()
   const { mutateAsync: writeContract } = useWriteContract()
   const queryClient = useQueryClient()
   const [isEnding, setIsEnding] = useState(false)

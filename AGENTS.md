@@ -26,6 +26,7 @@
 ## Web3 conventions
 
 - Platform chain is defined once in `src/lib/web3.ts` (`PLATFORM_CHAIN` / `PLATFORM_CHAIN_ID`). Deployment/contract addresses come from `src/lib/contracts.ts` accessors (`getCoordinatorFactory()`, `getDeployment()`) — never index `contracts[CHAIN_ID]` at module top-level in new code.
+- `PLATFORM_CHAIN_ID` is a **decision-site constant**: it belongs only in `web3.ts`, `contracts.ts`, `use-contract-tx.ts`, and the wallet-chain guards (`web3-action-button.tsx`, `prelaunch.tsx`). **Reads must not pass it** — the wagmi config has a single chain, so an omitted `chainId` already resolves to BSC (see the invariant comment in `src/providers/web3-provider.tsx`). Writes keep it, because it turns on viem's `assertChainId` and fails loudly when the wallet sits on another chain.
 - All backend HTTP goes through `src/lib/http/client.ts` (`get` / `postForm` / `postMultipart`); never call `axios`/`fetch` directly.
 - **Contract writes go through `src/hooks/use-contract-tx.ts`**, the single place where we decide how writes are executed and confirmed. It owns the "send → wait for receipt" flow:
   - In React components: use `useWriteContractTx()` — it wraps wagmi's `useWriteContract` so `isPending` is tracked automatically (prevents double-clicks) and returns `{ hash, receipt }`.

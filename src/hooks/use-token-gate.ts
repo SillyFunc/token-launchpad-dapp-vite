@@ -5,7 +5,6 @@ import {
 } from '@sillyfunc/launchpad-contracts'
 import { isAddress, zeroAddress, type Address } from 'viem'
 import { getCoordinatorFactory } from '@/lib/contracts'
-import { PLATFORM_CHAIN_ID } from '@/lib/web3'
 
 function validAddress(value?: string | null): Address | undefined {
   if (!value || !isAddress(value) || value.toLowerCase() === zeroAddress) {
@@ -64,67 +63,56 @@ export function useTokenGate(
         ...coordinator,
         functionName: 'tokenExists',
         args: [queryTokenAddress],
-        chainId: PLATFORM_CHAIN_ID,
       },
       {
         ...coordinator,
         functionName: 'tokenConfigured',
         args: [queryTokenAddress],
-        chainId: PLATFORM_CHAIN_ID,
       },
       {
         ...coordinator,
         functionName: 'tokenCreators',
         args: [queryTokenAddress],
-        chainId: PLATFORM_CHAIN_ID,
       },
       {
         ...coordinator,
         functionName: 'getTokenPresale',
         args: [queryTokenAddress],
-        chainId: PLATFORM_CHAIN_ID,
       },
       {
         address: queryTokenAddress,
         abi: flapTaxTokenV3Abi,
         functionName: 'state',
-        chainId: PLATFORM_CHAIN_ID,
       },
       {
         address: queryTokenAddress,
         abi: flapTaxTokenV3Abi,
         functionName: 'name',
-        chainId: PLATFORM_CHAIN_ID,
       },
       {
         address: queryTokenAddress,
         abi: flapTaxTokenV3Abi,
         functionName: 'symbol',
-        chainId: PLATFORM_CHAIN_ID,
       },
       {
         address: queryTokenAddress,
         abi: flapTaxTokenV3Abi,
         functionName: 'decimals',
-        chainId: PLATFORM_CHAIN_ID,
       },
       {
         address: queryTokenAddress,
         abi: flapTaxTokenV3Abi,
         functionName: 'totalSupply',
-        chainId: PLATFORM_CHAIN_ID,
       },
       {
         address: queryTokenAddress,
         abi: flapTaxTokenV3Abi,
         functionName: 'getPoolStateData',
-        chainId: PLATFORM_CHAIN_ID,
       },
       {
         address: queryTokenAddress,
         abi: flapTaxTokenV3Abi,
         functionName: 'mainPool',
-        chainId: PLATFORM_CHAIN_ID,
       },
     ] as const,
     query: {
@@ -147,67 +135,56 @@ export function useTokenGate(
         address: queryPresaleAddress,
         abi: presaleAbi,
         functionName: 'getLaunchStatus',
-        chainId: PLATFORM_CHAIN_ID,
       },
       {
         address: queryPresaleAddress,
         abi: presaleAbi,
         functionName: 'softCap',
-        chainId: PLATFORM_CHAIN_ID,
       },
       {
         address: queryPresaleAddress,
         abi: presaleAbi,
         functionName: 'hardcap',
-        chainId: PLATFORM_CHAIN_ID,
       },
       {
         address: queryPresaleAddress,
         abi: presaleAbi,
         functionName: 'presaleShare',
-        chainId: PLATFORM_CHAIN_ID,
       },
       {
         address: queryPresaleAddress,
         abi: presaleAbi,
         functionName: 'vestingDelay',
-        chainId: PLATFORM_CHAIN_ID,
       },
       {
         address: queryPresaleAddress,
         abi: presaleAbi,
         functionName: 'vestingRate',
-        chainId: PLATFORM_CHAIN_ID,
       },
       {
         address: queryPresaleAddress,
         abi: presaleAbi,
         functionName: 'presaleTokenPrice',
-        chainId: PLATFORM_CHAIN_ID,
       },
       {
         address: queryPresaleAddress,
         abi: presaleAbi,
         functionName: 'maxBuyPerWallet',
-        chainId: PLATFORM_CHAIN_ID,
       },
       {
         address: queryPresaleAddress,
         abi: presaleAbi,
         functionName: 'startTime',
-        chainId: PLATFORM_CHAIN_ID,
       },
       {
         address: queryPresaleAddress,
         abi: presaleAbi,
         functionName: 'endTime',
-        chainId: PLATFORM_CHAIN_ID,
       },
       {
         address: queryPresaleAddress,
         abi: presaleAbi,
         functionName: 'lpAddress',
-        chainId: PLATFORM_CHAIN_ID,
       },
     ] as const,
     query: {

@@ -58,21 +58,18 @@ export function RepresaleForm({
     address: presaleAddress,
     abi: presaleAbi,
     functionName: 'maxPresaleTokens',
-    chainId: PLATFORM_CHAIN_ID,
     query: { staleTime: 30_000 },
   })
   const { data: duration } = useReadContract({
     address: presaleAddress,
     abi: presaleAbi,
     functionName: 'presaleDuration',
-    chainId: PLATFORM_CHAIN_ID,
     query: { staleTime: 30_000 },
   })
   const { data: onchainSlippage } = useReadContract({
     address: presaleAddress,
     abi: presaleAbi,
     functionName: 'slippageProtection',
-    chainId: PLATFORM_CHAIN_ID,
     query: { staleTime: 30_000 },
   })
 

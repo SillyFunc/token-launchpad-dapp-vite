@@ -96,7 +96,7 @@ export function TokenPresale({
 }) {
   const queryClient = useQueryClient()
   const { address: userAddress } = useConnection()
-  const publicClient = usePublicClient({ chainId: PLATFORM_CHAIN_ID })
+  const publicClient = usePublicClient()
   const contractWriter = useWriteContract()
   const [subscribeAmount, setSubscribeAmount] = useState('')
   const [nowSeconds, setNowSeconds] = useState(() =>
@@ -110,7 +110,6 @@ export function TokenPresale({
 
   const { data: balanceData } = useBalance({
     address: userAddress,
-    chainId: PLATFORM_CHAIN_ID,
     query: { enabled: Boolean(userAddress), staleTime: 10_000 },
   })
   const userPosition = useReadContracts({
@@ -120,14 +119,12 @@ export function TokenPresale({
         abi: presaleAbi,
         functionName: 'subscribedTokens',
         args: [queryUserAddress],
-        chainId: PLATFORM_CHAIN_ID,
       },
       {
         address: queryPresaleAddress,
         abi: presaleAbi,
         functionName: 'contributions',
         args: [queryUserAddress],
-        chainId: PLATFORM_CHAIN_ID,
       },
     ] as const,
     query: {
