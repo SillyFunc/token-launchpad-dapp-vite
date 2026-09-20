@@ -556,16 +556,17 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
             >
               {(field) => (
                 <div className="flex flex-col">
-                  <FormInput
+                  <textarea
                     id={field.name}
                     name={field.name}
-                    type="text"
+                    rows={1}
                     aria-label={m.launch_fee_recipient()}
                     autoComplete="off"
                     spellCheck={false}
                     value={field.state.value}
                     onBlur={field.handleBlur}
                     onChange={(event) => field.handleChange(event.target.value)}
+                    className='border border-[#84888c] min-h-15 text-sm px-3 py-2 w-full text-foreground bg-transparent placeholder:text-[#84888c] focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#FE810B] disabled:cursor-not-allowed disabled:opacity-50 block resize-none break-all'
                   />
                   <FieldInfo field={field} showBeforeBlur />
                 </div>
