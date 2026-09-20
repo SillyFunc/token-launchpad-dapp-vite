@@ -80,6 +80,16 @@ function sanitizeDaysInput(value: string) {
     .slice(0, 3)
 }
 
+/**
+ * Anti-farmer protection has no separate default: an emptied box means 0 days
+ * ("set to 0 days to disable"). Echo the 0 back so the input never sits blank
+ * while 0 is what would be submitted.
+ */
+function sanitizeAntiFarmerInput(value: string) {
+  const digits = sanitizeDaysInput(value)
+  return digits === '' ? '0' : digits
+}
+
 function getErrorMessage(error: unknown, fallback: string) {
   return error instanceof Error && error.message ? error.message : fallback
 }
@@ -594,7 +604,9 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
                     value={field.state.value}
                     onBlur={field.handleBlur}
                     onChange={(event) =>
-                      field.handleChange(sanitizeDaysInput(event.target.value))
+                      field.handleChange(
+                        sanitizeAntiFarmerInput(event.target.value),
+                      )
                     }
                     rightAdornment="天"
                   />
