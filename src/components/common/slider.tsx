@@ -1,4 +1,5 @@
 import { useId } from 'react'
+import SliderLabelIcon from '@/assets/svgs/tax-rate-pointer.svg'
 
 export interface TaxSliderProps {
   label: string
@@ -33,11 +34,18 @@ export const Slider: React.FC<TaxSliderProps> = ({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
-        <label
-          htmlFor={inputId}
-          className="flex items-center gap-0.5 text-sm text-white"
-        >
-          <span>{label}</span>
+        <label htmlFor={inputId} className="flex min-w-0 items-center gap-1">
+          <span className="peer-disabled:cursor-not-allowed peer-disabled:opacity-70 min-w-0 truncate text-sm font-medium text-foreground">
+            {label}
+          </span>
+          <img
+            aria-hidden
+            loading="lazy"
+            decoding="sync"
+            className="size-5 shrink-0 text-transparent"
+            src={SliderLabelIcon}
+            alt=""
+          />
           {/* {required && (
             <span aria-hidden="true" className="text-sm text-[#f7594b]">
               *
@@ -46,24 +54,17 @@ export const Slider: React.FC<TaxSliderProps> = ({
         </label>
         <output
           htmlFor={inputId}
-          className="flex h-8 w-12 items-center justify-center rounded border border-white/30 bg-[#141517] text-sm font-bold text-[#FB5F16]"
+          className="flex h-8 w-12 items-center justify-center border border-white/30 bg-[#141517] text-sm font-bold text-[#FB5F16]"
         >
           {safeValue}%
         </output>
       </div>
 
-      <div className="flex flex-col gap-1">
-        <div className="flex justify-between text-xs text-white">
-          <span>{min}%</span>
-          <span>{max}%</span>
-        </div>
-        <div className="relative flex items-center rounded py-1">
-          <div
-            className="h-1 w-full rounded-full bg-[#2F3737]"
-            aria-hidden="true"
-          >
+      <div className="flex flex-col gap-1.5">
+        <div className="relative flex items-center py-1">
+          <div className="h-1 w-full bg-[#757575]" aria-hidden="true">
             <div
-              className="h-1 rounded-full bg-linear-to-r from-[#FE810B] via-[#FFA546] to-[#FE810B]"
+              className="h-1 bg-linear-to-r from-[#FE810B] via-[#FFA546] to-[#FE810B]"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -80,10 +81,14 @@ export const Slider: React.FC<TaxSliderProps> = ({
             className="absolute inset-0 h-full w-full cursor-pointer opacity-0 focus:outline-none focus-visible:outline-none focus:ring-0"
           />
           <div
-            className="pointer-events-none absolute h-3.5 w-2 -translate-x-1/2 rounded-xs bg-[#FB5F16]"
+            className="pointer-events-none absolute size-3 -translate-x-1/2 bg-[#FB5F16]"
             style={{ left: `${progress}%` }}
             aria-hidden="true"
           />
+        </div>
+        <div className="flex justify-between text-[#84888c] text-xs">
+          <span>{min}%</span>
+          <span>{max}%</span>
         </div>
       </div>
     </div>
