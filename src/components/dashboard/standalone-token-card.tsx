@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { CoinsIcon, RocketIcon } from 'lucide-react'
 import type { Address } from 'viem'
-import { presaleAbi } from '@sillyfunc/launchpad-contracts'
+import { presaleAbi } from '@/contracts'
 
 import type { BoardItemResponse } from '@/api/board'
 import { Web3ActionButton } from '@/components/common/web3-action-button'

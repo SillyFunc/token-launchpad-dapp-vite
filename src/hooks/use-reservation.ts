@@ -3,7 +3,7 @@ import { readContract } from 'wagmi/actions'
 import { formatEther, type Hex } from 'viem'
 
 import { executeContractTx } from '@/hooks/use-contract-tx'
-import { getCoordinatorFactory } from '@/lib/contracts'
+import { getCoordinatorFactory } from '@/contracts'
 
 /** Mainnet fallback when reservationFee cannot be read. Matches current on-chain 0.001 BNB. */
 export const FALLBACK_RESERVATION_FEE_WEI = 1_000_000_000_000_000n

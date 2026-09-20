@@ -2,8 +2,7 @@ import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { CircleStopIcon, CoinsIcon, RocketIcon, TriangleAlertIcon, WalletIcon } from 'lucide-react'
 import type { Address } from 'viem'
-import { usePublicClient, useWriteContract } from 'wagmi'
-import { presaleAbi } from '@sillyfunc/launchpad-contracts'
+import { presaleAbi } from '@/contracts'
 
 import type { BoardItemResponse } from '@/api/board'
 import { PresaleProgress } from '@/components/common/presale-progress'
@@ -13,7 +12,7 @@ import { Button } from '@/components/ui/button'
 import { formatBnbAmount, formatTokenAmount } from '@/lib/format'
 import { getContractErrorMessage } from '@/lib/contract-error'
 import { toast } from '@/lib/toast'
-import { PLATFORM_CHAIN_ID } from '@/lib/web3'
+import { useWriteContractTx } from '@/hooks/use-contract-tx'
 import { m } from '@/paraglide/messages.js'
 import { DetailRow, TokenBasicDetails, TokenCardShell } from './token-card-parts'
 import type { TokenCardState } from './token-card-model'
@@ -215,23 +214,20 @@ function RelaunchPresaleButton({
   disabled: boolean
   onRelaunched: () => void
 }) {
-  const publicClient = usePublicClient()
-  const { mutateAsync: writeContract } = useWriteContract()
+  const { execute } = useWriteContractTx()
   const queryClient = useQueryClient()
   const [isRelaunching, setIsRelaunching] = useState(false)
 
   const handleRelaunchPresale = async () => {
-    if (!publicClient || disabled || isRelaunching) return
+    if (disabled || isRelaunching) return
 
     setIsRelaunching(true)
     try {
-      const hash = await writeContract({
+      await execute({
         address: presaleAddress,
         abi: presaleAbi,
         functionName: 'relaunchPresale',
-        chainId: PLATFORM_CHAIN_ID,
       })
-      await publicClient.waitForTransactionReceipt({ hash })
       await queryClient
         .invalidateQueries({ queryKey: ['readContracts'] })
         .catch(() => undefined)
@@ -267,23 +263,20 @@ function OpenPresaleButton({
 }: {
   presaleAddress: Address
 }) {
-  const publicClient = usePublicClient()
-  const { mutateAsync: writeContract } = useWriteContract()
+  const { execute } = useWriteContractTx()
   const queryClient = useQueryClient()
   const [isOpening, setIsOpening] = useState(false)
 
   const handleOpenPresale = async () => {
-    if (!publicClient || isOpening) return
+    if (isOpening) return
 
     setIsOpening(true)
     try {
-      const hash = await writeContract({
+      await execute({
         address: presaleAddress,
         abi: presaleAbi,
         functionName: 'openPresale',
-        chainId: PLATFORM_CHAIN_ID,
       })
-      await publicClient.waitForTransactionReceipt({ hash })
       await queryClient
         .invalidateQueries({ queryKey: ['readContracts'] })
         .catch(() => undefined)
@@ -318,23 +311,20 @@ function EndPresaleButton({
   presaleAddress?: Address
   onSettled: () => Promise<void>
 }) {
-  const publicClient = usePublicClient()
-  const { mutateAsync: writeContract } = useWriteContract()
+  const { execute } = useWriteContractTx()
   const queryClient = useQueryClient()
   const [isEnding, setIsEnding] = useState(false)
 
   const handleEndPresale = async () => {
-    if (!presaleAddress || !publicClient || isEnding) return
+    if (!presaleAddress || isEnding) return
 
     setIsEnding(true)
     try {
-      const hash = await writeContract({
+      await execute({
         address: presaleAddress,
         abi: presaleAbi,
         functionName: 'endPresale',
-        chainId: PLATFORM_CHAIN_ID,
       })
-      await publicClient.waitForTransactionReceipt({ hash })
       await Promise.all([
         onSettled(),
         queryClient.invalidateQueries({ queryKey: ['readContracts'] }),

@@ -8,18 +8,14 @@ import {
   type Address,
   type ContractFunctionParameters,
 } from 'viem'
-import {
-  flapTaxTokenV3Abi,
-  presaleAbi,
-} from '@sillyfunc/launchpad-contracts'
+import { flapTaxTokenV3Abi, presaleAbi, getCoordinatorFactory } from '@/contracts'
 
 import type { BoardItemResponse } from '@/api/board'
 import { useDexQuotes } from '@/hooks/use-dex-quotes'
-import { getCoordinatorFactory } from '@/lib/contracts'
 import { WRAPPED_NATIVE_ADDRESS } from '@/lib/web3'
 
-// This is the external PancakeSwap V2 pair interface. Launchpad ABIs come from
-// @sillyfunc/launchpad-contracts.
+// This is the external PancakeSwap V2 pair interface. Launchpad ABIs live in
+// @/contracts.
 const pairAbi = parseAbi([
   'function token0() view returns (address)',
   'function getReserves() view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast)',

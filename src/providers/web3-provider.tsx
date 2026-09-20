@@ -6,7 +6,7 @@ import {
   injected,
   webSocket,
 } from 'wagmi'
-import { bsc } from 'wagmi/chains'
+import { bsc, bscTestnet } from 'wagmi/chains'
 import {
   MutationCache,
   QueryCache,
@@ -18,23 +18,11 @@ import { walletConnect } from 'wagmi/connectors'
 import { Toaster } from '@/components/ui/toast'
 import { env } from '@/env/client'
 import { ApiError } from '@/lib/http/error'
-import { DEFAULT_RPC_HTTP, DEFAULT_RPC_WS } from '@/lib/web3'
 import { toast } from '@/lib/toast'
 import { m } from '@/paraglide/messages.js'
 
-/**
- * Single-chain invariant: `bsc` is the ONLY configured chain, and read paths
- * (useReadContract / useReadContracts / useBalance / usePublicClient /
- * readContract) deliberately omit `chainId` and rely on it.
- *
- * wagmi resolves an omitted `chainId` to `config.state.chainId`, which
- * `syncConnectedChain` only ever updates to a *configured* chain — so with a
- * single chain it is always bsc. Adding a second chain here would silently make
- * every implicit read follow the wallet instead; re-add explicit
- * `chainId: PLATFORM_CHAIN_ID` at those call sites if that ever happens.
- */
 const config = createConfig({
-  chains: [bsc],
+  chains: [bsc, bscTestnet],
   connectors: [
     injected(),
     walletConnect({
@@ -44,8 +32,12 @@ const config = createConfig({
   ],
   transports: {
     [bsc.id]: fallback([
-      webSocket(env.VITE_APP_RPC_WS_URL ?? DEFAULT_RPC_WS),
-      http(env.VITE_APP_RPC_URL ?? DEFAULT_RPC_HTTP),
+      http('https://bsc-mainnet.nodereal.io/v1/52a58f1ed33e4bc0b7e5e9e2eb0acb40'),
+      webSocket('wss://bsc-mainnet.nodereal.io/ws/v1/52a58f1ed33e4bc0b7e5e9e2eb0acb40'),
+    ]),
+    [bscTestnet.id]: fallback([
+      http('https://bsc-testnet.nodereal.io/v1/52a58f1ed33e4bc0b7e5e9e2eb0acb40'),
+      webSocket('wss://bsc-testnet.nodereal.io/ws/v1/52a58f1ed33e4bc0b7e5e9e2eb0acb40'),
     ]),
   },
 })

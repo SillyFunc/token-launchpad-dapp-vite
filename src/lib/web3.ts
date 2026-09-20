@@ -1,18 +1,15 @@
-import { bsc } from 'wagmi/chains'
+import { bscTestnet } from 'wagmi/chains'
 
-export const PLATFORM_CHAIN = bsc
-export const PLATFORM_CHAIN_ID = bsc.id
-
-/** Default public RPC endpoints, overridable via env. */
-export const DEFAULT_RPC_HTTP = 'https://bsc-rpc.publicnode.com'
-export const DEFAULT_RPC_WS = 'wss://bsc-rpc.publicnode.com'
+export const PLATFORM_CHAIN = bscTestnet
+export const PLATFORM_CHAIN_ID = bscTestnet.id
 
 /**
  * Wrapped native token (WBNB) on the platform chain. DEX aggregators report a
  * pair's `priceNative` relative to its quote token, so a quote is only usable
  * as a BNB price when the pair is quoted against this address.
+ * (BSC testnet WBNB — switch back to 0xbb4CdB…95c on mainnet.)
  */
-export const WRAPPED_NATIVE_ADDRESS = '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c'
+export const WRAPPED_NATIVE_ADDRESS = '0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd'
 
 /**
  * Chain slug used by external DEX aggregators (defined.fi, dexscreener, ...).

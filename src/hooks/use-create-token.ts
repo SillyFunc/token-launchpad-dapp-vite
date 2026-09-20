@@ -3,7 +3,7 @@ import { readContract } from 'wagmi/actions'
 import { decodeEventLog, type Address, type Hex } from 'viem'
 
 import { executeContractTx } from '@/hooks/use-contract-tx'
-import { getCoordinatorFactory } from '@/lib/contracts'
+import { getCoordinatorFactory } from '@/contracts'
 import { findVanitySalt } from '@/lib/vanity-salt'
 
 const SECONDS_PER_DAY = 86_400

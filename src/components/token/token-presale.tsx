@@ -3,13 +3,12 @@ import { useQueryClient } from '@tanstack/react-query'
 import {
   useBalance,
   useConnection,
-  usePublicClient,
   useReadContracts,
-  useWriteContract,
 } from 'wagmi'
 import { AlertTriangle, Clock, Loader2 } from 'lucide-react'
 import { formatEther, parseEther, zeroAddress } from 'viem'
-import { presaleAbi } from '@sillyfunc/launchpad-contracts'
+import { presaleAbi } from '@/contracts'
+import { useWriteContractTx } from '@/hooks/use-contract-tx'
 
 import type { TokenGateResult } from '@/hooks/use-token-gate'
 import { PresaleProgress } from '@/components/common/presale-progress'
@@ -22,7 +21,6 @@ import {
   formatTokenAmount,
 } from '@/lib/format'
 import { getPresaleProgress } from '@/lib/utils'
-import { PLATFORM_CHAIN_ID } from '@/lib/web3'
 import { m } from '@/paraglide/messages.js'
 
 const TOKEN_SCALE = 10n ** 18n
@@ -96,8 +94,7 @@ export function TokenPresale({
 }) {
   const queryClient = useQueryClient()
   const { address: userAddress } = useConnection()
-  const publicClient = usePublicClient()
-  const contractWriter = useWriteContract()
+  const { execute } = useWriteContractTx()
   const [subscribeAmount, setSubscribeAmount] = useState('')
   const [nowSeconds, setNowSeconds] = useState(() =>
     Math.floor(Date.now() / 1_000),
@@ -235,33 +232,30 @@ export function TokenPresale({
     action: 'subscribe' | 'refund' | 'settle',
     value?: bigint,
   ) => {
-    if (!gate.presaleAddress || !publicClient) return
+    if (!gate.presaleAddress) return
     setPendingAction(action)
 
     try {
-      const hash =
-        action === 'subscribe'
-          ? await contractWriter.mutateAsync({
-              address: gate.presaleAddress,
-              abi: presaleAbi,
-              functionName: 'subscribe',
-              chainId: PLATFORM_CHAIN_ID,
-              value: value ?? 0n,
-            })
-          : action === 'refund'
-            ? await contractWriter.mutateAsync({
-                address: gate.presaleAddress,
-                abi: presaleAbi,
-                functionName: 'refund',
-                chainId: PLATFORM_CHAIN_ID,
-              })
-            : await contractWriter.mutateAsync({
-                address: gate.presaleAddress,
-                abi: presaleAbi,
-                functionName: 'endPresale',
-                chainId: PLATFORM_CHAIN_ID,
-              })
-      await publicClient.waitForTransactionReceipt({ hash })
+      if (action === 'subscribe') {
+        await execute({
+          address: gate.presaleAddress,
+          abi: presaleAbi,
+          functionName: 'subscribe',
+          value: value ?? 0n,
+        })
+      } else if (action === 'refund') {
+        await execute({
+          address: gate.presaleAddress,
+          abi: presaleAbi,
+          functionName: 'refund',
+        })
+      } else {
+        await execute({
+          address: gate.presaleAddress,
+          abi: presaleAbi,
+          functionName: 'endPresale',
+        })
+      }
       await refreshPresale()
       if (action === 'subscribe') setSubscribeAmount('')
       toast.success(

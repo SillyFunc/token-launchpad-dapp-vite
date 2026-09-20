@@ -2,13 +2,11 @@ import { useNavigate } from 'react-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { useForm } from '@tanstack/react-form'
 import { useConfig, useReadContract } from 'wagmi'
-import { waitForTransactionReceipt, writeContract } from 'wagmi/actions'
 import { formatEther, isAddress, parseEther, type Address } from 'viem'
 import { hoursToSeconds, minutesToSeconds } from 'date-fns'
 import { Calculator, Coins } from 'lucide-react'
-import {
-  flapTaxTokenV3Abi,
-} from '@sillyfunc/launchpad-contracts'
+import { flapTaxTokenV3Abi } from '@/contracts'
+import { useWriteContractTx } from '@/hooks/use-contract-tx'
 
 import { updateTokenInfo, type TokenDetail } from '@/api/token'
 import { FieldInfo } from '@/components/common/field-info'
@@ -23,8 +21,7 @@ import { formatTokenSupply } from '@/lib/format'
 import { sanitizeDecimal, sanitizeInteger } from '@/lib/presale-input'
 import { calculatePresaleTokenPrice } from '@/lib/presale-price'
 import { cn } from '@/lib/utils'
-import { getCoordinatorFactory } from '@/lib/contracts'
-import { PLATFORM_CHAIN_ID } from '@/lib/web3'
+import { getCoordinatorFactory } from '@/contracts'
 import { m } from '@/paraglide/messages.js'
 
 const DURATION_MIN_SEC = hoursToSeconds(1)
@@ -47,6 +44,7 @@ export function PresaleForm({
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const config = useConfig()
+  const { execute } = useWriteContractTx()
   const coordinator = getCoordinatorFactory()
   const resolvedTokenAddress = tokenAddress || token?.coinContractAddress || ''
 
@@ -248,11 +246,10 @@ export function PresaleForm({
 
       try {
         const auth = await requestAuthSignature(config, address)
-        const setupHash = await writeContract(config, {
+        await execute({
           ...coordinator,
           functionName: 'setupPresale',
           account: address,
-          chainId: PLATFORM_CHAIN_ID,
           args: [
             resolvedTokenAddress,
             {
@@ -270,10 +267,6 @@ export function PresaleForm({
             },
           ],
           value: creatorBuyBnbWei > 0n ? creatorBuyBnbWei : undefined,
-        })
-        await waitForTransactionReceipt(config, {
-          hash: setupHash,
-          chainId: PLATFORM_CHAIN_ID,
         })
 
         await updateTokenInfo({

@@ -7,7 +7,7 @@ import {
   type Hex,
 } from 'viem'
 
-import { getDeployment } from '@/lib/contracts'
+import { getDeployment } from '@/contracts'
 import { getInitCodeHash, predictCloneAddress } from '@/lib/eip1167'
 import type {
   VanityWorkerError,

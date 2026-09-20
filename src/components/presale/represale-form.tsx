@@ -1,11 +1,11 @@
 import { useMemo, useRef, useState } from 'react'
 import { useForm } from '@tanstack/react-form'
 import { useConfig, useReadContract } from 'wagmi'
-import { waitForTransactionReceipt, writeContract } from 'wagmi/actions'
 import { formatEther, parseEther, type Address } from 'viem'
 import { hoursToSeconds, minutesToSeconds } from 'date-fns'
 import { Calculator, Coins } from 'lucide-react'
-import { presaleAbi } from '@sillyfunc/launchpad-contracts'
+import { presaleAbi } from '@/contracts'
+import { useWriteContractTx } from '@/hooks/use-contract-tx'
 
 import { updateTokenInfo, type TokenDetail } from '@/api/token'
 import { FieldInfo } from '@/components/common/field-info'
@@ -20,7 +20,6 @@ import { formatDecimalText } from '@/lib/format'
 import { sanitizeDecimal, sanitizeInteger } from '@/lib/presale-input'
 import { calculatePresaleTokenPrice } from '@/lib/presale-price'
 import { cn } from '@/lib/utils'
-import { PLATFORM_CHAIN_ID } from '@/lib/web3'
 import { m } from '@/paraglide/messages.js'
 
 const DURATION_MIN_SEC = hoursToSeconds(1)
@@ -51,6 +50,7 @@ export function RepresaleForm({
   onSuccess,
 }: RepresaleFormProps) {
   const config = useConfig()
+  const { execute } = useWriteContractTx()
   const [submitStep, setSubmitStep] = useState('')
   const submitInFlightRef = useRef(false)
 
@@ -170,12 +170,11 @@ export function RepresaleForm({
         const auth = await requestAuthSignature(config, address)
 
         setSubmitStep(m.presale_updating_terms())
-        const configHash = await writeContract(config, {
+        await execute({
           address: presaleAddress,
           abi: presaleAbi,
           functionName: 'setPresaleConfig',
           account: address,
-          chainId: PLATFORM_CHAIN_ID,
           args: [
             {
               presaleTokenPrice: priceWei,
@@ -191,10 +190,6 @@ export function RepresaleForm({
               slippageProtection: slippageBps,
             },
           ],
-        })
-        await waitForTransactionReceipt(config, {
-          hash: configHash,
-          chainId: PLATFORM_CHAIN_ID,
         })
 
         setSubmitStep(m.presale_syncing())
