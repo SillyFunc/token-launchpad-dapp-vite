@@ -77,10 +77,10 @@ export function ReservedAddressSelect({
   else if (!hasAvailableAddress) hint = m.launch_reserved_address_all_used()
 
   return (
-    <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-sm text-white">
+    <div className="flex flex-col gap-1.5 mt-4">
+      {/* <label htmlFor={id} className="text-sm text-white">
         {m.launch_reserved_address()}
-      </label>
+      </label> */}
       <Select<ReservedAddressOption | string>
         value={value}
         onValueChange={(nextValue) =>

@@ -384,13 +384,7 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
         </div>
 
         <div className="flex flex-col space-y-10 p-4">
-          <div className="flex flex-col gap-6">
-            <FormSectionTitle title={m.launch_basic_info()} />
-            <TokenLogoUploader
-              initialPreview={initialData?.coinImg || null}
-              onFileChange={setLogoFile}
-            />
-
+          <CollapsibleFormSection title="预留 CA">
             <form.Field name="reservedAddress">
               {(field) => (
                 <ReservedAddressSelect
@@ -401,6 +395,14 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
                 />
               )}
             </form.Field>
+          </CollapsibleFormSection>
+
+          <div className="flex flex-col gap-6">
+            <FormSectionTitle title={m.launch_basic_info()} />
+            <TokenLogoUploader
+              initialPreview={initialData?.coinImg || null}
+              onFileChange={setLogoFile}
+            />
 
             <form.Field
               name="name"
@@ -606,7 +608,7 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
           </CollapsibleFormSection>
 
           <CollapsibleFormSection title={m.launch_optional_links()}>
-            <div className="mt-6 flex flex-col gap-6">
+            <div className="mt-4 flex flex-col gap-6">
               <form.Field
                 name="links.telegram"
                 validators={{ onChange: optionalUrl }}
