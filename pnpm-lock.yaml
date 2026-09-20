@@ -17,9 +17,6 @@ importers:
       '@fontsource-variable/jetbrains-mono':
         specifier: ^5.3.0
         version: 5.3.0
-      '@sillyfunc/launchpad-contracts':
-        specifier: ^0.1.0
-        version: 0.1.0
       '@t3-oss/env-core':
         specifier: ^0.13.11
         version: 0.13.11(typescript@6.0.3)(valibot@1.5.0(typescript@6.0.3))(zod@4.6.5)
@@ -929,10 +926,6 @@ packages:
 
   '@sec-ant/readable-stream@0.4.1':
     resolution: {integrity: sha512-831qok9r2t8AlxLko40y2ebgSDhenenCatLVeW/uBtnHPyhHOvG0C7TvfgecV+wHzIm5KUICgzmVpWS+IMEAeg==}
-
-  '@sillyfunc/launchpad-contracts@0.1.0':
-    resolution: {integrity: sha512-au86OOHff0NF6bGU2cQ04/nSZeGTe6HNMX9Nzvs5XhjjMt5rfufgV9BONcSEuGBDmrycRqlYEcbyF4nzT+0PiQ==}
-    engines: {node: '>=20'}
 
   '@sinclair/typebox@0.31.30':
     resolution: {integrity: sha512-MGsM7bVmHg3sUKCphlu3SGQ+T+5JTbygZWYArfKQCW5anJeACHeqLhcnf+R7XlCWZ+QR3C8JTBx3kCKJTN69ow==}
@@ -4082,8 +4075,6 @@ snapshots:
       '@scure/base': 1.2.6
 
   '@sec-ant/readable-stream@0.4.1': {}
-
-  '@sillyfunc/launchpad-contracts@0.1.0': {}
 
   '@sinclair/typebox@0.31.30': {}
 
