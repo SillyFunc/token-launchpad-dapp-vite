@@ -19,6 +19,7 @@
 | CoordinatorFactory | [`0xc7284F96716E4FbB3f794Cb407D882C29AA653B1`](https://bscscan.com/address/0xc7284F96716E4FbB3f794Cb407D882C29AA653B1) |
 | PRESALE 模板 | [`0x6b51064D62018De9832590f1788078bDFB64Aca5`](https://bscscan.com/address/0x6b51064D62018De9832590f1788078bDFB64Aca5) |
 | FlapTaxTokenV3 模板 | [`0xd7E12Ecd6406B993D94F0bc67a4a62681f50aA99`](https://bscscan.com/address/0xd7E12Ecd6406B993D94F0bc67a4a62681f50aA99) |
+| BuybackVault / Factory | **当前这次主网部署尚未包含**。接口见测试网文档 §3.1.1；地址必须等新一次 `Deploy.s.sol` 广播并链上核验后再写入，禁止手抄。新版本同时把 TaxProcessor 改为 keeper 异步清算；本表现有地址仍是旧 ABI/旧行为，不得绑定新 SDK ABI。 |
 
 Pancake Router 与 WBNB 不应由前端硬编码：读取已部署
 `CoordinatorFactory.routerAddress()`，再读取该 Router 的 `WETH()`。部署前必须链上确认两项调用均成功，且 `factory()` 返回非零地址。
@@ -95,3 +96,22 @@ const presaleAbi = parseAbi([
 5. 在链上用最小金额走完整冒烟流程：创建、配置、认购、结算、开盘、领取；重开流程另行验证。
 
 共享的事件、错误码和交易交互说明可参考测试网文档，但当两者存在差异时，本文的主网时间规则与主网部署地址具有最高优先级。
+
+## 6. 管理员更新平台费用
+
+创建费和地址预留费均由 `CoordinatorFactory.DEFAULT_ADMIN_ROLE` 管理，前端必须继续通过
+`creationFee()` 和 `reservationFee()` 动态读取，不能硬编码。管理员可使用
+`script/SetPlatformFees.s.sol` 更新两项费用；两个金额均以 BNB wei 传入，且必须非零。
+
+```bash
+forge script script/SetPlatformFees.s.sol:SetPlatformFees \
+  --sig "run(address,uint256,uint256)" \
+  0xc7284F96716E4FbB3f794Cb407D882C29AA653B1 \
+  5000000000000000 \
+  1000000000000000 \
+  --rpc-url bsc \
+  --account <FOUNDRY_ACCOUNT> \
+  --broadcast
+```
+
+上例设置创建费为 `0.005 BNB`、预留费为 `0.001 BNB`。脚本仅对发生变化的费用发送交易；因为已部署合约提供的是两个独立 setter，若两项均变更，将产生两笔管理员交易，并非原子批量更新。广播账户必须拥有该 CoordinatorFactory 的 `DEFAULT_ADMIN_ROLE`。
