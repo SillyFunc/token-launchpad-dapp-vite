@@ -1,5 +1,5 @@
 import { Crop } from 'lucide-react'
-import { useEffect, useRef, useState, type ChangeEvent, type DragEvent, type MouseEvent } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent, type DragEvent, type KeyboardEvent, type MouseEvent } from 'react'
 import { m } from '@/paraglide/messages.js'
 import { toast } from '@/lib/toast'
 import { LogoCropDialog } from './logo-crop-dialog'
@@ -121,22 +121,33 @@ export const TokenLogoUploader: React.FC<TokenLogoUploaderProps> = ({
     event.target.value = ''
   }
 
-  const handleDrop = (event: DragEvent<HTMLButtonElement>) => {
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault()
     applyFile(event.dataTransfer.files?.[0] ?? null)
+  }
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    // Ignore keys bubbling up from the nested "adjust crop" button.
+    if (event.target !== event.currentTarget) return
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      inputRef.current?.click()
+    }
   }
 
   const isUploaded = preview !== null
 
   return (
     <>
-      <button
-        type="button"
+      <div
+        role="button"
+        tabIndex={0}
         aria-label={m.launch_upload_logo()}
       onClick={() => inputRef.current?.click()}
+      onKeyDown={handleKeyDown}
       onDragOver={(event) => event.preventDefault()}
       onDrop={handleDrop}
-      className="group relative flex w-full min-w-0 items-center gap-4 text-left outline-none transition-shadow focus-visible:ring-1 focus-visible:ring-[#FE810B]"
+      className="group relative flex w-full min-w-0 cursor-pointer items-center gap-4 text-left outline-none transition-shadow focus-visible:ring-1 focus-visible:ring-[#FE810B]"
     >
       <input
         ref={inputRef}
@@ -239,7 +250,7 @@ export const TokenLogoUploader: React.FC<TokenLogoUploaderProps> = ({
           )}
         </div>
       </div>
-    </button>
+    </div>
       <LogoCropDialog
         open={isCropDialogOpen}
         onClose={handleCropClose}
