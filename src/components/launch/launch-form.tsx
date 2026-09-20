@@ -386,10 +386,27 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
           </div>
           <Link
             to="/prelaunch"
-            className="flex shrink-0 items-center justify-center whitespace-nowrap rounded border border-[#ffd98c] px-4 py-2 text-xs font-semibold text-[#ffd98c] transition-colors hover:bg-[#ffd98c] hover:text-black sm:px-6 sm:py-2.5"
+            className="group flex shrink-0 items-center justify-center whitespace-nowrap bg-transparent overflow-visible px-6 h-10 text-xs font-semibold text-[#ffd98c] transition-colors hover:text-[#070808] relative"
           >
-            <span>{m.launch_reserve_action()}</span>
-            <ArrowRightIcon className="ml-1.5 size-3 shrink-0" />
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 134.858 40"
+              preserveAspectRatio="none"
+              fill="none"
+              className="absolute inset-0 h-full w-full"
+            >
+              <path
+                d="M12.429 39.5122 L4.326 39.5122 C2.2023 39.5122 0.4807 37.765 0.4807 35.6098 L0.4807 10.3826 C0.4807 9.3476 0.8858 8.355 1.6069 7.6232 L7.5117 1.6308 C8.2328 0.899 9.2109 0.4878 10.2307 0.4878 L12.429 0.4878 H122.429 L130.532 0.4878 C132.6557 0.4878 134.3773 2.235 134.3773 4.3902 L134.3773 29.6174 C134.3773 30.6524 133.9722 31.645 133.2511 32.3768 L127.3463 38.3692 C126.6252 39.101 125.6471 39.5122 124.6273 39.5122 L122.429 39.5122 H12.429 Z"
+                stroke="currentColor"
+                className="fill-transparent transition-colors group-hover:fill-[#ffd98c]"
+              ></path>
+            </svg>
+            <span className="relative z-10 flex min-w-0 items-center gap-2">
+              <span className="min-w-0 truncate">
+                {m.launch_reserve_action()}
+              </span>
+              <ArrowRightIcon className="ml-1.5 size-3 shrink-0" />
+            </span>
           </Link>
         </div>
 
@@ -566,7 +583,7 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
                     value={field.state.value}
                     onBlur={field.handleBlur}
                     onChange={(event) => field.handleChange(event.target.value)}
-                    className='border border-[#84888c] min-h-15 text-sm px-3 py-2 w-full text-foreground bg-transparent placeholder:text-[#84888c] focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#FE810B] disabled:cursor-not-allowed disabled:opacity-50 block resize-none break-all'
+                    className="border border-[#84888c] min-h-15 text-sm px-3 py-2 w-full text-foreground bg-transparent placeholder:text-[#84888c] focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#FE810B] disabled:cursor-not-allowed disabled:opacity-50 block resize-none break-all"
                   />
                   <FieldInfo field={field} showBeforeBlur />
                 </div>
