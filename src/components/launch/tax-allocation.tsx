@@ -42,7 +42,7 @@ export const TaxAllocation: React.FC<TaxAllocationProps> = () => {
                 10%
               </div>
             </div>
-            <div className="flex w-full max-w-55 min-w-0 flex-col gap-1 text-xs font-light text-foreground">
+            <div className="flex w-full max-w-55 sm:max-w-full min-w-0 flex-col gap-1 text-xs font-light text-foreground">
               <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
                 <span className="flex min-w-0 items-center gap-2 overflow-hidden">
                   <span
