@@ -39,6 +39,7 @@ import { m } from '@/paraglide/messages.js'
 import { CollapsibleFormSection } from '../common/collapsible-form-section'
 import { ScheduledBuybackVault } from './scheduled-buyback-vault'
 import { TokenLogoUploader } from './token-logo-uploader'
+import { TaxAllocation } from './tax-allocation'
 
 const optionalUrl = z.union([z.literal(''), z.url()])
 
@@ -577,6 +578,8 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
               )}
             </form.Field>
           </div>
+
+          <TaxAllocation />
 
           <form.Subscribe
             selector={(state) => state.values.buybackVault.selected}
