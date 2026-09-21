@@ -175,7 +175,7 @@ export const TaxAllocation: React.FC<TaxAllocationProps> = () => {
                   step={1}
                   className="mx-auto w-full"
                 />
-              </div>{' '}
+              </div>
               <div className="space-y-3 text-xs">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex min-w-0 flex-col">
