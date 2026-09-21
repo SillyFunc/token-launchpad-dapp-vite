@@ -1,6 +1,6 @@
 /**
- * ABI copied from token-launchpad-contracts/out/CoordinatorFactory.sol/CoordinatorFactory.sol.json
- * Source: D:/gh-projects/token-launchpad-contracts @ 0f03263 (codex/fix-buyback-vault)
+ * ABI copied from token-launchpad-contracts/out/CoordinatorFactory.sol/CoordinatorFactory.json
+ * Source: D:/gh-projects/token-launchpad-contracts @ 3e04354 + 97.json working tree
  * Keep `as const` so viem/wagmi infer function names and argument types.
  */
 export const coordinatorFactoryAbi = [
@@ -47,6 +47,32 @@ export const coordinatorFactoryAbi = [
         "name": "",
         "type": "bytes32",
         "internalType": "bytes32"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "MAX_ANTI_FARMER_DURATION",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "TAX_DURATION",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ],
     "stateMutability": "view"
@@ -136,11 +162,6 @@ export const coordinatorFactoryAbi = [
             "internalType": "address"
           },
           {
-            "name": "taxDuration",
-            "type": "uint256",
-            "internalType": "uint256"
-          },
-          {
             "name": "antiFarmerDuration",
             "type": "uint256",
             "internalType": "uint256"
@@ -210,11 +231,6 @@ export const coordinatorFactoryAbi = [
             "name": "feeRecipient",
             "type": "address",
             "internalType": "address"
-          },
-          {
-            "name": "taxDuration",
-            "type": "uint256",
-            "internalType": "uint256"
           },
           {
             "name": "antiFarmerDuration",
@@ -1605,6 +1621,11 @@ export const coordinatorFactoryAbi = [
   {
     "type": "error",
     "name": "InvalidAllocation",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidAntiFarmerDuration",
     "inputs": []
   },
   {

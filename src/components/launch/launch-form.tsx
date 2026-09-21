@@ -54,14 +54,7 @@ const symbolSchema = z
   .min(1, m.launch_token_symbol())
   .max(15, 'Token symbol must be 15 characters or fewer')
 
-const taxDurationSchema = z
-  .string()
-  .trim()
-  .min(1, m.launch_tax_duration())
-  .refine((value) => {
-    const number = Number(value)
-    return Number.isInteger(number) && number >= 1 && number <= 365
-  }, 'Enter an integer from 1 to 365')
+const PLATFORM_TAX_DURATION_DAYS = 100 * 365
 
 const antiFarmerDurationSchema = z
   .string()
@@ -118,7 +111,6 @@ interface LaunchFormValues {
   feeRecipient: string
   buyTax: number
   sellTax: number
-  taxDuration: string
   antiFarmerDuration: string
   buybackVault: BuybackVaultDraft
   links: {
@@ -175,7 +167,6 @@ function getInitialValues(
     feeRecipient: initialData?.feeRecipient || address || '',
     buyTax: initialData?.buyTax ?? 0,
     sellTax: initialData?.sellTax ?? 0,
-    taxDuration: String(initialData?.taxDuration ?? 365),
     antiFarmerDuration: String(initialData?.antiFarmerDuration ?? 30),
     buybackVault: defaultBuybackVaultDraft(),
     links: {
@@ -200,7 +191,6 @@ function normalizeValues(value: LaunchFormValues) {
     feeRecipient: value.feeRecipient.trim().toLowerCase(),
     buyTax: Number(value.buyTax),
     sellTax: Number(value.sellTax),
-    taxDuration: Number(value.taxDuration),
     antiFarmerDuration: Number(value.antiFarmerDuration),
     buybackVault: value.buybackVault,
     links: {
@@ -319,7 +309,7 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
             buyTax: Number(value.buyTax),
             sellTax: Number(value.sellTax),
             feeRecipient,
-            taxDuration: Number(value.taxDuration),
+            taxDuration: PLATFORM_TAX_DURATION_DAYS,
             antiFarmerDuration: Number(value.antiFarmerDuration),
             liqExpectedOutputAmount: 0,
             launchType: Number(initialData?.launchType ?? 2),
@@ -350,7 +340,6 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
               buyTax: payload.buyTax,
               sellTax: payload.sellTax,
               feeRecipient,
-              taxDurationDays: payload.taxDuration,
               antiFarmerDurationDays: payload.antiFarmerDuration,
               salt: salt as Hex,
               buyback,
@@ -589,39 +578,6 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
             </form.Field>
           </div>
 
-          <div className="flex flex-col">
-            <FormSectionTitle title={m.launch_tax_duration()} required />
-            <form.Field
-              name="taxDuration"
-              validators={{
-                onMount: taxDurationSchema,
-                onChange: taxDurationSchema,
-              }}
-            >
-              {(field) => (
-                <div className="mt-4 flex flex-col">
-                  <FormInput
-                    id={field.name}
-                    name={field.name}
-                    type="text"
-                    inputMode="numeric"
-                    autoComplete="off"
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(event) =>
-                      field.handleChange(sanitizeDaysInput(event.target.value))
-                    }
-                    rightAdornment="天"
-                  />
-                  <FieldInfo field={field} />
-                </div>
-              )}
-            </form.Field>
-            <p className="mt-2 text-xs text-[#84888c]">
-              {m.launch_tax_duration_description()}
-            </p>
-          </div>
-
           <form.Subscribe
             selector={(state) => state.values.buybackVault.selected}
           >
@@ -681,19 +637,7 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
               name="antiFarmerDuration"
               validators={{
                 onMount: antiFarmerDurationSchema,
-                onChangeListenTo: ['taxDuration'],
-                onChange: ({ value, fieldApi }) => {
-                  const result = antiFarmerDurationSchema.safeParse(value)
-                  if (!result.success) return result.error.issues[0]?.message
-
-                  const taxDuration = Number(
-                    fieldApi.form.getFieldValue('taxDuration'),
-                  )
-                  if (Number(value) > taxDuration) {
-                    return 'Protection period cannot exceed tax duration'
-                  }
-                  return undefined
-                },
+                onChange: antiFarmerDurationSchema,
               }}
             >
               {(field) => (

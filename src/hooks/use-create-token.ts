@@ -8,6 +8,7 @@ import type { EncodedBuybackConfig } from '@/lib/buyback-vault'
 import { findVanitySalt } from '@/lib/vanity-salt'
 
 const SECONDS_PER_DAY = 86_400
+const MAX_ANTI_FARMER_DURATION_DAYS = 365
 
 export interface CreateTokenParams {
   account: Address
@@ -17,7 +18,6 @@ export interface CreateTokenParams {
   buyTax: number
   sellTax: number
   feeRecipient: Address
-  taxDurationDays: number
   antiFarmerDurationDays: number
   salt?: Hex
   buyback?: EncodedBuybackConfig
@@ -40,15 +40,15 @@ export function useCreateToken() {
   const createToken = async (
     params: CreateTokenParams,
   ): Promise<CreateTokenResult> => {
-    const taxDuration = BigInt(
-      Math.round(params.taxDurationDays * SECONDS_PER_DAY),
-    )
     const antiFarmerDuration = BigInt(
       Math.round(params.antiFarmerDurationDays * SECONDS_PER_DAY),
     )
 
-    if (taxDuration <= 0n || antiFarmerDuration > taxDuration) {
-      throw new Error('Invalid token duration configuration')
+    if (
+      antiFarmerDuration < 0n ||
+      params.antiFarmerDurationDays > MAX_ANTI_FARMER_DURATION_DAYS
+    ) {
+      throw new Error('InvalidAntiFarmerDuration')
     }
 
     const [creationFee, salt] = await Promise.all([
@@ -68,7 +68,6 @@ export function useCreateToken() {
       buyTax: percentToBps(params.buyTax),
       sellTax: percentToBps(params.sellTax),
       feeRecipient: params.feeRecipient,
-      taxDuration,
       antiFarmerDuration,
       liqExpectedOutputAmount: 0n,
     }

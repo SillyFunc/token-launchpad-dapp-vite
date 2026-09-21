@@ -6,10 +6,12 @@
 
 | 内容 | 来源文件 | 合约仓库 commit |
 |---|---|---|
-| `abis/*.ts` | `token-launchpad-contracts/out/<Contract>.sol/<Contract>.json` 的 `abi` 字段 | `0f03263` (`codex/fix-buyback-vault`) |
+| `abis/*.ts` | `token-launchpad-contracts/out/<Contract>.sol/<Contract>.json` 的 `abi` 字段 | `3e04354` + `script/deployments/97.json` working tree |
 | `addresses.ts` | `token-launchpad-contracts/script/deployments/{56,97}.json` | 同上 |
 
 合约仓库本地路径：`D:/gh-projects/token-launchpad-contracts`。
+
+`TokenConfig` 为 8 字段（无 `taxDuration`）。税期由 Coordinator 常量 `TAX_DURATION() == 100 * 365 days` 注入。
 
 ## 更新时机与方法
 

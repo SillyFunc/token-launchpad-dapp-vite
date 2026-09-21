@@ -59,7 +59,6 @@ export function useIssueToken(
         buyTax: token.buyTax ?? 0,
         sellTax: token.sellTax ?? 0,
         feeRecipient: token.feeRecipient,
-        taxDurationDays: Number(token.taxDuration) || 30,
         antiFarmerDurationDays: Number(token.antiFarmerDuration) || 0,
         salt,
       })

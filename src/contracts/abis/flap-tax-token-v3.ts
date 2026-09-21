@@ -1,6 +1,6 @@
 /**
- * ABI copied from token-launchpad-contracts/out/FlapTaxTokenV3.sol/FlapTaxTokenV3.sol.json
- * Source: D:/gh-projects/token-launchpad-contracts @ 0f03263 (codex/fix-buyback-vault)
+ * ABI copied from token-launchpad-contracts/out/FlapTaxTokenV3.sol/FlapTaxTokenV3.json
+ * Source: D:/gh-projects/token-launchpad-contracts @ 3e04354 + 97.json working tree
  * Keep `as const` so viem/wagmi infer function names and argument types.
  */
 export const flapTaxTokenV3Abi = [

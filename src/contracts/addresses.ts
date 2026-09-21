@@ -3,7 +3,7 @@ import type { Address } from 'viem'
 /**
  * Deployment addresses, keyed by chain id.
  * Source: D:/gh-projects/token-launchpad-contracts/script/deployments/{56,97}.json
- * @ 0f03263 (codex/fix-buyback-vault)
+ * @ 3e04354 + 97.json working tree (2026-09-21 testnet redeploy)
  *
  * 56 = BSC mainnet, 97 = BSC testnet.
  */
@@ -16,13 +16,13 @@ export const addresses = {
     coordinatorFactory: '0xc7284f96716E4FbB3F794CB407D882C29aA653B1',
   },
   97: {
-    flapTaxTokenImplementation: '0x52c01A724b80d2E408131466802ec05FeB5557da',
-    tokenFactory: '0xfE39e0fe0CbE1c2A042c337880161B9aeF2D2Eb9',
-    presaleImplementation: '0x9B1c041844e2334478DC1135cd051A3CbC3bC961',
-    presaleFactory: '0xd2E0861A80C4a3b0bdf501251Ee397476437138c',
-    coordinatorFactory: '0x9a7594114f4b79544f7CA00FBd1E902C556BbC47',
-    buybackVaultImplementation: '0x4390656F8560Df63E3551A32eac6c97e1F36D2FD',
-    buybackVaultFactory: '0xf1bD2178266aa91270c888808f71a842cdE037fC',
+    flapTaxTokenImplementation: '0x74919901380297e0294dcd206B9C1E934e7026da',
+    tokenFactory: '0x084f90Eda0EE5fd0075159feBE44bcCa3dE1f083',
+    presaleImplementation: '0x22a55bEe1F079ecf021347575599C5dCf96FE751',
+    presaleFactory: '0x41Bc35F1e4b86d2230CDa129ae42D57968E4fe79',
+    coordinatorFactory: '0x8b678ed56926B975C9d926bE12778d9F17e479C1',
+    buybackVaultImplementation: '0xa5C7A00C3A96A0E787a1c751071F531A7C44e05b',
+    buybackVaultFactory: '0xb8F45651205850DFfc5Ecb23EEffAAFb8A02CDcf',
   },
 } as const satisfies Record<number, Record<string, Address>>
 

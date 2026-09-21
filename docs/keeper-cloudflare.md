@@ -7,6 +7,7 @@
 | 项目 | BSC 测试网 | BSC 主网 |
 |---|---|---|
 | chainId | `97` | `56` |
+| Coordinator | `0x8b678ed56926B975C9d926bE12778d9F17e479C1` | 以主网最新广播与链上核验结果为准 |
 | Keeper | `0x9f87b1973361b23387D7F1b536484543a5ea1eFB` | 必须另建生产专用钱包，不复用测试网私钥 |
 | Pancake V2 Router | `0xD99D1c33F9fC3444f8101754aBC46c52416550D1` | `0x10ED43C718714eb63d5aA57B78B54704E256024E` |
 | 读取 RPC | BNB Chain 测试网公共 RPC | 独立公共/免费 RPC |
@@ -112,11 +113,11 @@ forge script script/Deploy.s.sol:Deploy --rpc-url <BSC testnet RPC> --sender <de
 
 命令会在本机询问 keystore 密码。不要把密码写入仓库、环境变量或聊天记录。
 
-执行部署后，必须从 `broadcast/Deploy.s.sol/97/run-latest.json` 取得并链上核验新 `CoordinatorFactory` 地址。禁止把当前旧部署地址绑定到新 ABI。
+2026-09-21 当前测试网部署的 `CoordinatorFactory` 为 `0x8b678ed56926B975C9d926bE12778d9F17e479C1`。地址来自 `broadcast/Deploy.s.sol/97/run-latest.json`，11/11 回执成功，链上代码、工厂接线、Keeper 权限和税期常量均已核验。
 
 不带 `--broadcast` 的 `forge script` 仅做模拟，不会生成 `script/deployments/97.json`；部署地址文件只允许由真实广播运行产生。
 
-BscScan 源码发布需要一个免费的 API key。当前机器未配置 `BSCSCAN_API_KEY`，因此这一步不能由仓库自行完成，也不得把 key 提交到 Git。配置后应按广播产物逐个执行 `forge verify-contract --chain 97 --guess-constructor-args --watch <address> <source:contract>`；七个地址全部显示 Verified 后，再更新 `docs/frontend-integration.md` 的发布状态。
+BscScan 源码发布需要一个免费的 API key，且不得把 key 提交到 Git。配置后应按广播产物逐个执行 `forge verify-contract --verifier etherscan --chain 97 --rpc-url bsc-testnet --guess-constructor-args --watch <address> <source:contract>`；七个地址全部显示 Verified 后，再更新 `docs/frontend-integration.md` 的发布状态。
 
 ### 阶段 C：创建 Cloudflare 免费项目
 
@@ -136,7 +137,7 @@ pnpm db:migrate:remote
 
 ### 阶段 D：录入 Secrets
 
-测试网的公开 `READ_RPC_URL`、`SEND_RPC_URL` 与 `COORDINATOR_ADDRESS` 已写入 `keeper/wrangler.jsonc`。以下两个敏感值仍必须通过本机终端录入，不会写入 Git：
+测试网的公开 `READ_RPC_URL`、`SEND_RPC_URL` 与新 `COORDINATOR_ADDRESS=0x8b678ed56926B975C9d926bE12778d9F17e479C1` 已写入 `keeper/wrangler.jsonc`。修改本地文件不会影响线上 Worker，必须执行阶段 E 的 `pnpm run deploy` 后远端 Keeper 才会切换。以下两个敏感值仍通过本机终端录入，不会写入 Git：
 
 ```text
 pnpm wrangler secret put KEEPER_PRIVATE_KEY
@@ -154,6 +155,8 @@ pnpm run deploy
 ```
 
 `pnpm deploy` 会被 pnpm 内置的 `deploy` 命令拦截并报 `ERR_PNPM_CANNOT_DEPLOY`，必须写成 `pnpm run deploy`（等价于 `pnpm run deploy:testnet`）。
+
+> **切换 Coordinator 时的 D1 语义**：修改 `COORDINATOR_ADDRESS` 不会自动清空 D1。`assets` 按 `chain_id + token` 保存，因此直接重新部署会继续处理数据库中的旧部署代币，同时只从新 Coordinator 发现新代币；这种方式可保持旧代币的自动化连续性，但旧 Coordinator 必须继续给同一 Keeper 保留 `KEEPER_ROLE`。如果测试网只需要服务新部署，应先备份 D1，再由负责人明确清理旧 `assets`、对应 `price_samples` 和 `discovery_cursor:97`；这是破坏性运维动作，不得在未确认保留策略时执行。
 
 测试网 Worker 地址：`https://sillyfunc-launchpad-keeper-testnet.wildfunc.workers.dev`。
 
@@ -201,7 +204,7 @@ pnpm wrangler d1 execute DB --remote --json --command "SELECT block_number,sampl
 - 选择 BNB Chain 官方列出的免费 MEV 保护私有 RPC，例如 PancakeSwap、48Club 或 Merkle；上线前实测 `eth_sendRawTransaction`、回执可见性和丢包恢复。
 - 将 `CHAIN_ID` 改为 `56`，替换生产 Keeper、Coordinator、D1 和 Secrets；不要复用测试环境 D1。
 - 在 BSC fork 和测试网上完成税费代币、买税/卖税、LP fallback、价格偏离、RPC 失败、D1 失败、低余额、重复 Cron、nonce 卡住与权限撤销测试。
-- 以新广播产物和 BscScan 核验结果同步 SDK、部署地址及前端文档后才能开放 UI。
+- 以新广播产物和 BscScan 核验结果同步部署地址、前端所需最小 ABI 及对接文档后才能开放 UI。
 
 ## 6. 故障验证矩阵
 
@@ -216,7 +219,7 @@ pnpm wrangler d1 execute DB --remote --json --command "SELECT block_number,sampl
 | LP 回购 | 普通买入与 LP 半仓兑换分别设置最低输出 | 已验证（本地执行计划测试 + BSC fork 实池：Keeper 规划出的 LP 侧最低输出 `1.097e24` 被满足，LP `2.06e19` 铸给 `0xdead`，`totalLpBurned` 与 `0xdead` 持仓一致）；测试网实池复验建议并入主网上线前演练 |
 | RPC batch 乱序 | 按 JSON-RPC id 恢复正确顺序 | 已验证（本地单元测试） |
 | RPC 返回错误或 HTTP 503 | 显式失败，不把错误当作结果 | 已验证（本地单元测试） |
-| 管理令牌缺失或错误 | 管理接口安全失败并返回 401，健康检查仍可用 | 已验证（已部署 Worker：缺失令牌与格式合法但值错误的令牌均返回 401、`/health` 返回 `ok:true`；携带有效令牌返回链 97、Coordinator `0x9a75…bC47`、Keeper `0x9f87…1eFB`、余额与运行/交易/告警记录，均与配置和 D1 一致） |
+| 管理令牌缺失或错误 | 管理接口安全失败并返回 401，健康检查仍可用 | 历史已验证（2026-09-20 旧 Coordinator `0x9a75…bC47`）；切换到新 Coordinator `0x8b67…79C1` 后必须重新部署并通过 `/health`、`/admin/status` 复验 |
 | 部署与 Cron 连续性 | 每分钟触发一次 Workflow，环境校验通过，运行记录无失败 | 已验证（**截至 2026-09-20 07:52Z / 本地 15:52 快照**：D1 共 249 条运行记录、0 失败、0 未解决告警；记录数持续增长，最新值请查 D1） |
 | 私钥与 Keeper 地址不匹配 | 拒绝签名 | 已验证（本地单元测试） |
 | BSC Legacy 交易签名 | 可恢复出配置的 Keeper 地址 | 已验证（本地单元测试） |
