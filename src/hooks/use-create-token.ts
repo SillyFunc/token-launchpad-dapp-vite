@@ -4,6 +4,7 @@ import { decodeEventLog, type Address, type Hex } from 'viem'
 
 import { executeContractTx } from '@/hooks/use-contract-tx'
 import { getCoordinatorFactory } from '@/contracts'
+import type { EncodedBuybackConfig } from '@/lib/buyback-vault'
 import { findVanitySalt } from '@/lib/vanity-salt'
 
 const SECONDS_PER_DAY = 86_400
@@ -19,6 +20,7 @@ export interface CreateTokenParams {
   taxDurationDays: number
   antiFarmerDurationDays: number
   salt?: Hex
+  buyback?: EncodedBuybackConfig
 }
 
 export interface CreateTokenResult {
@@ -59,24 +61,25 @@ export function useCreateToken() {
         : findVanitySalt().then((result) => result.salt),
     ])
 
+    const tokenConfig = {
+      name: params.name.trim(),
+      symbol: params.symbol.trim(),
+      meta: params.meta,
+      buyTax: percentToBps(params.buyTax),
+      sellTax: percentToBps(params.sellTax),
+      feeRecipient: params.feeRecipient,
+      taxDuration,
+      antiFarmerDuration,
+      liqExpectedOutputAmount: 0n,
+    }
+
     const { hash: txHash, receipt } = await executeContractTx(config, {
       ...coordinator,
-      functionName: 'createToken',
+      functionName: params.buyback ? 'createTokenWithVault' : 'createToken',
       account: params.account,
-      args: [
-        {
-          name: params.name.trim(),
-          symbol: params.symbol.trim(),
-          meta: params.meta,
-          buyTax: percentToBps(params.buyTax),
-          sellTax: percentToBps(params.sellTax),
-          feeRecipient: params.feeRecipient,
-          taxDuration,
-          antiFarmerDuration,
-          liqExpectedOutputAmount: 0n,
-        },
-        salt,
-      ],
+      args: params.buyback
+        ? [tokenConfig, salt, params.buyback]
+        : [tokenConfig, salt],
       value: creationFee,
     })
 

@@ -1,27 +1,33 @@
-import { useState } from 'react'
 import { LucideClock3 } from 'lucide-react'
 import { CollapsibleFormSection } from '../common/collapsible-form-section'
 
 import { Checkbox } from '../ui/checkbox'
 import BuybackVaultLogo from '@/assets/svgs/scheduled-buyback-vault-logo.svg'
+import {
+  type BuybackVaultDraft,
+  type BuybackVaultIntervalUnit,
+  type BuybackVaultTrigger,
+} from '@/lib/buyback-vault'
+import { sanitizeDecimal } from '@/lib/presale-input'
 import { cn } from '@/lib/utils'
 import { Button } from '../ui/button'
 
-type BuybackMode = 'token' | 'lp'
-type ExecutionCondition = 'time' | 'balance' | 'time-and-balance'
-type IntervalUnit = 'minutes' | 'hours' | 'days'
-
-const INTERVAL_UNITS: { value: IntervalUnit; label: string }[] = [
+const INTERVAL_UNITS: { value: BuybackVaultIntervalUnit; label: string }[] = [
   { value: 'minutes', label: '分钟' },
   { value: 'hours', label: '小时' },
   { value: 'days', label: '天' },
 ]
 
+export interface ScheduledBuybackVaultProps {
+  value: BuybackVaultDraft
+  onChange: (value: BuybackVaultDraft) => void
+}
+
 const configInputClassName =
   'h-10 w-full min-w-0 max-w-full border border-foreground/15 bg-background/30 px-3 text-sm text-white outline-none focus:border-[#FE810B]'
 
 function conditionIncludes(
-  condition: ExecutionCondition,
+  condition: BuybackVaultTrigger,
   kind: 'time' | 'balance',
 ) {
   return condition === kind || condition === 'time-and-balance'
@@ -43,12 +49,18 @@ function optionTitleClassName(isSelected: boolean) {
   )
 }
 
-export const ScheduledBuybackVault: React.FC = () => {
-  const [selected, setSelected] = useState(false)
-  const [buybackMode, setBuybackMode] = useState<BuybackMode>('token')
-  const [executionCondition, setExecutionCondition] =
-    useState<ExecutionCondition>('time')
-  const [intervalUnit, setIntervalUnit] = useState<IntervalUnit>('minutes')
+export const ScheduledBuybackVault: React.FC<ScheduledBuybackVaultProps> = ({
+  value,
+  onChange,
+}) => {
+  const selected = value.selected
+  const buybackMode = value.buybackMode
+  const executionCondition = value.executionCondition
+  const intervalUnit = value.intervalUnit
+
+  const patch = (next: Partial<BuybackVaultDraft>) => {
+    onChange({ ...value, ...next })
+  }
 
   const showFirstExecutionTime = conditionIncludes(executionCondition, 'time')
   const showTriggerBalance = conditionIncludes(executionCondition, 'balance')
@@ -59,7 +71,7 @@ export const ScheduledBuybackVault: React.FC = () => {
         type="button"
         aria-label="選擇金庫"
         aria-pressed={selected}
-        onClick={() => setSelected((prev) => !prev)}
+        onClick={() => patch({ selected: !selected })}
         className="border border-[#484b51] bg-transparent p-4 gap-5 mt-6 w-full min-w-0 transition-colors"
       >
         <div className="min-w-0 flex-1 flex items-center gap-3">
@@ -108,7 +120,7 @@ export const ScheduledBuybackVault: React.FC = () => {
                     type="button"
                     aria-label="Token 回購銷燬"
                     aria-pressed={buybackMode === 'token'}
-                    onClick={() => setBuybackMode('token')}
+                    onClick={() => patch({ buybackMode: 'token' })}
                     className={optionClassName(buybackMode === 'token')}
                   >
                     <strong
@@ -124,7 +136,7 @@ export const ScheduledBuybackVault: React.FC = () => {
                     type="button"
                     aria-label="LP 回購銷燬"
                     aria-pressed={buybackMode === 'lp'}
-                    onClick={() => setBuybackMode('lp')}
+                    onClick={() => patch({ buybackMode: 'lp' })}
                     className={optionClassName(buybackMode === 'lp')}
                   >
                     <strong
@@ -148,7 +160,7 @@ export const ScheduledBuybackVault: React.FC = () => {
                     type="button"
                     aria-label="時間"
                     aria-pressed={executionCondition === 'time'}
-                    onClick={() => setExecutionCondition('time')}
+                    onClick={() => patch({ executionCondition: 'time' })}
                     className={optionClassName(executionCondition === 'time')}
                   >
                     <strong
@@ -166,7 +178,7 @@ export const ScheduledBuybackVault: React.FC = () => {
                     type="button"
                     aria-label="金庫餘額"
                     aria-pressed={executionCondition === 'balance'}
-                    onClick={() => setExecutionCondition('balance')}
+                    onClick={() => patch({ executionCondition: 'balance' })}
                     className={optionClassName(
                       executionCondition === 'balance',
                     )}
@@ -186,7 +198,9 @@ export const ScheduledBuybackVault: React.FC = () => {
                     type="button"
                     aria-label="时间 + 金库余额"
                     aria-pressed={executionCondition === 'time-and-balance'}
-                    onClick={() => setExecutionCondition('time-and-balance')}
+                    onClick={() =>
+                      patch({ executionCondition: 'time-and-balance' })
+                    }
                     className={optionClassName(
                       executionCondition === 'time-and-balance',
                     )}
@@ -223,6 +237,10 @@ export const ScheduledBuybackVault: React.FC = () => {
                       <input
                         type="datetime-local"
                         step={60}
+                        value={value.firstExecuteAt}
+                        onChange={(event) =>
+                          patch({ firstExecuteAt: event.target.value })
+                        }
                         className={cn(
                           configInputClassName,
                           'block appearance-none overflow-hidden pl-10',
@@ -240,13 +258,17 @@ export const ScheduledBuybackVault: React.FC = () => {
                       触发金额（BNB）
                     </span>
                     <input
+                      type="text"
                       inputMode="decimal"
-                      min="0.001"
-                      max="10"
-                      step="0.001"
+                      autoComplete="off"
+                      spellCheck={false}
                       className={configInputClassName}
-                      type="number"
-                      defaultValue="1"
+                      value={value.triggerAmount}
+                      onChange={(event) =>
+                        patch({
+                          triggerAmount: sanitizeDecimal(event.target.value, 3),
+                        })
+                      }
                     />
                   </label>
                 )}
@@ -272,7 +294,10 @@ export const ScheduledBuybackVault: React.FC = () => {
                       step="1"
                       className={configInputClassName}
                       type="number"
-                      defaultValue="1"
+                      value={value.interval}
+                      onChange={(event) =>
+                        patch({ interval: event.target.value })
+                      }
                     />
                     <div className="flex h-8 items-stretch overflow-hidden border border-foreground/15 bg-background/30 w-full p-0.5">
                       {INTERVAL_UNITS.map((unit) => (
@@ -280,7 +305,7 @@ export const ScheduledBuybackVault: React.FC = () => {
                           key={unit.value}
                           type="button"
                           aria-pressed={intervalUnit === unit.value}
-                          onClick={() => setIntervalUnit(unit.value)}
+                          onClick={() => patch({ intervalUnit: unit.value })}
                           className={cn(
                             'cursor-pointer px-3 text-xs transition-colors flex-1',
                             intervalUnit === unit.value
@@ -299,15 +324,19 @@ export const ScheduledBuybackVault: React.FC = () => {
                   <span className="mb-2 font-medium text-foreground/70 text-xs block">
                     每次执行使用的 BNB
                   </span>
-                  <input
-                    inputMode="decimal"
-                    min="0.001"
-                    max="10"
-                    step="0.001"
-                    className={configInputClassName}
-                    type="number"
-                    defaultValue="0.001"
-                  />
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      autoComplete="off"
+                      spellCheck={false}
+                      className={configInputClassName}
+                      value={value.buybackAmount}
+                      onChange={(event) =>
+                        patch({
+                          buybackAmount: sanitizeDecimal(event.target.value, 3),
+                        })
+                      }
+                    />
                   <p className="mt-1 text-xs text-foreground/40">
                     金库每次执行时使用的 BNB 数量。
                   </p>
@@ -316,7 +345,8 @@ export const ScheduledBuybackVault: React.FC = () => {
             </div>
             <div className="flex justify-end gap-2 mt-5">
               <Button
-                onClick={() => setSelected(false)}
+                type="button"
+                onClick={() => patch({ selected: false })}
                 className="text-sm px-4 bg-background border border-input text-foreground hover:bg-accent h-10"
               >
                 取消配置
