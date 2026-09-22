@@ -7,9 +7,9 @@ const CHANNEL_ORDER = ['creator', 'burn', 'dividend', 'liquidity'] as const
 type ChannelKey = (typeof CHANNEL_ORDER)[number]
 
 const CHANNEL_COLORS: Record<ChannelKey, string> = {
-  creator: '#fe810b',
+  creator: 'rgb(254, 129, 11)',
   burn: 'rgb(91, 49, 255)',
-  dividend: '#f7594b',
+  dividend: 'rgb(247, 89, 75)',
   liquidity: 'rgb(22, 217, 217)',
 }
 
@@ -129,7 +129,7 @@ export const TaxAllocation: React.FC<TaxAllocationProps> = () => {
                 <span className="flex min-w-0 items-center gap-2 overflow-hidden">
                   <span
                     className="size-2 shrink-0 rounded-full"
-                    style={{ backgroundColor: '#f7594b' }}
+                    style={{ backgroundColor: 'rgb(247, 89, 75)' }}
                   ></span>
                   <span className="min-w-0 truncate" title="分紅">
                     分紅
