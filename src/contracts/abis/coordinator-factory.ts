@@ -1,8 +1,3 @@
-/**
- * ABI copied from token-launchpad-contracts/out/CoordinatorFactory.sol/CoordinatorFactory.json
- * Source: D:/gh-projects/token-launchpad-contracts @ 3e04354 + 97.json working tree
- * Keep `as const` so viem/wagmi infer function names and argument types.
- */
 export const coordinatorFactoryAbi = [
   {
     "type": "constructor",
@@ -54,6 +49,19 @@ export const coordinatorFactoryAbi = [
   {
     "type": "function",
     "name": "MAX_ANTI_FARMER_DURATION",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "MAX_MINIMUM_SHARE_BALANCE",
     "inputs": [],
     "outputs": [
       {
@@ -162,6 +170,31 @@ export const coordinatorFactoryAbi = [
             "internalType": "address"
           },
           {
+            "name": "marketBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
+            "name": "deflationBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
+            "name": "lpBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
+            "name": "dividendBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
+            "name": "minimumShareBalance",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
             "name": "antiFarmerDuration",
             "type": "uint256",
             "internalType": "uint256"
@@ -231,6 +264,31 @@ export const coordinatorFactoryAbi = [
             "name": "feeRecipient",
             "type": "address",
             "internalType": "address"
+          },
+          {
+            "name": "marketBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
+            "name": "deflationBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
+            "name": "lpBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
+            "name": "dividendBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
+            "name": "minimumShareBalance",
+            "type": "uint256",
+            "internalType": "uint256"
           },
           {
             "name": "antiFarmerDuration",
@@ -930,6 +988,19 @@ export const coordinatorFactoryAbi = [
   },
   {
     "type": "function",
+    "name": "setTaxInfrastructureFactory",
+    "inputs": [
+      {
+        "name": "factory",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "setupPresale",
     "inputs": [
       {
@@ -1024,6 +1095,19 @@ export const coordinatorFactoryAbi = [
   },
   {
     "type": "function",
+    "name": "taxInfrastructureFactory",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "tokenAddressReserver",
     "inputs": [
       {
@@ -1063,6 +1147,25 @@ export const coordinatorFactoryAbi = [
   {
     "type": "function",
     "name": "tokenCreators",
+    "inputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "tokenDividends",
     "inputs": [
       {
         "name": "",
@@ -1163,6 +1266,25 @@ export const coordinatorFactoryAbi = [
   {
     "type": "function",
     "name": "tokenPresales",
+    "inputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "tokenTaxProcessors",
     "inputs": [
       {
         "name": "",
@@ -1503,6 +1625,44 @@ export const coordinatorFactoryAbi = [
   },
   {
     "type": "event",
+    "name": "TaxInfrastructureAttached",
+    "inputs": [
+      {
+        "name": "token",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "taxProcessor",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "dividend",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "TaxInfrastructureFactorySet",
+    "inputs": [
+      {
+        "name": "factory",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "TokenAddressReserved",
     "inputs": [
       {
@@ -1640,12 +1800,27 @@ export const coordinatorFactoryAbi = [
   },
   {
     "type": "error",
+    "name": "InvalidMinimumShareBalance",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "InvalidPrice",
     "inputs": []
   },
   {
     "type": "error",
     "name": "InvalidSalt",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidTaxDistribution",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidTaxInfrastructureFactory",
     "inputs": []
   },
   {
@@ -1675,6 +1850,11 @@ export const coordinatorFactoryAbi = [
   },
   {
     "type": "error",
+    "name": "TaxInfrastructureFactoryNotSet",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "TokenCreationFailed",
     "inputs": []
   },
@@ -1686,6 +1866,11 @@ export const coordinatorFactoryAbi = [
   {
     "type": "error",
     "name": "TokenTransferFailed",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "VaultRequiresMarketChannel",
     "inputs": []
   },
   {
@@ -1706,6 +1891,11 @@ export const coordinatorFactoryAbi = [
   {
     "type": "error",
     "name": "ZeroMinLiquidity",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ZeroTaxInfrastructureFactory",
     "inputs": []
   }
 ] as const

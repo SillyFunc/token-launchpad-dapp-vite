@@ -1,8 +1,3 @@
-/**
- * ABI copied from token-launchpad-contracts/out/Presale.sol/PRESALE.json
- * Source: D:/gh-projects/token-launchpad-contracts @ 3e04354 + 97.json working tree
- * Keep `as const` so viem/wagmi infer function names and argument types.
- */
 export const presaleAbi = [
   {
     "type": "constructor",

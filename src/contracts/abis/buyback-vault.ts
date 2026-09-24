@@ -1,8 +1,3 @@
-/**
- * ABI copied from token-launchpad-contracts/out/BuybackVault.sol/BuybackVault.json
- * Source: D:/gh-projects/token-launchpad-contracts @ 3e04354 + 97.json working tree
- * Keep `as const` so viem/wagmi infer function names and argument types.
- */
 export const buybackVaultAbi = [
   {
     "type": "constructor",
@@ -158,6 +153,19 @@ export const buybackVaultAbi = [
   },
   {
     "type": "function",
+    "name": "MIN_EXECUTION_AMOUNT",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "MIN_INTERVAL_SECONDS",
     "inputs": [],
     "outputs": [
@@ -225,6 +233,11 @@ export const buybackVaultAbi = [
     "type": "function",
     "name": "executeBuyback",
     "inputs": [
+      {
+        "name": "expectedBnbIn",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
       {
         "name": "minTokenOut",
         "type": "uint256",
@@ -328,6 +341,16 @@ export const buybackVaultAbi = [
             "name": "canExecute",
             "type": "bool",
             "internalType": "bool"
+          },
+          {
+            "name": "executableBuybackAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "readiness",
+            "type": "uint8",
+            "internalType": "enum BuybackReadiness"
           }
         ]
       }
@@ -501,6 +524,24 @@ export const buybackVaultAbi = [
         "name": "",
         "type": "address",
         "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "previewBuyback",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "executableAmount",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "readiness",
+        "type": "uint8",
+        "internalType": "enum BuybackReadiness"
       }
     ],
     "stateMutability": "view"
@@ -748,11 +789,6 @@ export const buybackVaultAbi = [
   },
   {
     "type": "error",
-    "name": "BuybackAmountExceedsReserveLimit",
-    "inputs": []
-  },
-  {
-    "type": "error",
     "name": "InsufficientBalance",
     "inputs": []
   },
@@ -818,6 +854,11 @@ export const buybackVaultAbi = [
   },
   {
     "type": "error",
+    "name": "ReserveCapBelowMinimum",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "TooEarly",
     "inputs": []
   },
@@ -841,6 +882,22 @@ export const buybackVaultAbi = [
     "type": "error",
     "name": "UnauthorizedKeeper",
     "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "UnsafeExecutionAmount",
+    "inputs": [
+      {
+        "name": "requested",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "maximum",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
   },
   {
     "type": "error",
