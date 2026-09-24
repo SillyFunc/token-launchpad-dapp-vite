@@ -193,7 +193,7 @@ export const TaxAllocation: React.FC<TaxAllocationProps> = () => {
                     onValueChange={(next) => setChannel(channel.key, next)}
                     max={100}
                     step={1}
-                    className="mx-auto w-full **:data-[slot=slider-track]:bg-[#757575] **:data-[slot=slider-range]:bg-[#FE810B] **:data-[slot=slider-thumb]:bg-[#FE810B] **:data-[slot=slider-thumb]:border-[#FE810B] **:data-[slot=slider-thumb]:ring-[#FE810B] **:data-[slot=slider-thumb]:shadow-none"
+                    className="mx-auto w-full **:data-[slot=slider-track]:bg-[#757575] **:data-[slot=slider-range]:bg-[#FE810B] **:data-[slot=slider-thumb]:bg-[#FE810B] **:data-[slot=slider-thumb]:border-[#FE810B] **:data-[slot=slider-thumb]:ring-[#FE810B] **:data-[slot=slider-thumb]:shadow-none **:data-[slot=slider-thumb]:box-border"
                   />
                 </div>
               ))}
