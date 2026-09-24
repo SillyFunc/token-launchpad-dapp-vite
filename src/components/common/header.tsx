@@ -1,5 +1,5 @@
 import { Link } from 'react-router'
-import { MenuIcon, XIcon } from 'lucide-react'
+import { Flame, MenuIcon, XIcon } from 'lucide-react'
 import { ConnectKitButton } from 'connectkit'
 import { formatAddress } from '@/lib/utils'
 import { Button } from '../ui/button'
@@ -10,7 +10,6 @@ interface HeaderProps {
   isMenuOpen: boolean
   onToggleMenu: () => void
 }
-
 export const Header: React.FC<HeaderProps> = ({ isMenuOpen, onToggleMenu }) => {
   return (
     <header className="sticky inset-x-0 top-0 z-50 flex h-16 items-center justify-between border-b border-b-[#484B51] bg-[#070808] px-4">
@@ -20,10 +19,10 @@ export const Header: React.FC<HeaderProps> = ({ isMenuOpen, onToggleMenu }) => {
           aria-label={isMenuOpen ? m.close_menu() : m.open_menu()}
           aria-expanded={isMenuOpen}
           onClick={onToggleMenu}
-          className="cursor-pointer active:opacity-85 transition-opacity"
+          className="cursor-pointer active:opacity-85 transition-opacity size-6 relative flex items-center justify-center text-foreground"
         >
           <div
-            className={`transition-transform duration-300 ease-in-out ${
+            className={`transition-transform duration-200 ${
               isMenuOpen ? 'rotate-90' : 'rotate-0'
             }`}
           >
@@ -34,6 +33,13 @@ export const Header: React.FC<HeaderProps> = ({ isMenuOpen, onToggleMenu }) => {
             )}
           </div>
         </button>
+        <Link
+          to="/board"
+          aria-label="Home"
+          className="flex items-center justify-center text-[#FE810B]"
+        >
+          <Flame className="size-6" />
+        </Link>
       </div>
       <div className="flex shrink-0 items-center space-x-2">
         {/* shadow-[0_3px_0_0_#963000] */}
