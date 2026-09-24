@@ -2,21 +2,37 @@ import { useState } from 'react'
 import { Slider } from '../ui/slider'
 import { FormSectionTitle } from '../common/form-section-title'
 
-const CHANNEL_ORDER = ['creator', 'burn', 'dividend', 'liquidity'] as const
+const CHANNELS = [
+  {
+    key: 'creator',
+    label: '创作者资金钱包',
+    sublabel: '开发者、营销等',
+    color: 'rgb(254, 129, 11)',
+  },
+  {
+    key: 'burn',
+    label: '銷毀',
+    sublabel: '銷毀',
+    color: 'rgb(91, 49, 255)',
+  },
+  {
+    key: 'dividend',
+    label: '分紅',
+    sublabel: '持有者獎勵',
+    color: 'rgb(247, 89, 75)',
+  },
+  {
+    key: 'liquidity',
+    label: '流動性',
+    sublabel: '增加流動性',
+    color: 'rgb(22, 217, 217)',
+  },
+] as const
 
-type ChannelKey = (typeof CHANNEL_ORDER)[number]
+type ChannelKey = (typeof CHANNELS)[number]['key']
 
-const CHANNEL_COLORS: Record<ChannelKey, string> = {
-  creator: 'rgb(254, 129, 11)',
-  burn: 'rgb(91, 49, 255)',
-  dividend: 'rgb(247, 89, 75)',
-  liquidity: 'rgb(22, 217, 217)',
-}
-
-/** Ring color of the not-yet-allocated arc (the legend uses its own gray dot). */
 const UNALLOCATED_ARC_COLOR = 'rgb(31, 32, 35)'
 
-/** Design default: the creator wallet takes 10%, the rest is unallocated. */
 const INITIAL_ALLOCATION: Record<ChannelKey, number> = {
   creator: 10,
   burn: 0,
@@ -29,31 +45,29 @@ export const TaxAllocation: React.FC<TaxAllocationProps> = () => {
   const [allocation, setAllocation] = useState(INITIAL_ALLOCATION)
   const [minDividendBalance, setMinDividendBalance] = useState('0')
 
-  const total = CHANNEL_ORDER.reduce((sum, key) => sum + allocation[key], 0)
+  const total = CHANNELS.reduce(
+    (sum, channel) => sum + allocation[channel.key],
+    0,
+  )
   const unallocated = 100 - total
 
-  /**
-   * A channel can only grow by the headroom the other three leave, so the four
-   * values can never add up to more than 100%.
-   */
   const setChannel = (key: ChannelKey, next: number | readonly number[]) => {
     const raw = Array.isArray(next) ? next[0] : next
     setAllocation((prev) => {
       const headroom =
-        100 - CHANNEL_ORDER.reduce((sum, k) => sum + prev[k], 0) + prev[key]
+        100 - CHANNELS.reduce((sum, ch) => sum + prev[ch.key], 0) + prev[key]
       const clamped = Math.min(Math.max(Math.round(raw), 0), headroom)
       return prev[key] === clamped ? prev : { ...prev, [key]: clamped }
     })
   }
 
-  /** Ring segments follow the channel order; the tail is the unallocated arc. */
   const donutBackground = (() => {
     const stops: string[] = []
     let allocated = 0
-    for (const key of CHANNEL_ORDER) {
-      const value = allocation[key]
+    for (const channel of CHANNELS) {
+      const value = allocation[channel.key]
       if (value <= 0) continue
-      stops.push(`${CHANNEL_COLORS[key]} ${allocated}% ${allocated + value}%`)
+      stops.push(`${channel.color} ${allocated}% ${allocated + value}%`)
       allocated += value
     }
     if (allocated < 100) {
@@ -101,54 +115,25 @@ export const TaxAllocation: React.FC<TaxAllocationProps> = () => {
               </div>
             </div>
             <div className="flex w-full max-w-55 sm:max-w-full min-w-0 flex-col gap-1 text-xs font-light text-foreground">
-              <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
-                <span className="flex min-w-0 items-center gap-2 overflow-hidden">
-                  <span
-                    className="size-2 shrink-0 rounded-full"
-                    style={{ backgroundColor: '#fe810b' }}
-                  ></span>
-                  <span className="min-w-0 truncate" title="创作者资金钱包">
-                    创作者资金钱包
+              {CHANNELS.map((channel) => (
+                <div
+                  key={channel.key}
+                  className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2"
+                >
+                  <span className="flex min-w-0 items-center gap-2 overflow-hidden">
+                    <span
+                      className="size-2 shrink-0 rounded-full"
+                      style={{ backgroundColor: channel.color }}
+                    ></span>
+                    <span className="min-w-0 truncate" title={channel.label}>
+                      {channel.label}
+                    </span>
                   </span>
-                </span>
-                <span className="shrink-0 text-white">{allocation.creator}%</span>
-              </div>
-              <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
-                <span className="flex min-w-0 items-center gap-2 overflow-hidden">
-                  <span
-                    className="size-2 shrink-0 rounded-full"
-                    style={{ backgroundColor: 'rgb(91, 49, 255)' }}
-                  ></span>
-                  <span className="min-w-0 truncate" title="銷毀">
-                    銷毀
+                  <span className="shrink-0 text-white">
+                    {allocation[channel.key]}%
                   </span>
-                </span>
-                <span className="shrink-0 text-white">{allocation.burn}%</span>
-              </div>
-              <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
-                <span className="flex min-w-0 items-center gap-2 overflow-hidden">
-                  <span
-                    className="size-2 shrink-0 rounded-full"
-                    style={{ backgroundColor: 'rgb(247, 89, 75)' }}
-                  ></span>
-                  <span className="min-w-0 truncate" title="分紅">
-                    分紅
-                  </span>
-                </span>
-                <span className="shrink-0 text-white">{allocation.dividend}%</span>
-              </div>
-              <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
-                <span className="flex min-w-0 items-center gap-2 overflow-hidden">
-                  <span
-                    className="size-2 shrink-0 rounded-full"
-                    style={{ backgroundColor: 'rgb(22, 217, 217)' }}
-                  ></span>
-                  <span className="min-w-0 truncate" title="流動性">
-                    流動性
-                  </span>
-                </span>
-                <span className="shrink-0 text-white">{allocation.liquidity}%</span>
-              </div>
+                </div>
+              ))}
               <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
                 <span className="flex min-w-0 items-center gap-2 overflow-hidden">
                   <span
@@ -177,133 +162,54 @@ export const TaxAllocation: React.FC<TaxAllocationProps> = () => {
               <button
                 type="button"
                 onClick={handleReset}
-                className="shrink-0 border border-[#a0a3a7] px-3 py-2.5 font-jetbrains text-xs text-foreground disabled:cursor-not-allowed disabled:opacity-50 [@media(hover:hover)]:hover:border-[#fe810b] [@media(hover:hover)]:hover:text-[#fe810b]"
+                className="shrink-0 border border-[#a0a3a7] px-3 py-2.5 text-xs text-foreground disabled:cursor-not-allowed disabled:opacity-50 [@media(hover:hover)]:hover:border-[#fe810b] [@media(hover:hover)]:hover:text-[#fe810b]"
               >
                 重置
               </button>
             </div>
             <div className="mt-5.5 min-w-0 space-y-5">
-              <div className="space-y-3 text-xs">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex min-w-0 flex-col">
-                    <label className="peer-disabled:cursor-not-allowed peer-disabled:opacity-70 min-w-0 truncate text-sm font-normal text-foreground">
-                      创作者资金钱包
-                    </label>
-                    <span className="min-w-0 truncate text-xs font-light text-[#84888c]">
-                      开发者、营销等
-                    </span>
+              {CHANNELS.map((channel) => (
+                <div key={channel.key} className="space-y-3 text-xs">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex min-w-0 flex-col">
+                      <label className="peer-disabled:cursor-not-allowed peer-disabled:opacity-70 min-w-0 truncate text-sm font-normal text-foreground">
+                        {channel.label}
+                      </label>
+                      <span className="min-w-0 truncate text-xs font-light text-[#84888c]">
+                        {channel.sublabel}
+                      </span>
+                    </div>
+                    <input
+                      inputMode="numeric"
+                      readOnly
+                      aria-readonly
+                      className="w-13.5 shrink-0 border border-[#484b51] bg-transparent py-1 text-center text-sm leading-normal text-foreground focus-visible:border-[#fe810b] focus-visible:outline-none"
+                      type="text"
+                      value={`${allocation[channel.key]}%`}
+                    ></input>
                   </div>
-                  <input
-                    inputMode="numeric"
-                    readOnly
-                    aria-readonly
-                    className="w-13.5 shrink-0 border border-[#484b51] bg-transparent py-1 text-center text-sm leading-normal text-foreground focus-visible:border-[#fe810b] focus-visible:outline-none"
-                    type="text"
-                    value={`${allocation.creator}%`}
-                  ></input>
+                  <Slider
+                    value={[allocation[channel.key]]}
+                    onValueChange={(next) => setChannel(channel.key, next)}
+                    max={100}
+                    step={1}
+                    className="mx-auto w-full"
+                  />
                 </div>
-                <Slider
-                  value={[allocation.creator]}
-                  onValueChange={(next) => setChannel('creator', next)}
-                  max={100}
-                  step={1}
-                  className="mx-auto w-full"
-                />
-              </div>
-              <div className="space-y-3 text-xs">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex min-w-0 flex-col">
-                    <label className="peer-disabled:cursor-not-allowed peer-disabled:opacity-70 min-w-0 truncate text-sm font-normal text-foreground">
-                      銷毀
-                    </label>
-                    <span className="min-w-0 truncate text-xs font-light text-[#84888c]">
-                      銷毀
-                    </span>
-                  </div>
-                  <input
-                    inputMode="numeric"
-                    readOnly
-                    aria-readonly
-                    className="w-13.5 shrink-0 border border-[#484b51] bg-transparent py-1 text-center text-sm leading-normal text-foreground focus-visible:border-[#fe810b] focus-visible:outline-none"
-                    type="text"
-                    value={`${allocation.burn}%`}
-                  ></input>
-                </div>
-                <Slider
-                  value={[allocation.burn]}
-                  onValueChange={(next) => setChannel('burn', next)}
-                  max={100}
-                  step={1}
-                  className="mx-auto w-full"
-                />
-              </div>
-              <div className="space-y-3 text-xs">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex min-w-0 flex-col">
-                    <label className="peer-disabled:cursor-not-allowed peer-disabled:opacity-70 min-w-0 truncate text-sm font-normal text-foreground">
-                      分紅
-                    </label>
-                    <span className="min-w-0 truncate text-xs font-light text-[#84888c]">
-                      持有者獎勵
-                    </span>
-                  </div>
-                  <input
-                    inputMode="numeric"
-                    readOnly
-                    aria-readonly
-                    className="w-13.5 shrink-0 border border-[#484b51] bg-transparent py-1 text-center text-sm leading-normal text-foreground focus-visible:border-[#fe810b] focus-visible:outline-none"
-                    type="text"
-                    value={`${allocation.dividend}%`}
-                  ></input>
-                </div>
-                <Slider
-                  value={[allocation.dividend]}
-                  onValueChange={(next) => setChannel('dividend', next)}
-                  max={100}
-                  step={1}
-                  className="mx-auto w-full"
-                />
-              </div>
-              <div className="space-y-3 text-xs">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex min-w-0 flex-col">
-                    <label className="peer-disabled:cursor-not-allowed peer-disabled:opacity-70 min-w-0 truncate text-sm font-normal text-foreground">
-                      流動性
-                    </label>
-                    <span className="min-w-0 truncate text-xs font-light text-[#84888c]">
-                      增加流動性
-                    </span>
-                  </div>
-                  <input
-                    inputMode="numeric"
-                    readOnly
-                    aria-readonly
-                    className="w-13.5 shrink-0 border border-[#484b51] bg-transparent py-1 text-center text-sm leading-normal text-foreground focus-visible:border-[#fe810b] focus-visible:outline-none"
-                    type="text"
-                    value={`${allocation.liquidity}%`}
-                  ></input>
-                </div>
-                <Slider
-                  value={[allocation.liquidity]}
-                  onValueChange={(next) => setChannel('liquidity', next)}
-                  max={100}
-                  step={1}
-                  className="mx-auto w-full"
-                />
-              </div>
+              ))}
             </div>
           </div>
           <div className="mt-7.5 border-t border-[#484b51] pt-7.5">
             <div>
               <label
-                className="peer-disabled:cursor-not-allowed peer-disabled:opacity-70 mb-2 block font-jetbrains text-[13px] font-normal leading-[normal] text-white"
+                className="peer-disabled:cursor-not-allowed peer-disabled:opacity-70 mb-2 block text-sm text-foreground"
                 htmlFor="minDividendBalance"
               >
                 分紅資格最低持倉
-                <span className="text-[#84888c]"> （代幣）</span>
+                <span className="text-[#84888c]">（代幣）</span>
               </label>
               <input
-                className="flex w-full py-2 ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-2 h-[42px] rounded-[2px] border border-[#84888c] bg-transparent px-3 font-jetbrains text-white placeholder:text-[#84888c] focus-visible:border-[#d0ff00] focus-visible:ring-1 focus-visible:ring-[#d0ff00] text-[14px]"
+                className="flex w-full py-2 ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-2 h-10.5 border border-[#84888c] bg-transparent px-3 text-foreground placeholder:text-[#FE810B] focus-visible:border-[#FE810B] focus-visible:ring-1 focus-visible:ring-[#ff8000] text-sm"
                 id="minDividendBalance"
                 min="0"
                 placeholder="0"
@@ -313,9 +219,7 @@ export const TaxAllocation: React.FC<TaxAllocationProps> = () => {
                   setMinDividendBalance(event.target.value.replace(/\D/g, ''))
                 }
               ></input>
-              <p className="mt-2 font-jetbrains text-[11px] leading-[normal] text-[#a0a3a7]">
-                最少：0 個代幣
-              </p>
+              <p className="mt-2 text-xs text-[#a0a3a7]">最少：0 個代幣</p>
             </div>
           </div>
         </div>
