@@ -46,11 +46,6 @@ export const Slider: React.FC<TaxSliderProps> = ({
             src={SliderLabelIcon}
             alt=""
           />
-          {/* {required && (
-            <span aria-hidden="true" className="text-sm text-[#f7594b]">
-              *
-            </span>
-          )} */}
         </label>
         <output
           htmlFor={inputId}
