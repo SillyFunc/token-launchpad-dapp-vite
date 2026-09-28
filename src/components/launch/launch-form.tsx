@@ -739,16 +739,22 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
               <form.Subscribe
                 selector={(state) => state.values.buybackVault.selected}
               >
-                {(vaultSelected) => (
-                  <TaxAllocation
-                    value={field.state.value}
-                    onChange={field.handleChange}
-                    errors={getTaxAllocationErrors(
-                      field.state.value,
-                      vaultSelected,
-                    )}
-                  />
-                )}
+                {(vaultSelected) => {
+                  const errors = getTaxAllocationErrors(
+                    field.state.value,
+                    vaultSelected,
+                  )
+                  if (!field.state.meta.isDirty) {
+                    delete errors.sum
+                  }
+                  return (
+                    <TaxAllocation
+                      value={field.state.value}
+                      onChange={field.handleChange}
+                      errors={errors}
+                    />
+                  )
+                }}
               </form.Subscribe>
             )}
           </form.Field>
