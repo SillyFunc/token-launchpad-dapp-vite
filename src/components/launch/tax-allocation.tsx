@@ -270,6 +270,11 @@ export const TaxAllocation: React.FC<TaxAllocationProps> = ({
                   {channel.key === 'creator' ? (
                     <FieldError message={errors?.creator} />
                   ) : null}
+                  {channel.key === 'dividend' ? (
+                    <p className="text-xs text-[#84888c]">
+                      分紅稅收將分配給符合條件的代幣持有者。
+                    </p>
+                  ) : null}
                 </div>
               ))}
             </div>
