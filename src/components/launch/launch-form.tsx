@@ -559,7 +559,7 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
             <FormSectionTitle title={m.launch_fee_recipient()} required />
             <form.Field
               name="feeRecipient"
-              validators={{ onMount: feeRecipientSchema, onChange: feeRecipientSchema }}
+              validators={{ onChange: feeRecipientSchema }}
             >
               {(field) => (
                 <div className="flex flex-col">
@@ -575,7 +575,7 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
                     onChange={(event) => field.handleChange(event.target.value)}
                     className="border border-[#84888c] min-h-15 text-sm px-3 py-2 w-full text-foreground bg-transparent placeholder:text-[#84888c] focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#FE810B] disabled:cursor-not-allowed disabled:opacity-50 block resize-none break-all"
                   />
-                  <FieldInfo field={field} showBeforeBlur />
+                  <FieldInfo field={field} />
                 </div>
               )}
             </form.Field>
