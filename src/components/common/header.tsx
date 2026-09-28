@@ -38,7 +38,7 @@ export const Header: React.FC<HeaderProps> = ({ isMenuOpen, onToggleMenu }) => {
           aria-label="Home"
           className="flex items-center justify-center text-[#FE810B]"
         >
-          <Flame className="size-6" />
+          <Flame className="size-6 fill-[#FE810B]" />
         </Link>
       </div>
       <div className="flex shrink-0 items-center space-x-2">
