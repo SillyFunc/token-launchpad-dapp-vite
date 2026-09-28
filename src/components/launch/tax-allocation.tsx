@@ -209,7 +209,7 @@ export const TaxAllocation: React.FC<TaxAllocationProps> = () => {
                 <span className="text-[#84888c]">（代幣）</span>
               </label>
               <input
-                className="flex w-full py-2 ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-2 h-10.5 border border-[#84888c] bg-transparent px-3 text-foreground placeholder:text-[#FE810B] focus-visible:border-[#FE810B] focus-visible:ring-1 focus-visible:ring-[#ff8000] text-sm"
+                className="box-border h-10.5 w-full appearance-none border border-[#84888c] bg-transparent px-3 text-sm text-white placeholder:text-[#84888c] focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#FE810B] disabled:cursor-not-allowed disabled:opacity-50"
                 id="minDividendBalance"
                 min="0"
                 placeholder="0"
