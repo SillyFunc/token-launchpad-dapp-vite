@@ -46,6 +46,7 @@ import {
   TaxAllocation,
   defaultTaxAllocation,
   taxAllocationFromParams,
+  type TaxAllocationErrors,
   type TaxAllocationValue,
 } from './tax-allocation'
 
@@ -114,37 +115,69 @@ const taxAllocationSchema = z
   .superRefine((value, ctx) => {
     const total = value.creator + value.burn + value.dividend + value.liquidity
     if (total !== 100) {
-      ctx.addIssue({ code: 'custom', message: m.launch_tax_allocation_sum() })
+      ctx.addIssue({
+        code: 'custom',
+        path: ['sum'],
+        message: m.launch_tax_allocation_sum(),
+      })
     }
 
     const minBalance = value.minDividendBalance.trim()
     if (value.dividend === 0) {
       if (minBalance !== '' && minBalance !== '0') {
-        ctx.addIssue({
-          code: 'custom',
-          message: m.launch_tax_min_share_zero(),
-        })
+      ctx.addIssue({
+        code: 'custom',
+        path: ['minDividendBalance'],
+        message: m.launch_tax_min_share_zero(),
+      })
       }
       return
     }
     if (!/^\d+$/.test(minBalance) || BigInt(minBalance) === 0n) {
-      ctx.addIssue({ code: 'custom', message: m.launch_tax_min_share_required() })
+      ctx.addIssue({
+        code: 'custom',
+        path: ['minDividendBalance'],
+        message: m.launch_tax_min_share_required(),
+      })
     } else if (BigInt(minBalance) > MAX_MINIMUM_SHARE_BALANCE_TOKENS) {
-      ctx.addIssue({ code: 'custom', message: m.launch_tax_min_share_max() })
+      ctx.addIssue({
+        code: 'custom',
+        path: ['minDividendBalance'],
+        message: m.launch_tax_min_share_max(),
+      })
     }
   })
 
-/** Adds the cross-field rule: a buyback vault requires a market channel. */
+function getTaxAllocationErrors(
+  value: TaxAllocationValue,
+  vaultSelected: boolean,
+): TaxAllocationErrors {
+  const errors: TaxAllocationErrors = {}
+  const result = taxAllocationSchema.safeParse(value)
+  if (!result.success) {
+    for (const issue of result.error.issues) {
+      const key = issue.path[0]
+      if (
+        (key === 'sum' || key === 'minDividendBalance') &&
+        !errors[key] &&
+        issue.message
+      ) {
+        errors[key] = issue.message
+      }
+    }
+  }
+  if (vaultSelected && value.creator === 0) {
+    errors.creator = m.launch_tax_vault_requires_market()
+  }
+  return errors
+}
+
 function validateTaxAllocationValue(
   value: TaxAllocationValue,
   vaultSelected: boolean,
 ): string | undefined {
-  const result = taxAllocationSchema.safeParse(value)
-  if (!result.success) return result.error.issues[0]?.message
-  if (vaultSelected && value.creator === 0) {
-    return m.launch_tax_vault_requires_market()
-  }
-  return undefined
+  const errors = getTaxAllocationErrors(value, vaultSelected)
+  return errors.sum ?? errors.creator ?? errors.minDividendBalance
 }
 
 /**
@@ -703,13 +736,20 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
             }}
           >
             {(field) => (
-              <div className="flex flex-col">
-                <TaxAllocation
-                  value={field.state.value}
-                  onChange={field.handleChange}
-                />
-                <FieldInfo field={field} showBeforeBlur />
-              </div>
+              <form.Subscribe
+                selector={(state) => state.values.buybackVault.selected}
+              >
+                {(vaultSelected) => (
+                  <TaxAllocation
+                    value={field.state.value}
+                    onChange={field.handleChange}
+                    errors={getTaxAllocationErrors(
+                      field.state.value,
+                      vaultSelected,
+                    )}
+                  />
+                )}
+              </form.Subscribe>
             )}
           </form.Field>
 

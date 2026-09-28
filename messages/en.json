@@ -86,7 +86,7 @@
   "launch_tax_min_share_required": "Minimum holding for dividend eligibility must be greater than 0 when the dividend channel is enabled.",
   "launch_tax_min_share_max": "Minimum holding for dividend eligibility cannot exceed 1,000,000,000 tokens.",
   "launch_tax_min_share_zero": "Minimum holding for dividend eligibility must be 0 when the dividend channel is disabled.",
-  "launch_tax_vault_requires_market": "A scheduled buyback vault requires the creator channel allocation to be above 0%.",
+  "launch_tax_vault_requires_market": "Enabling the buyback vault requires its tax share to be above 0%.",
   "launch_tax_duration": "Tax duration",
   "launch_tax_duration_placeholder": "365",
   "launch_tax_duration_description": "The number of days token trading taxes remain active. Both buy and sell taxes become zero after this period.",

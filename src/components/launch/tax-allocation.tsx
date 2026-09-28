@@ -5,8 +5,8 @@ import { FormSectionTitle } from '../common/form-section-title'
 const CHANNELS = [
   {
     key: 'creator',
-    label: '创作者资金钱包',
-    sublabel: '开发者、营销等',
+    label: '自动回购金库',
+    sublabel: '',
     color: 'rgb(254, 129, 11)',
   },
   {
@@ -19,7 +19,7 @@ const CHANNELS = [
     key: 'dividend',
     label: '分紅',
     sublabel: '持有者獎勵',
-    color: 'rgb(247, 89, 75)',
+    color: 'rgb(208, 255, 0)',
   },
   {
     key: 'liquidity',
@@ -98,14 +98,27 @@ export function taxAllocationFromParams(
   }
 }
 
+export interface TaxAllocationErrors {
+  sum?: string
+  creator?: string
+  minDividendBalance?: string
+}
+
 export interface TaxAllocationProps {
   value: TaxAllocationValue
   onChange: (next: TaxAllocationValue) => void
+  errors?: TaxAllocationErrors
+}
+
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null
+  return <p className="mt-1 text-xs text-[#f7594b]">{message}</p>
 }
 
 export const TaxAllocation: React.FC<TaxAllocationProps> = ({
   value,
   onChange,
+  errors,
 }) => {
   const total = CHANNELS.reduce((sum, channel) => sum + value[channel.key], 0)
   const unallocated = 100 - total
@@ -137,6 +150,7 @@ export const TaxAllocation: React.FC<TaxAllocationProps> = ({
   return (
     <div className="flex flex-col gap-6">
       <FormSectionTitle title="税收分配" required></FormSectionTitle>
+      <div className="flex flex-col">
       <div className='class="mt-9 min-w-0 border border-[#84888c] bg-transparent p-4 text-xs"'>
         <div className="flex items-center gap-2 bg-[rgba(247,89,75,0.1)] p-3 text-[#f7594b]">
           <svg
@@ -231,9 +245,11 @@ export const TaxAllocation: React.FC<TaxAllocationProps> = ({
                       <label className="peer-disabled:cursor-not-allowed peer-disabled:opacity-70 min-w-0 truncate text-sm font-normal text-foreground">
                         {channel.label}
                       </label>
-                      <span className="min-w-0 truncate text-xs font-light text-[#84888c]">
-                        {channel.sublabel}
-                      </span>
+                      {channel.sublabel ? (
+                        <span className="min-w-0 truncate text-xs font-light text-[#84888c]">
+                          {channel.sublabel}
+                        </span>
+                      ) : null}
                     </div>
                     <input
                       inputMode="numeric"
@@ -251,6 +267,9 @@ export const TaxAllocation: React.FC<TaxAllocationProps> = ({
                     step={1}
                     className="mx-auto w-full **:data-[slot=slider-track]:bg-[#757575] **:data-[slot=slider-range]:bg-[#FE810B] **:data-[slot=slider-thumb]:bg-[#FE810B] **:data-[slot=slider-thumb]:border-[#FE810B] **:data-[slot=slider-thumb]:ring-[#FE810B] **:data-[slot=slider-thumb]:shadow-none **:data-[slot=slider-thumb]:box-border"
                   />
+                  {channel.key === 'creator' ? (
+                    <FieldError message={errors?.creator} />
+                  ) : null}
                 </div>
               ))}
             </div>
@@ -278,10 +297,13 @@ export const TaxAllocation: React.FC<TaxAllocationProps> = ({
                   })
                 }
               ></input>
+              <FieldError message={errors?.minDividendBalance} />
               <p className="mt-2 text-xs text-[#a0a3a7]">最少：0 個代幣</p>
             </div>
           </div>
         </div>
+      </div>
+      <FieldError message={errors?.sum} />
       </div>
     </div>
   )
