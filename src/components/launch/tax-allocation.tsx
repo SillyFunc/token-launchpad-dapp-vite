@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { formatUnits } from 'viem'
 import { Slider } from '../ui/slider'
 import { FormSectionTitle } from '../common/form-section-title'
 
@@ -33,42 +33,98 @@ type ChannelKey = (typeof CHANNELS)[number]['key']
 
 const UNALLOCATED_ARC_COLOR = 'rgb(31, 32, 35)'
 
-const INITIAL_ALLOCATION: Record<ChannelKey, number> = {
-  creator: 10,
-  burn: 0,
-  dividend: 0,
-  liquidity: 0,
+export interface TaxAllocationValue {
+  creator: number
+  burn: number
+  dividend: number
+  liquidity: number
+  minDividendBalance: string
 }
 
-export interface TaxAllocationProps {}
-export const TaxAllocation: React.FC<TaxAllocationProps> = () => {
-  const [allocation, setAllocation] = useState(INITIAL_ALLOCATION)
-  const [minDividendBalance, setMinDividendBalance] = useState('0')
+/**
+ * Default draft: 10% to the creator wallet, the rest intentionally left
+ * unallocated so creators must distribute the full 100% themselves before
+ * the form validates (contract requires the shares to sum to 100%).
+ */
+export function defaultTaxAllocation(): TaxAllocationValue {
+  return {
+    creator: 10,
+    burn: 0,
+    dividend: 0,
+    liquidity: 0,
+    minDividendBalance: '0',
+  }
+}
 
-  const total = CHANNELS.reduce(
-    (sum, channel) => sum + allocation[channel.key],
-    0,
-  )
+/** Tax allocation fields as echoed back by the backend (bps + token wei). */
+export interface TaxAllocationParams {
+  marketBps?: number
+  deflationBps?: number
+  lpBps?: number
+  dividendBps?: number
+  minimumShareBalance?: string
+}
+
+/**
+ * Rebuilds the form value from backend-echoed fields (bps → percents, wei →
+ * whole tokens). Records saved before tax allocation existed carry no fields
+ * and fall back to the defaults.
+ */
+export function taxAllocationFromParams(
+  params: TaxAllocationParams,
+): TaxAllocationValue {
+  if (params.marketBps == null) return defaultTaxAllocation()
+
+  let minDividendBalance = '0'
+  try {
+    minDividendBalance = formatUnits(
+      BigInt(params.minimumShareBalance || '0'),
+      18,
+    )
+  } catch {
+    // Keep '0' for malformed echoes.
+  }
+  // The form input is integer-only; truncate any decimal part defensively.
+  if (minDividendBalance.includes('.')) {
+    minDividendBalance = minDividendBalance.split('.')[0]
+  }
+
+  return {
+    creator: (params.marketBps ?? 0) / 100,
+    burn: (params.deflationBps ?? 0) / 100,
+    dividend: (params.dividendBps ?? 0) / 100,
+    liquidity: (params.lpBps ?? 0) / 100,
+    minDividendBalance,
+  }
+}
+
+export interface TaxAllocationProps {
+  value: TaxAllocationValue
+  onChange: (next: TaxAllocationValue) => void
+}
+
+export const TaxAllocation: React.FC<TaxAllocationProps> = ({
+  value,
+  onChange,
+}) => {
+  const total = CHANNELS.reduce((sum, channel) => sum + value[channel.key], 0)
   const unallocated = 100 - total
 
   const setChannel = (key: ChannelKey, next: number | readonly number[]) => {
     const raw = Array.isArray(next) ? next[0] : next
-    setAllocation((prev) => {
-      const headroom =
-        100 - CHANNELS.reduce((sum, ch) => sum + prev[ch.key], 0) + prev[key]
-      const clamped = Math.min(Math.max(Math.round(raw), 0), headroom)
-      return prev[key] === clamped ? prev : { ...prev, [key]: clamped }
-    })
+    const headroom = 100 - total + value[key]
+    const clamped = Math.min(Math.max(Math.round(raw), 0), headroom)
+    if (value[key] !== clamped) onChange({ ...value, [key]: clamped })
   }
 
   const donutBackground = (() => {
     const stops: string[] = []
     let allocated = 0
     for (const channel of CHANNELS) {
-      const value = allocation[channel.key]
-      if (value <= 0) continue
-      stops.push(`${channel.color} ${allocated}% ${allocated + value}%`)
-      allocated += value
+      const channelValue = value[channel.key]
+      if (channelValue <= 0) continue
+      stops.push(`${channel.color} ${allocated}% ${allocated + channelValue}%`)
+      allocated += channelValue
     }
     if (allocated < 100) {
       stops.push(`${UNALLOCATED_ARC_COLOR} ${allocated}% 100%`)
@@ -76,7 +132,7 @@ export const TaxAllocation: React.FC<TaxAllocationProps> = () => {
     return `conic-gradient(${stops.join(', ')})`
   })()
 
-  const handleReset = () => setAllocation(INITIAL_ALLOCATION)
+  const handleReset = () => onChange(defaultTaxAllocation())
 
   return (
     <div className="flex flex-col gap-6">
@@ -130,7 +186,7 @@ export const TaxAllocation: React.FC<TaxAllocationProps> = () => {
                     </span>
                   </span>
                   <span className="shrink-0 text-white">
-                    {allocation[channel.key]}%
+                    {value[channel.key]}%
                   </span>
                 </div>
               ))}
@@ -185,11 +241,11 @@ export const TaxAllocation: React.FC<TaxAllocationProps> = () => {
                       aria-readonly
                       className="w-13.5 shrink-0 border border-[#484b51] bg-transparent py-1 text-center text-sm leading-normal text-foreground focus-visible:border-[#fe810b] focus-visible:outline-none"
                       type="text"
-                      value={`${allocation[channel.key]}%`}
+                      value={`${value[channel.key]}%`}
                     ></input>
                   </div>
                   <Slider
-                    value={[allocation[channel.key]]}
+                    value={[value[channel.key]]}
                     onValueChange={(next) => setChannel(channel.key, next)}
                     max={100}
                     step={1}
@@ -214,9 +270,12 @@ export const TaxAllocation: React.FC<TaxAllocationProps> = () => {
                 min="0"
                 placeholder="0"
                 type="number"
-                value={minDividendBalance}
+                value={value.minDividendBalance}
                 onChange={(event) =>
-                  setMinDividendBalance(event.target.value.replace(/\D/g, ''))
+                  onChange({
+                    ...value,
+                    minDividendBalance: event.target.value.replace(/\D/g, ''),
+                  })
                 }
               ></input>
               <p className="mt-2 text-xs text-[#a0a3a7]">最少：0 個代幣</p>

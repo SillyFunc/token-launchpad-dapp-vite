@@ -101,6 +101,18 @@ export type BoardItemResponse = {
   minLiquidityAmount: number
   slippage: number
   creatorBuyTokens: number
+  marketBps?: number
+  deflationBps?: number
+  lpBps?: number
+  dividendBps?: number
+  minimumShareBalance?: string
+  buybackVaultEnabled?: number
+  mode?: number
+  triggerType?: number
+  firstExecuteAt?: number
+  intervalSeconds?: number
+  triggerAmount?: string
+  buybackAmount?: string
 }
 
 export function listBoard(params: BoardListParams, signal?: AbortSignal) {

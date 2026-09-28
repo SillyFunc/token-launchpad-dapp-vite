@@ -4,6 +4,7 @@ import { CollapsibleFormSection } from '../common/collapsible-form-section'
 import { Checkbox } from '../ui/checkbox'
 import BuybackVaultLogo from '@/assets/svgs/scheduled-buyback-vault-logo.svg'
 import {
+  defaultFirstExecuteAt,
   type BuybackVaultDraft,
   type BuybackVaultIntervalUnit,
   type BuybackVaultTrigger,
@@ -21,6 +22,7 @@ const INTERVAL_UNITS: { value: BuybackVaultIntervalUnit; label: string }[] = [
 export interface ScheduledBuybackVaultProps {
   value: BuybackVaultDraft
   onChange: (value: BuybackVaultDraft) => void
+  isCreateMode?: boolean
 }
 
 const configInputClassName =
@@ -52,6 +54,7 @@ function optionTitleClassName(isSelected: boolean) {
 export const ScheduledBuybackVault: React.FC<ScheduledBuybackVaultProps> = ({
   value,
   onChange,
+  isCreateMode = false,
 }) => {
   const selected = value.selected
   const buybackMode = value.buybackMode
@@ -66,12 +69,19 @@ export const ScheduledBuybackVault: React.FC<ScheduledBuybackVaultProps> = ({
   const showTriggerBalance = conditionIncludes(executionCondition, 'balance')
 
   return (
-    <CollapsibleFormSection title="選擇 VAULT">
+    <CollapsibleFormSection title="選擇 VAULT" defaultOpen={selected}>
       <button
         type="button"
         aria-label="選擇金庫"
         aria-pressed={selected}
-        onClick={() => patch({ selected: !selected })}
+        onClick={() => {
+          const nextSelected = !selected
+          patch(
+            nextSelected && isCreateMode && !value.firstExecuteAt
+              ? { selected: true, firstExecuteAt: defaultFirstExecuteAt() }
+              : { selected: nextSelected },
+          )
+        }}
         className="border border-[#484b51] bg-transparent p-4 gap-5 mt-6 w-full min-w-0 transition-colors"
       >
         <div className="min-w-0 flex-1 flex items-center gap-3">
@@ -350,9 +360,6 @@ export const ScheduledBuybackVault: React.FC<ScheduledBuybackVaultProps> = ({
                 className="text-sm px-4 bg-background border border-input text-foreground hover:bg-accent h-10"
               >
                 取消配置
-              </Button>
-              <Button className="bg-[#FE810B] text-foreground text-sm px-4 border-none outline-none hover:bg-[#FE810B]/85 h-10">
-                配置复核
               </Button>
             </div>
           </div>

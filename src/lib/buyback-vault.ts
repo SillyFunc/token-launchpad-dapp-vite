@@ -1,4 +1,4 @@
-import { parseEther } from 'viem'
+import { formatEther, parseEther } from 'viem'
 
 export type BuybackVaultMode = 'token' | 'lp'
 export type BuybackVaultTrigger = 'time' | 'balance' | 'time-and-balance'
@@ -45,6 +45,99 @@ export function defaultBuybackVaultDraft(): BuybackVaultDraft {
     triggerAmount: '1',
     interval: '1',
     buybackAmount: '0.001',
+  }
+}
+
+/** Vault params as echoed back by the backend (same names as the API payload). */
+export interface BuybackVaultParams {
+  buybackVaultEnabled?: number
+  mode?: number
+  triggerType?: number
+  firstExecuteAt?: number
+  intervalSeconds?: number
+  triggerAmount?: string
+  buybackAmount?: string
+}
+
+const TRIGGER_CONDITIONS: BuybackVaultTrigger[] = [
+  'time',
+  'balance',
+  'time-and-balance',
+]
+
+function unixSecondsToUtc8DatetimeLocal(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds <= 0) return ''
+  // The datetime-local input displays UTC+8 wall time; shift the epoch before
+  // reading ISO fields (inverse of utc8DatetimeLocalToUnixSeconds).
+  return new Date(seconds * 1000 + 8 * 3600 * 1000).toISOString().slice(0, 16)
+}
+
+export function defaultFirstExecuteAt(nowMs = Date.now()): string {
+  return unixSecondsToUtc8DatetimeLocal(Math.floor(nowMs / 1000) + 3_600)
+}
+
+function splitIntervalSeconds(totalSeconds: number): {
+  interval: string
+  intervalUnit: BuybackVaultIntervalUnit
+} {
+  // Prefer the largest unit that divides evenly; the contract guarantees a
+  // whole-minute interval, so minutes always work as the final fallback.
+  if (totalSeconds >= 86_400 && totalSeconds % 86_400 === 0) {
+    return { interval: String(totalSeconds / 86_400), intervalUnit: 'days' }
+  }
+  if (totalSeconds >= 3_600 && totalSeconds % 3_600 === 0) {
+    return { interval: String(totalSeconds / 3_600), intervalUnit: 'hours' }
+  }
+  if (totalSeconds >= 60) {
+    return {
+      interval: String(Math.round(totalSeconds / 60)),
+      intervalUnit: 'minutes',
+    }
+  }
+  return { interval: '1', intervalUnit: 'minutes' }
+}
+
+function weiToBnbString(value: string): string {
+  try {
+    return formatEther(BigInt(value))
+  } catch {
+    return '0'
+  }
+}
+
+/**
+ * Rebuilds the form draft from backend-echoed vault params (the same values
+ * the launch form submitted). Records saved before vault support existed
+ * carry no fields and fall back to the defaults.
+ */
+export function draftFromVaultParams(
+  params: BuybackVaultParams,
+): BuybackVaultDraft {
+  const defaults = defaultBuybackVaultDraft()
+  if (params.buybackVaultEnabled == null) return defaults
+
+  const intervalSeconds = Number(params.intervalSeconds ?? 0)
+  const { interval, intervalUnit } =
+    intervalSeconds > 0
+      ? splitIntervalSeconds(intervalSeconds)
+      : { interval: defaults.interval, intervalUnit: defaults.intervalUnit }
+
+  return {
+    selected: params.buybackVaultEnabled === 1,
+    buybackMode: Number(params.mode) === 1 ? 'lp' : 'token',
+    executionCondition:
+      TRIGGER_CONDITIONS[Number(params.triggerType ?? 0)] ?? 'time',
+    intervalUnit,
+    firstExecuteAt: unixSecondsToUtc8DatetimeLocal(
+      Number(params.firstExecuteAt ?? 0),
+    ),
+    triggerAmount: params.triggerAmount
+      ? weiToBnbString(params.triggerAmount)
+      : defaults.triggerAmount,
+    interval,
+    buybackAmount: params.buybackAmount
+      ? weiToBnbString(params.buybackAmount)
+      : defaults.buybackAmount,
   }
 }
 

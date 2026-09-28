@@ -1,6 +1,6 @@
 import { useConfig } from 'wagmi'
 import { readContract } from 'wagmi/actions'
-import { decodeEventLog, type Address, type Hex } from 'viem'
+import { decodeEventLog, parseEther, type Address, type Hex } from 'viem'
 
 import { executeContractTx } from '@/hooks/use-contract-tx'
 import { getCoordinatorFactory } from '@/contracts'
@@ -9,6 +9,42 @@ import { findVanitySalt } from '@/lib/vanity-salt'
 
 const SECONDS_PER_DAY = 86_400
 const MAX_ANTI_FARMER_DURATION_DAYS = 365
+
+/** Mirrors CoordinatorFactory.MAX_MINIMUM_SHARE_BALANCE (1e9 tokens, 18 decimals). */
+const MAX_MINIMUM_SHARE_BALANCE = parseEther('1000000000')
+
+/**
+ * Tax distribution across the four channels, in contract units (bps).
+ * The contract requires the shares to sum to exactly 10_000 bps.
+ */
+export interface TaxDistributionParams {
+  /** Creator/marketing channel share (bps). */
+  marketBps: number
+  /** Burn/deflation channel share (bps). */
+  deflationBps: number
+  /** Liquidity channel share (bps). */
+  lpBps: number
+  /** Dividend channel share (bps). */
+  dividendBps: number
+  /**
+   * Minimum holding (token wei, 18 decimals) for dividend eligibility.
+   * Must be 0n when `dividendBps` is 0, otherwise 1…1e9 tokens.
+   */
+  minimumShareBalance: bigint
+}
+
+/**
+ * Fallback for records saved before tax allocation existed: 100% to the
+ * market channel, matching the legacy behavior where all tax went to the
+ * fee recipient.
+ */
+export const DEFAULT_TAX_DISTRIBUTION: TaxDistributionParams = {
+  marketBps: 10_000,
+  deflationBps: 0,
+  lpBps: 0,
+  dividendBps: 0,
+  minimumShareBalance: 0n,
+}
 
 export interface CreateTokenParams {
   account: Address
@@ -19,6 +55,7 @@ export interface CreateTokenParams {
   sellTax: number
   feeRecipient: Address
   antiFarmerDurationDays: number
+  taxDistribution: TaxDistributionParams
   salt?: Hex
   buyback?: EncodedBuybackConfig
 }
@@ -51,6 +88,22 @@ export function useCreateToken() {
       throw new Error('InvalidAntiFarmerDuration')
     }
 
+    // Mirror the CoordinatorFactory checks so misconfiguration fails before
+    // the transaction is sent instead of reverting on-chain.
+    const { marketBps, deflationBps, lpBps, dividendBps, minimumShareBalance } =
+      params.taxDistribution
+    if (marketBps + deflationBps + lpBps + dividendBps !== 10_000) {
+      throw new Error('InvalidTaxDistribution')
+    }
+    if (
+      (dividendBps === 0 && minimumShareBalance !== 0n) ||
+      (dividendBps > 0 &&
+        (minimumShareBalance === 0n ||
+          minimumShareBalance > MAX_MINIMUM_SHARE_BALANCE))
+    ) {
+      throw new Error('InvalidMinimumShareBalance')
+    }
+
     const [creationFee, salt] = await Promise.all([
       readContract(config, {
         ...coordinator,
@@ -68,6 +121,11 @@ export function useCreateToken() {
       buyTax: percentToBps(params.buyTax),
       sellTax: percentToBps(params.sellTax),
       feeRecipient: params.feeRecipient,
+      marketBps,
+      deflationBps,
+      lpBps,
+      dividendBps,
+      minimumShareBalance,
       antiFarmerDuration,
       liqExpectedOutputAmount: 0n,
     }

@@ -2,7 +2,7 @@ import { useMemo, useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useForm } from '@tanstack/react-form'
 import { useQueryClient } from '@tanstack/react-query'
-import { isAddress, type Hex } from 'viem'
+import { isAddress, parseUnits, type Hex } from 'viem'
 import { useConfig, useConnection } from 'wagmi'
 import { ArrowRightIcon } from 'lucide-react'
 import { z } from 'zod'
@@ -28,6 +28,12 @@ import {
 import { toast } from '@/lib/toast'
 import { requestAuthSignature } from '@/lib/auth'
 import {
+  defaultBuybackVaultDraft,
+  draftFromVaultParams,
+  encodeBuybackConfig,
+  type BuybackVaultDraft,
+} from '@/lib/buyback-vault'
+import {
   findVanitySalt,
   isPredictedTokenAddress,
   predictTokenAddress,
@@ -35,7 +41,13 @@ import {
 import { m } from '@/paraglide/messages.js'
 import { CollapsibleFormSection } from '../common/collapsible-form-section'
 import { TokenLogoUploader } from './token-logo-uploader'
-import { TaxAllocation } from './tax-allocation'
+import { ScheduledBuybackVault } from './scheduled-buyback-vault'
+import {
+  TaxAllocation,
+  defaultTaxAllocation,
+  taxAllocationFromParams,
+  type TaxAllocationValue,
+} from './tax-allocation'
 
 const optionalUrl = z.union([z.literal(''), z.url()])
 
@@ -80,6 +92,86 @@ const feeRecipientSchema = z
   // alongside the min(1) message.
   .refine((value) => !value || isAddress(value), 'Enter a valid EVM address')
 
+/** FlapTaxTokenV3 uses 18 decimals. */
+const TOKEN_DECIMALS = 18
+/** Mirrors CoordinatorFactory.MAX_MINIMUM_SHARE_BALANCE (1e9 whole tokens). */
+const MAX_MINIMUM_SHARE_BALANCE_TOKENS = 1_000_000_000n
+
+/**
+ * Contract rules mirrored from CoordinatorFactory._assertCanCreate:
+ * channel shares sum to exactly 100%, and a non-zero dividend channel
+ * requires a minimum share balance in (0, 1e9] while a zero dividend
+ * channel requires it to be 0.
+ */
+const taxAllocationSchema = z
+  .object({
+    creator: z.number().int().min(0).max(100),
+    burn: z.number().int().min(0).max(100),
+    dividend: z.number().int().min(0).max(100),
+    liquidity: z.number().int().min(0).max(100),
+    minDividendBalance: z.string(),
+  })
+  .superRefine((value, ctx) => {
+    const total = value.creator + value.burn + value.dividend + value.liquidity
+    if (total !== 100) {
+      ctx.addIssue({ code: 'custom', message: m.launch_tax_allocation_sum() })
+    }
+
+    const minBalance = value.minDividendBalance.trim()
+    if (value.dividend === 0) {
+      if (minBalance !== '' && minBalance !== '0') {
+        ctx.addIssue({
+          code: 'custom',
+          message: m.launch_tax_min_share_zero(),
+        })
+      }
+      return
+    }
+    if (!/^\d+$/.test(minBalance) || BigInt(minBalance) === 0n) {
+      ctx.addIssue({ code: 'custom', message: m.launch_tax_min_share_required() })
+    } else if (BigInt(minBalance) > MAX_MINIMUM_SHARE_BALANCE_TOKENS) {
+      ctx.addIssue({ code: 'custom', message: m.launch_tax_min_share_max() })
+    }
+  })
+
+/** Adds the cross-field rule: a buyback vault requires a market channel. */
+function validateTaxAllocationValue(
+  value: TaxAllocationValue,
+  vaultSelected: boolean,
+): string | undefined {
+  const result = taxAllocationSchema.safeParse(value)
+  if (!result.success) return result.error.issues[0]?.message
+  if (vaultSelected && value.creator === 0) {
+    return m.launch_tax_vault_requires_market()
+  }
+  return undefined
+}
+
+/**
+ * Maps the encoded on-chain BuybackConfig to the API payload shape.
+ * Identical to the contract parameters except `trigger` → `triggerType`.
+ */
+function encodeVaultForPayload(draft: BuybackVaultDraft) {
+  const encoded = encodeBuybackConfig(draft)
+  return {
+    mode: encoded.mode,
+    triggerType: encoded.trigger,
+    firstExecuteAt: Number(encoded.firstExecuteAt),
+    intervalSeconds: Number(encoded.intervalSeconds),
+    triggerAmount: encoded.triggerAmount.toString(),
+    buybackAmount: encoded.buybackAmount.toString(),
+  }
+}
+
+const clearedVaultPayload = {
+  mode: 0,
+  triggerType: 0,
+  firstExecuteAt: 0,
+  intervalSeconds: 0,
+  triggerAmount: '0',
+  buybackAmount: '0',
+}
+
 function sanitizeDaysInput(value: string) {
   return value
     .replace(/\D/g, '')
@@ -119,6 +211,8 @@ interface LaunchFormValues {
   buyTax: number
   sellTax: number
   antiFarmerDuration: string
+  taxAllocation: TaxAllocationValue
+  buybackVault: BuybackVaultDraft
   links: {
     telegram: string
     twitter: string
@@ -174,6 +268,12 @@ function getInitialValues(
     buyTax: initialData?.buyTax ?? 0,
     sellTax: initialData?.sellTax ?? 1,
     antiFarmerDuration: String(initialData?.antiFarmerDuration ?? 30),
+    taxAllocation: initialData
+      ? taxAllocationFromParams(initialData)
+      : defaultTaxAllocation(),
+    buybackVault: initialData
+      ? draftFromVaultParams(initialData)
+      : defaultBuybackVaultDraft(),
     links: {
       telegram: initialData?.telegram ?? '',
       twitter: initialData?.twitter ?? '',
@@ -197,6 +297,11 @@ function normalizeValues(value: LaunchFormValues) {
     buyTax: Number(value.buyTax),
     sellTax: Number(value.sellTax),
     antiFarmerDuration: Number(value.antiFarmerDuration),
+    taxAllocation: {
+      ...value.taxAllocation,
+      minDividendBalance: value.taxAllocation.minDividendBalance.trim(),
+    },
+    buybackVault: value.buybackVault,
     links: {
       telegram: value.links.telegram.trim(),
       twitter: value.links.twitter.trim(),
@@ -290,7 +395,9 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
             throw new Error(m.launch_salt_failed())
           }
 
-          const feeRecipient = value.feeRecipient.trim()
+          const feeRecipient = value.buybackVault.selected
+            ? value.feeRecipient.trim() || address
+            : value.feeRecipient.trim()
           if (!isAddress(feeRecipient)) {
             throw new Error(m.dashboard_issue_invalid_recipient())
           }
@@ -310,6 +417,22 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
             taxDuration: PLATFORM_TAX_DURATION_DAYS,
             antiFarmerDuration: Number(value.antiFarmerDuration),
             liqExpectedOutputAmount: 0,
+            // Four-channel tax allocation, in contract bps (percents are
+            // slider integers, so the ×100 conversion is exact).
+            marketBps: value.taxAllocation.creator * 100,
+            deflationBps: value.taxAllocation.burn * 100,
+            lpBps: value.taxAllocation.liquidity * 100,
+            dividendBps: value.taxAllocation.dividend * 100,
+            minimumShareBalance: parseUnits(
+              value.taxAllocation.minDividendBalance.trim() || '0',
+              TOKEN_DECIMALS,
+            ).toString(),
+            // Buyback vault: contract parameters, with `trigger` renamed
+            // to `triggerType` for the API.
+            buybackVaultEnabled: value.buybackVault.selected ? 1 : 0,
+            ...(value.buybackVault.selected
+              ? encodeVaultForPayload(value.buybackVault)
+              : clearedVaultPayload),
             launchType: Number(initialData?.launchType ?? 2),
             website: value.links.website.trim(),
             telegram: value.links.telegram.trim(),
@@ -521,6 +644,16 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
             </form.Field>
           </div>
 
+          <form.Field name="buybackVault">
+            {(field) => (
+              <ScheduledBuybackVault
+                value={field.state.value}
+                onChange={field.handleChange}
+                isCreateMode={!isEditMode}
+              />
+            )}
+          </form.Field>
+
           <div className="flex flex-col gap-6">
             <FormSectionTitle title={m.launch_tax_settings()} required />
             <form.Field name="buyTax">
@@ -553,33 +686,90 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
             </form.Field>
           </div>
 
-          <TaxAllocation />
+          <form.Field
+            name="taxAllocation"
+            validators={{
+              onMount: ({ value, fieldApi }) =>
+                validateTaxAllocationValue(
+                  value,
+                  fieldApi.form.getFieldValue('buybackVault').selected,
+                ),
+              onChangeListenTo: ['buybackVault'],
+              onChange: ({ value, fieldApi }) =>
+                validateTaxAllocationValue(
+                  value,
+                  fieldApi.form.getFieldValue('buybackVault').selected,
+                ),
+            }}
+          >
+            {(field) => (
+              <div className="flex flex-col">
+                <TaxAllocation
+                  value={field.state.value}
+                  onChange={field.handleChange}
+                />
+                <FieldInfo field={field} showBeforeBlur />
+              </div>
+            )}
+          </form.Field>
 
-          <div className="flex flex-col gap-6">
-            <FormSectionTitle title={m.launch_fee_recipient()} required />
-            <form.Field
-              name="feeRecipient"
-              validators={{ onChange: feeRecipientSchema }}
-            >
-              {(field) => (
-                <div className="flex flex-col">
-                  <textarea
-                    id={field.name}
-                    name={field.name}
-                    rows={1}
-                    aria-label={m.launch_fee_recipient()}
-                    autoComplete="off"
-                    spellCheck={false}
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(event) => field.handleChange(event.target.value)}
-                    className="border border-[#84888c] min-h-15 text-sm px-3 py-2 w-full text-foreground bg-transparent placeholder:text-[#84888c] focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#FE810B] disabled:cursor-not-allowed disabled:opacity-50 block resize-none break-all"
-                  />
-                  <FieldInfo field={field} />
-                </div>
-              )}
-            </form.Field>
-          </div>
+          <form.Subscribe
+            selector={(state) => state.values.buybackVault.selected}
+          >
+            {(vaultSelected) => (
+              <div className={vaultSelected ? 'hidden' : 'flex flex-col gap-6'}>
+                <FormSectionTitle title={m.launch_fee_recipient()} required />
+                <form.Field
+                  name="feeRecipient"
+                  validators={{
+                    onChangeListenTo: ['buybackVault'],
+                    onBlur: ({ value, fieldApi }) => {
+                      if (
+                        fieldApi.form.getFieldValue('buybackVault').selected
+                      ) {
+                        return undefined
+                      }
+                      const result = feeRecipientSchema.safeParse(value)
+                      return result.success
+                        ? undefined
+                        : result.error.issues[0]?.message
+                    },
+                    onChange: ({ value, fieldApi }) => {
+                      if (
+                        fieldApi.form.getFieldValue('buybackVault').selected
+                      ) {
+                        return undefined
+                      }
+                      const result = feeRecipientSchema.safeParse(value)
+                      return result.success
+                        ? undefined
+                        : result.error.issues[0]?.message
+                    },
+                  }}
+                >
+                  {(field) => (
+                    <div className="flex flex-col">
+                      <textarea
+                        id={field.name}
+                        name={field.name}
+                        rows={1}
+                        aria-label={m.launch_fee_recipient()}
+                        autoComplete="off"
+                        spellCheck={false}
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(event) =>
+                          field.handleChange(event.target.value)
+                        }
+                        className="border border-[#84888c] min-h-15 text-sm px-3 py-2 w-full text-foreground bg-transparent placeholder:text-[#84888c] focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#FE810B] disabled:cursor-not-allowed disabled:opacity-50 block resize-none break-all"
+                      />
+                      <FieldInfo field={field} showBeforeBlur />
+                    </div>
+                  )}
+                </form.Field>
+              </div>
+            )}
+          </form.Subscribe>
 
           <CollapsibleFormSection title={m.launch_anti_farmer()}>
             <form.Field

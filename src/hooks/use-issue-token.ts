@@ -6,8 +6,13 @@ import { useConfig, useConnection } from 'wagmi'
 import type { BoardItemResponse } from '@/api/board'
 import { parseTxHash } from '@/api/token'
 import { boardKeys } from '@/hooks/use-board'
-import { useCreateToken } from '@/hooks/use-create-token'
+import {
+  useCreateToken,
+  DEFAULT_TAX_DISTRIBUTION,
+  type TaxDistributionParams,
+} from '@/hooks/use-create-token'
 import { requestAuthSignature } from '@/lib/auth'
+import type { EncodedBuybackConfig } from '@/lib/buyback-vault'
 import { getContractErrorMessage } from '@/lib/contract-error'
 import { toast } from '@/lib/toast'
 import { m } from '@/paraglide/messages.js'
@@ -51,6 +56,32 @@ export function useIssueToken(
       const salt = /^0x[\da-fA-F]{64}$/.test(token.salt)
         ? (token.salt as Hex)
         : undefined
+
+      // Drafts saved before tax allocation existed carry no distribution
+      // fields; issue them with the legacy 100%-market fallback.
+      const taxDistribution: TaxDistributionParams =
+        token.marketBps != null
+          ? {
+              marketBps: token.marketBps,
+              deflationBps: token.deflationBps ?? 0,
+              lpBps: token.lpBps ?? 0,
+              dividendBps: token.dividendBps ?? 0,
+              minimumShareBalance: BigInt(token.minimumShareBalance || '0'),
+            }
+          : DEFAULT_TAX_DISTRIBUTION
+
+      const buyback: EncodedBuybackConfig | undefined =
+        token.buybackVaultEnabled === 1
+          ? {
+              mode: token.mode ?? 0,
+              trigger: token.triggerType ?? 0,
+              firstExecuteAt: BigInt(token.firstExecuteAt ?? 0),
+              intervalSeconds: BigInt(token.intervalSeconds ?? 60),
+              triggerAmount: BigInt(token.triggerAmount || '0'),
+              buybackAmount: BigInt(token.buybackAmount || '0'),
+            }
+          : undefined
+
       const result = await createToken({
         account: connectedAddress,
         name: token.name,
@@ -60,7 +91,9 @@ export function useIssueToken(
         sellTax: token.sellTax ?? 0,
         feeRecipient: token.feeRecipient,
         antiFarmerDurationDays: Number(token.antiFarmerDuration) || 0,
+        taxDistribution,
         salt,
+        buyback,
       })
 
       onIssued?.(result.tokenAddress)
