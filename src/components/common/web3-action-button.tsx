@@ -14,12 +14,14 @@ export interface Web3ActionButtonProps
   onAction?: (event: MouseEvent<HTMLButtonElement>) => Promise<void> | void
   loading?: boolean
   loadingText?: React.ReactNode
+  requireChain?: boolean
 }
 
 export function Web3ActionButton({
   onAction,
   loading = false,
   loadingText,
+  requireChain = true,
   disabled,
   children,
   className,
@@ -54,7 +56,7 @@ export function Web3ActionButton({
     )
   }
 
-  if (chainId !== PLATFORM_CHAIN_ID) {
+  if (requireChain && chainId !== PLATFORM_CHAIN_ID) {
     return (
       <Button
         type="button"

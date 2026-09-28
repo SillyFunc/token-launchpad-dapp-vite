@@ -8,7 +8,6 @@ import { ArrowRightIcon } from 'lucide-react'
 import { z } from 'zod'
 
 import {
-  parseTxHash,
   saveTokenInfo,
   updateTokenInfo,
   uploadTokenLogo,
@@ -21,7 +20,6 @@ import { Slider } from '@/components/common/slider'
 import { Web3ActionButton } from '@/components/common/web3-action-button'
 import { ReservedAddressSelect } from '@/components/launch/reserved-address-select'
 import { boardKeys } from '@/hooks/use-board'
-import { useCreateToken } from '@/hooks/use-create-token'
 import {
   reservedAddressKeys,
   useReservedAddressOptions,
@@ -30,14 +28,12 @@ import {
 import { toast } from '@/lib/toast'
 import { requestAuthSignature } from '@/lib/auth'
 import {
-  defaultBuybackVaultDraft,
-  encodeBuybackConfig,
-  type BuybackVaultDraft,
-} from '@/lib/buyback-vault'
-import { findVanitySalt, isPredictedTokenAddress } from '@/lib/vanity-salt'
+  findVanitySalt,
+  isPredictedTokenAddress,
+  predictTokenAddress,
+} from '@/lib/vanity-salt'
 import { m } from '@/paraglide/messages.js'
 import { CollapsibleFormSection } from '../common/collapsible-form-section'
-import { ScheduledBuybackVault } from './scheduled-buyback-vault'
 import { TokenLogoUploader } from './token-logo-uploader'
 import { TaxAllocation } from './tax-allocation'
 
@@ -123,7 +119,6 @@ interface LaunchFormValues {
   buyTax: number
   sellTax: number
   antiFarmerDuration: string
-  buybackVault: BuybackVaultDraft
   links: {
     telegram: string
     twitter: string
@@ -179,7 +174,6 @@ function getInitialValues(
     buyTax: initialData?.buyTax ?? 0,
     sellTax: initialData?.sellTax ?? 1,
     antiFarmerDuration: String(initialData?.antiFarmerDuration ?? 30),
-    buybackVault: defaultBuybackVaultDraft(),
     links: {
       telegram: initialData?.telegram ?? '',
       twitter: initialData?.twitter ?? '',
@@ -203,7 +197,6 @@ function normalizeValues(value: LaunchFormValues) {
     buyTax: Number(value.buyTax),
     sellTax: Number(value.sellTax),
     antiFarmerDuration: Number(value.antiFarmerDuration),
-    buybackVault: value.buybackVault,
     links: {
       telegram: value.links.telegram.trim(),
       twitter: value.links.twitter.trim(),
@@ -225,7 +218,6 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
   const { address } = useConnection()
   const config = useConfig()
   const queryClient = useQueryClient()
-  const { createToken } = useCreateToken()
   const { data: reservedAddressOptions } = useReservedAddressOptions()
   const initialValues = useMemo(
     () => getInitialValues(initialData, address, reservedAddressOptions),
@@ -298,12 +290,7 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
             throw new Error(m.launch_salt_failed())
           }
 
-          const buyback = value.buybackVault.selected
-            ? encodeBuybackConfig(value.buybackVault)
-            : undefined
-          const feeRecipient = value.buybackVault.selected
-            ? value.feeRecipient.trim() || address
-            : value.feeRecipient.trim()
+          const feeRecipient = value.feeRecipient.trim()
           if (!isAddress(feeRecipient)) {
             throw new Error(m.dashboard_issue_invalid_recipient())
           }
@@ -343,34 +330,12 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
             })
             queryClient.setQueryData(['tokenDetail', editId], updatedToken)
           } else {
-            const issued = await createToken({
-              account: address,
-              name: payload.name,
-              symbol: payload.symbol,
-              meta: payload.meta,
-              buyTax: payload.buyTax,
-              sellTax: payload.sellTax,
-              feeRecipient,
-              antiFarmerDurationDays: payload.antiFarmerDuration,
-              salt: salt as Hex,
-              buyback,
-            })
-            const saved = await saveTokenInfo({
+            await saveTokenInfo({
               ...payload,
-              coinContractAddress: issued.tokenAddress,
+              coinContractAddress:
+                selectedReservedAddress?.address ??
+                predictTokenAddress(salt as Hex),
             })
-            try {
-              await parseTxHash({
-                id: saved.id,
-                hash: issued.txHash,
-                ...auth,
-              })
-            } catch {
-              toast.warning(
-                m.dashboard_issue_sync_pending(),
-                m.dashboard_issue_sync_pending_description(),
-              )
-            }
           }
 
           await Promise.allSettled([
@@ -556,15 +521,6 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
             </form.Field>
           </div>
 
-          <form.Field name="buybackVault">
-            {(field) => (
-              <ScheduledBuybackVault
-                value={field.state.value}
-                onChange={field.handleChange}
-              />
-            )}
-          </form.Field>
-
           <div className="flex flex-col gap-6">
             <FormSectionTitle title={m.launch_tax_settings()} required />
             <form.Field name="buyTax">
@@ -599,63 +555,31 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
 
           <TaxAllocation />
 
-          <form.Subscribe
-            selector={(state) => state.values.buybackVault.selected}
-          >
-            {(vaultSelected) => (
-              <div className={vaultSelected ? 'hidden' : 'flex flex-col gap-6'}>
-                <FormSectionTitle title={m.launch_fee_recipient()} required />
-                <form.Field
-                  name="feeRecipient"
-                  validators={{
-                    onChangeListenTo: ['buybackVault'],
-                    onBlur: ({ value, fieldApi }) => {
-                      if (
-                        fieldApi.form.getFieldValue('buybackVault').selected
-                      ) {
-                        return undefined
-                      }
-                      const result = feeRecipientSchema.safeParse(value)
-                      return result.success
-                        ? undefined
-                        : result.error.issues[0]?.message
-                    },
-                    onChange: ({ value, fieldApi }) => {
-                      if (
-                        fieldApi.form.getFieldValue('buybackVault').selected
-                      ) {
-                        return undefined
-                      }
-                      const result = feeRecipientSchema.safeParse(value)
-                      return result.success
-                        ? undefined
-                        : result.error.issues[0]?.message
-                    },
-                  }}
-                >
-                  {(field) => (
-                    <div className="flex flex-col">
-                      <textarea
-                        id={field.name}
-                        name={field.name}
-                        rows={1}
-                        aria-label={m.launch_fee_recipient()}
-                        autoComplete="off"
-                        spellCheck={false}
-                        value={field.state.value}
-                        onBlur={field.handleBlur}
-                        onChange={(event) =>
-                          field.handleChange(event.target.value)
-                        }
-                        className="border border-[#84888c] min-h-15 text-sm px-3 py-2 w-full text-foreground bg-transparent placeholder:text-[#84888c] focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#FE810B] disabled:cursor-not-allowed disabled:opacity-50 block resize-none break-all"
-                      />
-                      <FieldInfo field={field} showBeforeBlur />
-                    </div>
-                  )}
-                </form.Field>
-              </div>
-            )}
-          </form.Subscribe>
+          <div className="flex flex-col gap-6">
+            <FormSectionTitle title={m.launch_fee_recipient()} required />
+            <form.Field
+              name="feeRecipient"
+              validators={{ onMount: feeRecipientSchema, onChange: feeRecipientSchema }}
+            >
+              {(field) => (
+                <div className="flex flex-col">
+                  <textarea
+                    id={field.name}
+                    name={field.name}
+                    rows={1}
+                    aria-label={m.launch_fee_recipient()}
+                    autoComplete="off"
+                    spellCheck={false}
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(event) => field.handleChange(event.target.value)}
+                    className="border border-[#84888c] min-h-15 text-sm px-3 py-2 w-full text-foreground bg-transparent placeholder:text-[#84888c] focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#FE810B] disabled:cursor-not-allowed disabled:opacity-50 block resize-none break-all"
+                  />
+                  <FieldInfo field={field} showBeforeBlur />
+                </div>
+              )}
+            </form.Field>
+          </div>
 
           <CollapsibleFormSection title={m.launch_anti_farmer()}>
             <form.Field
@@ -800,9 +724,10 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
           {({ canSubmit, isSubmitting }) => (
             <Web3ActionButton
               type="submit"
+              requireChain={false}
               disabled={!canSubmit}
               loading={isSubmitting && !isEditMode}
-              loadingText={m.launch_creating()}
+              loadingText={m.launch_saving()}
               className="flex h-10.5 text-foreground w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-[#FE810B] text-base font-bold [clip-path:polygon(10px_0,100%_0,100%_calc(100%-10px),calc(100%-10px)_100%,0_100%,0_10px)] transition-[transform,opacity] active:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFA546]"
             >
               <span>
