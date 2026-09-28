@@ -15,6 +15,11 @@ type ToastPromiseState = string | ToastManagerUpdateOptions<object>
 
 const PROMISE_SUCCESS_TIMEOUT = 4000
 const PROMISE_ERROR_TIMEOUT = 8000
+/**
+ * Plain error toasts auto-close after the same duration as plain success
+ * toasts (the Base UI provider default of 5000ms).
+ */
+const ERROR_TIMEOUT = 5000
 
 export const toastManager = ToastPrimitive.createToastManager()
 
@@ -24,6 +29,29 @@ function createToastMethod(type: AppToastType) {
     description?: ReactNode,
     options?: AppToastOptions,
   ) => toastManager.add({ ...options, type, title, description })
+}
+
+/**
+ * Error toasts close on our own timer instead of the store's: Base UI pauses
+ * its timers while the window is blurred (e.g. a wallet popup stole focus,
+ * which is exactly when contract errors fire), and a stuck pause can leave
+ * the toast open forever. `closeAfter` is a plain setTimeout, so it fires
+ * regardless of focus/hover state. Pass `timeout: 0` to keep an error sticky.
+ */
+function errorToast(
+  title: ReactNode,
+  description?: ReactNode,
+  options?: AppToastOptions,
+) {
+  const id = toastManager.add({
+    ...options,
+    type: 'error',
+    title,
+    description,
+    timeout: 0,
+  })
+  closeAfter(id, options?.timeout ?? ERROR_TIMEOUT)
+  return id
 }
 
 function normalizePromiseState(state: ToastPromiseState) {
@@ -73,7 +101,7 @@ export const toast = {
   success: createToastMethod('success'),
   info: createToastMethod('info'),
   warning: createToastMethod('warning'),
-  error: createToastMethod('error'),
+  error: errorToast,
   loading: createToastMethod('loading'),
   promise: promiseToast,
   dismiss: (id?: string) => toastManager.close(id),
