@@ -81,6 +81,7 @@
   "launch_tax_settings": "稅率設定",
   "launch_buy_tax": "買入稅率",
   "launch_sell_tax": "賣出稅率",
+  "launch_sell_tax_min": "賣出稅率最低為 1%。",
   "launch_tax_duration": "收稅時長",
   "launch_tax_duration_placeholder": "365",
   "launch_tax_duration_description": "收稅時長是指代幣交易稅費生效的總天數。期滿後，買入與賣出稅率將永久歸零。",

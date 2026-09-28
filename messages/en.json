@@ -81,6 +81,7 @@
   "launch_tax_settings": "Tax settings",
   "launch_buy_tax": "Buy tax",
   "launch_sell_tax": "Sell tax",
+  "launch_sell_tax_min": "Sell tax must be at least 1%.",
   "launch_tax_duration": "Tax duration",
   "launch_tax_duration_placeholder": "365",
   "launch_tax_duration_description": "The number of days token trading taxes remain active. Both buy and sell taxes become zero after this period.",

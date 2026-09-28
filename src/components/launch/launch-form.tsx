@@ -65,6 +65,16 @@ const antiFarmerDurationSchema = z
     return Number.isInteger(number) && number >= 0 && number <= 365
   }, 'Enter an integer from 0 to 365')
 
+/**
+ * Platform policy: sell tax floor (percent). The slider range and the
+ * contract both allow 0, but users cannot drag below — or submit — this.
+ */
+const SELL_TAX_MIN_PERCENT = 1
+
+const sellTaxSchema = z
+  .number()
+  .min(SELL_TAX_MIN_PERCENT, m.launch_sell_tax_min())
+
 const feeRecipientSchema = z
   .string()
   .trim()
@@ -167,7 +177,7 @@ function getInitialValues(
     description: initialData?.meta || initialData?.zhIntroduction || '',
     feeRecipient: initialData?.feeRecipient || address || '',
     buyTax: initialData?.buyTax ?? 0,
-    sellTax: initialData?.sellTax ?? 0,
+    sellTax: initialData?.sellTax ?? 1,
     antiFarmerDuration: String(initialData?.antiFarmerDuration ?? 30),
     buybackVault: defaultBuybackVaultDraft(),
     links: {
@@ -567,14 +577,22 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
                 />
               )}
             </form.Field>
-            <form.Field name="sellTax">
+            <form.Field
+              name="sellTax"
+              validators={{ onMount: sellTaxSchema, onChange: sellTaxSchema }}
+            >
               {(field) => (
-                <Slider
-                  label={m.launch_sell_tax()}
-                  required
-                  value={field.state.value}
-                  onChange={field.handleChange}
-                />
+                <div className="flex flex-col">
+                  <Slider
+                    label={m.launch_sell_tax()}
+                    required
+                    value={field.state.value}
+                    onChange={(next) =>
+                      field.handleChange(Math.max(SELL_TAX_MIN_PERCENT, next))
+                    }
+                  />
+                  <FieldInfo field={field} showBeforeBlur />
+                </div>
               )}
             </form.Field>
           </div>
@@ -592,7 +610,9 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
                   validators={{
                     onChangeListenTo: ['buybackVault'],
                     onBlur: ({ value, fieldApi }) => {
-                      if (fieldApi.form.getFieldValue('buybackVault').selected) {
+                      if (
+                        fieldApi.form.getFieldValue('buybackVault').selected
+                      ) {
                         return undefined
                       }
                       const result = feeRecipientSchema.safeParse(value)
@@ -601,7 +621,9 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
                         : result.error.issues[0]?.message
                     },
                     onChange: ({ value, fieldApi }) => {
-                      if (fieldApi.form.getFieldValue('buybackVault').selected) {
+                      if (
+                        fieldApi.form.getFieldValue('buybackVault').selected
+                      ) {
                         return undefined
                       }
                       const result = feeRecipientSchema.safeParse(value)
