@@ -538,7 +538,7 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
                     value={field.state.value}
                     onBlur={field.handleBlur}
                     onChange={(event) => field.handleChange(event.target.value)}
-                    className="box-border min-h-30 w-full appearance-none resize-none rounded-xs border border-[#84888c] bg-transparent p-3 text-sm text-white placeholder:text-[#84888c] focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#FE810B] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="border border-[#84888c] min-h-30 text-sm p-3 w-full text-foreground bg-transparent placeholder:text-[#84888c] focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#FE810B] disabled:cursor-not-allowed disabled:opacity-50 block resize-none break-all"
                   />
                   <FieldInfo field={field} />
                 </FormField>
