@@ -401,7 +401,7 @@ export const TokenPage = () => {
           </section>
         )}
         {displayedTab === 'CHART' && (
-          <section className="m-3 flex min-h-0 flex-1 flex-col overflow-hidden">
+          <section className="mx-3 mt-3 flex min-h-0 flex-1 flex-col overflow-hidden">
             <TokenChart
               tokenAddress={gate.tokenAddress}
               pairAddress={gate.pairAddress}
