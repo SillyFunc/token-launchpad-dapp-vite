@@ -12,7 +12,7 @@ interface HeaderProps {
 }
 export const Header: React.FC<HeaderProps> = ({ isMenuOpen, onToggleMenu }) => {
   return (
-    <header className="sticky inset-x-0 top-0 z-50 flex h-16 items-center justify-between border-b border-b-[#484B51] bg-[#070808] px-4">
+    <header className="sticky inset-x-0 top-0 z-50 flex h-16 items-center justify-between border-b border-b-[#484B51] bg-[#070808] px-3">
       <div className="flex items-center space-x-3">
         <button
           type="button"
