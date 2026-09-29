@@ -372,27 +372,33 @@ export const TokenPage = () => {
         </div>
       </div>
 
-      <main className="px-3 pt-6">
+      <>
         {displayedTab === 'PRESALE' && (
-          <TokenPresale gate={gate} symbol={token?.symbol || '--'} />
+          <section className="p-3">
+            <TokenPresale gate={gate} symbol={token?.symbol || '--'} />
+          </section>
         )}
         {displayedTab === 'CHART' && (
-          <TokenChart
-            tokenAddress={gate.tokenAddress}
-            pairAddress={gate.pairAddress}
-          />
+          <section className="p-3 flex-1">
+            <TokenChart
+              tokenAddress={gate.tokenAddress}
+              pairAddress={gate.pairAddress}
+            />
+          </section>
         )}
         {displayedTab === 'INFO' && (
-          <TokenInfo
-            token={token}
-            totalSupply={gate.totalSupply}
-            tokenDecimals={gate.tokenDecimals}
-            marketCapUsdt={displayedMarketCap}
-            changePercent={changePercent}
-            creatorAddress={gate.creatorAddress}
-          />
+          <section className="px-3 pt-6">
+            <TokenInfo
+              token={token}
+              totalSupply={gate.totalSupply}
+              tokenDecimals={gate.tokenDecimals}
+              marketCapUsdt={displayedMarketCap}
+              changePercent={changePercent}
+              creatorAddress={gate.creatorAddress}
+            />
+          </section>
         )}
-      </main>
+      </>
     </TokenLayout>
   )
 }
