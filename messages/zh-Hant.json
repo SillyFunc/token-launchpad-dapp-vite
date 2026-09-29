@@ -87,6 +87,7 @@
   "launch_tax_min_share_max": "分紅資格最低持倉不可超過 1,000,000,000 個代幣。",
   "launch_tax_min_share_zero": "未開啟分紅通道時，分紅資格最低持倉必須為 0。",
   "launch_tax_vault_requires_market": "啟用回購金庫時，回購金庫稅收份額必須大於 0%。",
+  "launch_vault_first_execute_required": "請選擇首次可執行時間。",
   "launch_tax_duration": "收稅時長",
   "launch_tax_duration_placeholder": "365",
   "launch_tax_duration_description": "收稅時長是指代幣交易稅費生效的總天數。期滿後，買入與賣出稅率將永久歸零。",

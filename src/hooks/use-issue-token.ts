@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { isAddress, type Address, type Hex } from 'viem'
+import { isAddress, parseUnits, type Address, type Hex } from 'viem'
 import { useConfig, useConnection } from 'wagmi'
 
 import type { BoardItemResponse } from '@/api/board'
@@ -66,7 +66,7 @@ export function useIssueToken(
               deflationBps: token.deflationBps ?? 0,
               lpBps: token.lpBps ?? 0,
               dividendBps: token.dividendBps ?? 0,
-              minimumShareBalance: BigInt(token.minimumShareBalance || '0'),
+              minimumShareBalance: parseUnits(token.minDividendBalance || '0', 18),
             }
           : DEFAULT_TAX_DISTRIBUTION
 

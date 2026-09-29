@@ -1,4 +1,3 @@
-import { formatUnits } from 'viem'
 import { Slider } from '../ui/slider'
 import { FormSectionTitle } from '../common/form-section-title'
 
@@ -62,39 +61,28 @@ export interface TaxAllocationParams {
   deflationBps?: number
   lpBps?: number
   dividendBps?: number
-  minimumShareBalance?: string
+  minDividendBalance?: string
 }
 
 /**
- * Rebuilds the form value from backend-echoed fields (bps → percents, wei →
- * whole tokens). Records saved before tax allocation existed carry no fields
- * and fall back to the defaults.
+ * Rebuilds the form value from backend-echoed fields (bps → percents).
+ * Records saved before tax allocation existed carry no fields and fall back
+ * to the defaults.
  */
 export function taxAllocationFromParams(
   params: TaxAllocationParams,
 ): TaxAllocationValue {
   if (params.marketBps == null) return defaultTaxAllocation()
 
-  let minDividendBalance = '0'
-  try {
-    minDividendBalance = formatUnits(
-      BigInt(params.minimumShareBalance || '0'),
-      18,
-    )
-  } catch {
-    // Keep '0' for malformed echoes.
-  }
-  // The form input is integer-only; truncate any decimal part defensively.
-  if (minDividendBalance.includes('.')) {
-    minDividendBalance = minDividendBalance.split('.')[0]
-  }
-
   return {
     creator: (params.marketBps ?? 0) / 100,
     burn: (params.deflationBps ?? 0) / 100,
     dividend: (params.dividendBps ?? 0) / 100,
     liquidity: (params.lpBps ?? 0) / 100,
-    minDividendBalance,
+    minDividendBalance: String(params.minDividendBalance ?? '0').replace(
+      /\D/g,
+      '',
+    ) || '0',
   }
 }
 

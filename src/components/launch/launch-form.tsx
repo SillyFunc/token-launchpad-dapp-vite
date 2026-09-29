@@ -2,7 +2,7 @@ import { useMemo, useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useForm } from '@tanstack/react-form'
 import { useQueryClient } from '@tanstack/react-query'
-import { isAddress, parseUnits, type Hex } from 'viem'
+import { isAddress, type Hex } from 'viem'
 import { useConfig, useConnection } from 'wagmi'
 import { ArrowRightIcon } from 'lucide-react'
 import { z } from 'zod'
@@ -93,8 +93,6 @@ const feeRecipientSchema = z
   // alongside the min(1) message.
   .refine((value) => !value || isAddress(value), 'Enter a valid EVM address')
 
-/** FlapTaxTokenV3 uses 18 decimals. */
-const TOKEN_DECIMALS = 18
 /** Mirrors CoordinatorFactory.MAX_MINIMUM_SHARE_BALANCE (1e9 whole tokens). */
 const MAX_MINIMUM_SHARE_BALANCE_TOKENS = 1_000_000_000n
 
@@ -184,6 +182,18 @@ function validateTaxAllocationValue(
  * Maps the encoded on-chain BuybackConfig to the API payload shape.
  * Identical to the contract parameters except `trigger` → `triggerType`.
  */
+function validateBuybackVault(value: BuybackVaultDraft): string | undefined {
+  if (!value.selected) return undefined
+  const needsTime =
+    value.executionCondition === 'time' ||
+    value.executionCondition === 'time-and-balance'
+  if (!needsTime) return undefined
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(value.firstExecuteAt)) {
+    return m.launch_vault_first_execute_required()
+  }
+  return undefined
+}
+
 function encodeVaultForPayload(draft: BuybackVaultDraft) {
   const encoded = encodeBuybackConfig(draft)
   return {
@@ -456,10 +466,8 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
             deflationBps: value.taxAllocation.burn * 100,
             lpBps: value.taxAllocation.liquidity * 100,
             dividendBps: value.taxAllocation.dividend * 100,
-            minimumShareBalance: parseUnits(
+            minDividendBalance:
               value.taxAllocation.minDividendBalance.trim() || '0',
-              TOKEN_DECIMALS,
-            ).toString(),
             // Buyback vault: contract parameters, with `trigger` renamed
             // to `triggerType` for the API.
             buybackVaultEnabled: value.buybackVault.selected ? 1 : 0,
@@ -677,12 +685,25 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
             </form.Field>
           </div>
 
-          <form.Field name="buybackVault">
+          <form.Field
+            name="buybackVault"
+            validators={{
+              onMount: ({ value }) => validateBuybackVault(value),
+              onChange: ({ value }) => validateBuybackVault(value),
+            }}
+          >
             {(field) => (
               <ScheduledBuybackVault
                 value={field.state.value}
                 onChange={field.handleChange}
                 isCreateMode={!isEditMode}
+                firstExecuteAtError={field.state.meta.errors
+                  .map((error) =>
+                    typeof error === 'string'
+                      ? error
+                      : (error as unknown as { message?: unknown }).message,
+                  )
+                  .find((message): message is string => typeof message === 'string')}
               />
             )}
           </form.Field>

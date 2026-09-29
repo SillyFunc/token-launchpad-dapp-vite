@@ -23,6 +23,7 @@ export interface ScheduledBuybackVaultProps {
   value: BuybackVaultDraft
   onChange: (value: BuybackVaultDraft) => void
   isCreateMode?: boolean
+  firstExecuteAtError?: string
 }
 
 const configInputClassName =
@@ -55,6 +56,7 @@ export const ScheduledBuybackVault: React.FC<ScheduledBuybackVaultProps> = ({
   value,
   onChange,
   isCreateMode = false,
+  firstExecuteAtError,
 }) => {
   const selected = value.selected
   const buybackMode = value.buybackMode
@@ -260,6 +262,11 @@ export const ScheduledBuybackVault: React.FC<ScheduledBuybackVaultProps> = ({
                     <p className="mt-1 text-xs text-foreground/40">
                       固定使用 UTC+8，不跟随浏览器时区变化。
                     </p>
+                    {firstExecuteAtError ? (
+                      <p className="mt-1 text-xs text-[#f7594b]">
+                        {firstExecuteAtError}
+                      </p>
+                    ) : null}
                   </label>
                 )}
                 {showTriggerBalance && (
