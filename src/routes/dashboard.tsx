@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import { ConnectKitButton } from 'connectkit'
 import {
@@ -7,10 +7,15 @@ import {
   TriangleAlertIcon,
   WalletIcon,
 } from 'lucide-react'
+import type { Address } from 'viem'
 import { useConnection } from 'wagmi'
 
 import type { BoardItemResponse } from '@/api/board'
 import { TokenCard } from '@/components/dashboard/token-card'
+import {
+  getTokenAddress,
+  getTokenKey,
+} from '@/components/dashboard/token-card-model'
 import { PageTitle } from '@/components/common/page-title'
 import { Button } from '@/components/ui/button'
 import {
@@ -23,6 +28,7 @@ import {
 } from '@/components/ui/empty'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useBoardList } from '@/hooks/use-board'
+import { useTokenGates } from '@/hooks/use-token-gate'
 import { m } from '@/paraglide/messages.js'
 
 const EMPTY_TOKEN_LIST: BoardItemResponse[] = []
@@ -39,6 +45,23 @@ export const DashboardPage = () => {
   const focusTokenId = getFocusTokenId(location.state)
   const focusedTokenRef = useRef<HTMLDivElement>(null)
   const [highlightedTokenId, setHighlightedTokenId] = useState<string>()
+  const [issuedAddresses, setIssuedAddresses] = useState<
+    Record<string, Address>
+  >({})
+
+  const gateInputs = useMemo(
+    () =>
+      tokenList.map((token) => {
+        const key = getTokenKey(token)
+        return {
+          key,
+          address: issuedAddresses[key] ?? getTokenAddress(token),
+          backendPresaleAddress: token.presaleAddress,
+        }
+      }),
+    [tokenList, issuedAddresses],
+  )
+  const gates = useTokenGates(gateInputs)
 
   useEffect(() => {
     if (!focusTokenId || isLoading || isFetching || isError) return
@@ -149,36 +172,48 @@ export const DashboardPage = () => {
 
       {address && !isLoading && !isError && tokenList.length > 0 && (
         <div className="flex flex-col gap-4">
-          {tokenList.map((token) => (
-            <div
-              key={
-                token.id || token.coinContractAddress || token.contractAddress
-              }
-              ref={
-                String(token.id) === focusTokenId
-                  ? focusedTokenRef
-                  : undefined
-              }
-              className={`scroll-mt-6 transition-shadow duration-500 ${
-                String(token.id) === highlightedTokenId
-                  ? 'shadow-[0_0_0_2px_#FE810B,0_0_28px_rgba(254,129,11,0.32)]'
-                  : ''
-              }`}
-            >
-              <TokenCard
-                token={token}
-                onEdit={(item) => navigate(`/launch?id=${item.id}`)}
-                onPresale={(item, tokenAddress, options) =>
-                  navigate(`/presale?address=${tokenAddress}&id=${item.id}`, {
-                    state: options?.allowEditAfterRelaunch
-                      ? { allowEditAfterRelaunch: true }
-                      : undefined,
-                  })
+          {tokenList.map((token) => {
+            const key = getTokenKey(token)
+            const gate = gates[key]
+            const candidate = issuedAddresses[key] ?? getTokenAddress(token)
+            const resolvedAddress =
+              issuedAddresses[key] ??
+              (gate.tokenExists ? candidate : undefined)
+
+            return (
+              <div
+                key={key}
+                ref={
+                  String(token.id) === focusTokenId
+                    ? focusedTokenRef
+                    : undefined
                 }
-                onView={(tokenAddress) => navigate(`/token/${tokenAddress}`)}
-              />
-            </div>
-          ))}
+                className={`scroll-mt-6 transition-shadow duration-500 ${
+                  String(token.id) === highlightedTokenId
+                    ? 'shadow-[0_0_0_2px_#FE810B,0_0_28px_rgba(254,129,11,0.32)]'
+                    : ''
+                }`}
+              >
+                <TokenCard
+                  token={token}
+                  gate={gate}
+                  tokenAddress={resolvedAddress}
+                  onIssued={(issued) =>
+                    setIssuedAddresses((prev) => ({ ...prev, [key]: issued }))
+                  }
+                  onEdit={(item) => navigate(`/launch?id=${item.id}`)}
+                  onPresale={(item, tokenAddress, options) =>
+                    navigate(`/presale?address=${tokenAddress}&id=${item.id}`, {
+                      state: options?.allowEditAfterRelaunch
+                        ? { allowEditAfterRelaunch: true }
+                        : undefined,
+                    })
+                  }
+                  onView={(tokenAddress) => navigate(`/token/${tokenAddress}`)}
+                />
+              </div>
+            )
+          })}
         </div>
       )}
     </div>

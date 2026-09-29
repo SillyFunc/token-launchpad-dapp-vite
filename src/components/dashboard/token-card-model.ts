@@ -89,6 +89,14 @@ export function getTokenAddress(token: BoardItemResponse): Address | undefined {
   return address ? getAddress(address) : undefined
 }
 
+/**
+ * Stable identity for a board row, shared by the React key and the page-level
+ * gate lookup so a card and its on-chain read always agree.
+ */
+export function getTokenKey(token: BoardItemResponse): string {
+  return String(token.id || token.coinContractAddress || token.contractAddress)
+}
+
 export function getReservedAddress(
   token: BoardItemResponse,
   issuedTokenAddress?: Address,
