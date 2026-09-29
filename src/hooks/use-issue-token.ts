@@ -66,7 +66,10 @@ export function useIssueToken(
               deflationBps: token.deflationBps ?? 0,
               lpBps: token.lpBps ?? 0,
               dividendBps: token.dividendBps ?? 0,
-              minimumShareBalance: parseUnits(token.minDividendBalance || '0', 18),
+              minimumShareBalance: parseUnits(
+                String(token.minDividendBalance ?? '0'),
+                18,
+              ),
             }
           : DEFAULT_TAX_DISTRIBUTION
 

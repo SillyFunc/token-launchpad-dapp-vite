@@ -61,7 +61,7 @@ export interface TaxAllocationParams {
   deflationBps?: number
   lpBps?: number
   dividendBps?: number
-  minDividendBalance?: string
+  minDividendBalance?: string | number
 }
 
 /**

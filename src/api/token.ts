@@ -37,7 +37,7 @@ export interface TokenDetail {
   deflationBps?: number
   lpBps?: number
   dividendBps?: number
-  minDividendBalance?: string
+  minDividendBalance?: string | number
   buybackVaultEnabled?: number
   mode?: number
   triggerType?: number
@@ -87,7 +87,7 @@ export interface SaveTokenParams {
   lpBps?: number
   dividendBps?: number
   /** 分红资格最低持仓，代币个数原值；dividendBps 为 0 时传 "0" */
-  minDividendBalance?: string
+  minDividendBalance?: string | number
   /** 定时回购金库：0=不开启，1=开启 */
   buybackVaultEnabled?: number
   /** 回购模式（合约 BuybackMode）：0=买本币销毁，1=买本币加 LP 死锁。仅开启金库时传 */

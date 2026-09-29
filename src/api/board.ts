@@ -105,7 +105,7 @@ export type BoardItemResponse = {
   deflationBps?: number
   lpBps?: number
   dividendBps?: number
-  minDividendBalance?: string
+  minDividendBalance?: string | number
   buybackVaultEnabled?: number
   mode?: number
   triggerType?: number
