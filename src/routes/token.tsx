@@ -85,7 +85,8 @@ export const TokenPage = () => {
     ? m.token_invalid_address_title()
     : isTokenLoading
       ? m.token_loading()
-      : token?.name || (isTokenError ? m.token_load_error_title() : m.token_unknown_name())
+      : token?.name ||
+        (isTokenError ? m.token_load_error_title() : m.token_unknown_name())
   const tokenSymbol = token?.symbol ? `$${token.symbol}` : '--'
   const explorerUrl = getExplorerAddressUrl(tokenAddress)
   const externalUrl = token?.website || explorerUrl
@@ -93,7 +94,8 @@ export const TokenPage = () => {
   const priceUsdt =
     priceBNB !== null && bnbUsdtPrice !== null ? priceBNB * bnbUsdtPrice : null
   const priceText = priceUsdt === null ? '--' : `$${formatDecimal(priceUsdt)}`
-  const changeText = changePercent === null ? '--' : formatPercent(changePercent)
+  const changeText =
+    changePercent === null ? '--' : formatPercent(changePercent)
   const supplyText =
     gate.totalSupply > 0n
       ? formatTokenAmount(gate.totalSupply, gate.tokenDecimals)
@@ -145,7 +147,11 @@ export const TokenPage = () => {
                   href={externalUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label={token?.website ? m.token_open_website({ name: tokenName }) : m.token_view_explorer()}
+                  aria-label={
+                    token?.website
+                      ? m.token_open_website({ name: tokenName })
+                      : m.token_view_explorer()
+                  }
                   className="group mt-1 flex items-center gap-1 truncate text-xs text-[#A0A3A7] focus-visible:outline-none"
                 >
                   <span className="truncate leading-none">{tokenName}</span>
@@ -177,42 +183,95 @@ export const TokenPage = () => {
         </div>
 
         <div className="mt-2.5 flex items-center gap-2 text-xs font-normal">
-          <div className="flex items-center">
-            <svg
-              viewBox="0 0 4.5 14"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-hidden="true"
-              className="size-3 shrink-0 text-[#A0A3A7]"
-            >
-              <path d="M4.25 0.5H0.5V13.5H4.25" stroke="currentColor" strokeWidth="1" />
-            </svg>
-            <div className="mx-1 flex items-center text-xs">
-              <span className="mr-1 text-[#A0A3A7]">CA</span>
-              <button
-                type="button"
-                aria-label={m.token_copy_address()}
-                disabled={!tokenAddress}
-                onClick={() => void handleCopy()}
-                className="inline-flex items-center gap-1 text-foreground underline underline-offset-2 transition-colors hover:text-primary focus-visible:text-primary focus-visible:outline-none disabled:cursor-not-allowed disabled:no-underline disabled:opacity-60"
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
+              <svg
+                viewBox="0 0 4.5 14"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+                className="h-3 shrink-0 text-[#A0A3A7]"
               >
-                {formatAddress(tokenAddress)}
-                {copied ? (
-                  <Check className="ml-1 size-3 text-[#0ECB81]" />
-                ) : (
-                  <Copy className="ml-1 size-3" />
-                )}
-              </button>
+                <path
+                  d="M4.25 0.5H0.5V13.5H4.25"
+                  stroke="currentColor"
+                  strokeWidth="1"
+                />
+              </svg>
+              <div className="mx-1 flex items-center text-xs">
+                <span className="mr-1 text-[#A0A3A7]">CA</span>
+                <button
+                  type="button"
+                  aria-label={m.token_copy_address()}
+                  disabled={!tokenAddress}
+                  onClick={() => void handleCopy()}
+                  className="inline-flex items-center gap-1 text-foreground underline underline-offset-2 transition-colors hover:text-primary focus-visible:text-primary focus-visible:outline-none disabled:cursor-not-allowed disabled:no-underline disabled:opacity-60"
+                >
+                  {formatAddress(tokenAddress)}
+                  {copied ? (
+                    <Check className="ml-1 size-3 text-[#0ECB81]" />
+                  ) : (
+                    <Copy className="ml-1 size-3" />
+                  )}
+                </button>
+              </div>
+              <svg
+                viewBox="0 0 4.5 14"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+                className="h-3 shrink-0 -scale-x-100 text-[#A0A3A7]"
+              >
+                <path
+                  d="M4.25 0.5H0.5V13.5H4.25"
+                  stroke="currentColor"
+                  strokeWidth="1"
+                />
+              </svg>
             </div>
-            <svg
-              viewBox="0 0 4.5 14"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-hidden="true"
-              className="size-3 shrink-0 -scale-x-100 text-[#A0A3A7]"
-            >
-              <path d="M4.25 0.5H0.5V13.5H4.25" stroke="currentColor" strokeWidth="1" />
-            </svg>
+            <div className="flex items-center text-[#fb5f16] gap-1">
+              <svg
+                viewBox="0 0 4.5 14"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+                className="h-3 shrink-0"
+              >
+                <path
+                  d="M4.25 0.5H0.5V13.5H4.25"
+                  stroke="currentColor"
+                  strokeWidth="1"
+                />
+              </svg>
+              <span className="min-w-0 inline-flex items-center gap-0.5 text-[#fb5f16]">
+                <span className='text-xs'>税收详情</span>
+                <svg
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden="true"
+                  className="size-4 shrink-0"
+                >
+                  <path
+                    d="M11.7712 3.62846C11.9304 3.62846 12.0832 3.69179 12.1957 3.80432C12.3082 3.91684 12.3715 4.06963 12.3715 4.22876V9.88562H11.1709V5.67796L4.41751 12.4314L3.56861 11.5825L10.322 4.82907L6.11438 4.82907L6.11438 3.62846H11.7712Z"
+                    fill="currentColor"
+                  ></path>
+                </svg>
+              </span>
+              <svg
+                viewBox="0 0 4.5 14"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+                className="h-3 shrink-0 -scale-x-100"
+              >
+                <path
+                  d="M4.25 0.5H0.5V13.5H4.25"
+                  stroke="currentColor"
+                  strokeWidth="1"
+                />
+              </svg>
+            </div>
           </div>
         </div>
 
@@ -263,7 +322,9 @@ export const TokenPage = () => {
                 onClick={() => setActiveTab(tab)}
               >
                 {label}
-                {isActive && <span aria-hidden="true" className={tabLineClass} />}
+                {isActive && (
+                  <span aria-hidden="true" className={tabLineClass} />
+                )}
               </button>
             )
           })}
@@ -275,7 +336,10 @@ export const TokenPage = () => {
           <TokenPresale gate={gate} symbol={token?.symbol || '--'} />
         )}
         {displayedTab === 'CHART' && (
-          <TokenChart tokenAddress={gate.tokenAddress} pairAddress={gate.pairAddress} />
+          <TokenChart
+            tokenAddress={gate.tokenAddress}
+            pairAddress={gate.pairAddress}
+          />
         )}
         {displayedTab === 'INFO' && (
           <TokenInfo
