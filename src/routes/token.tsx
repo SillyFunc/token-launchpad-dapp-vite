@@ -129,7 +129,7 @@ export const TokenPage = () => {
 
   return (
     <TokenLayout>
-      <header className="shrink-0 bg-[#070808] p-4">
+      <header className="shrink-0 bg-[#070808] p-3">
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
             <Avatar className="size-9.5 bg-[#141517] after:border-foreground/10">
@@ -309,7 +309,7 @@ export const TokenPage = () => {
         </div>
       </header>
 
-      <div className="relative mt-4 px-4">
+      <div className="relative mt-4 px-3">
         <div
           role="tablist"
           aria-label={m.token_content_tabs()}
@@ -337,7 +337,7 @@ export const TokenPage = () => {
         </div>
       </div>
 
-      <main className="px-4 pt-6">
+      <main className="px-3 pt-6">
         {displayedTab === 'PRESALE' && (
           <TokenPresale gate={gate} symbol={token?.symbol || '--'} />
         )}
