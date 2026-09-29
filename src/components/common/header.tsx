@@ -33,13 +33,6 @@ export const Header: React.FC<HeaderProps> = ({ isMenuOpen, onToggleMenu }) => {
             )}
           </div>
         </button>
-        <Link
-          to="/board"
-          aria-label="Home"
-          className="flex items-center justify-center text-[#FE810B]"
-        >
-          <Flame className="size-6 fill-[#FE810B]" />
-        </Link>
       </div>
       <div className="flex shrink-0 items-center space-x-2">
         {/* shadow-[0_3px_0_0_#963000] */}
