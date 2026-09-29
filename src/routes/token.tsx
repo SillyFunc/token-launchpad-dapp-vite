@@ -203,17 +203,6 @@ export const TokenPage = () => {
                   <Copy className="ml-1 size-3" />
                 )}
               </button>
-              {explorerUrl && (
-                <a
-                  href={explorerUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={m.token_view_explorer()}
-                  className="ml-1 text-[#A0A3A7] transition-colors hover:text-primary focus-visible:text-primary focus-visible:outline-none"
-                >
-                  <ExternalLink className="size-3" />
-                </a>
-              )}
             </div>
             <svg
               viewBox="0 0 4.5 14"
