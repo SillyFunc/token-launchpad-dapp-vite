@@ -49,13 +49,17 @@ export const TokenPage = () => {
     staleTime: 30_000,
   })
 
-  const gate = useTokenGate(tokenAddress, token?.presaleAddress)
+  const gate = useTokenGate(tokenAddress, token?.presaleAddress, {
+    refetchInterval: 15_000,
+    watchPair: true,
+  })
   const { priceBNB, marketCapBNB, changePercent } = useTokenPrice({
     tokenAddress: gate.tokenAddress,
     pairAddress: gate.pairAddress,
     presalePrice: gate.presalePrice,
     totalSupply: gate.totalSupply,
     tokenDecimals: gate.tokenDecimals,
+    managedPairReads: gate.pairReads,
   })
 
   const isLaunched = (gate.tokenState ?? 0) >= 2 || gate.presaleStatus === 3

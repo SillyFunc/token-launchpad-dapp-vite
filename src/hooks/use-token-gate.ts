@@ -1,16 +1,34 @@
+import { useState } from 'react'
 import { useReadContracts } from 'wagmi'
 import {
   flapTaxTokenV3Abi,
   presaleAbi,
   getCoordinatorFactory,
 } from '@/contracts'
-import { isAddress, zeroAddress, type Address } from 'viem'
+import { pairQuoteAbi, type ManagedPairReads } from '@/hooks/use-token-price'
+import { PLATFORM_CHAIN_ID } from '@/lib/web3'
+import {
+  isAddress,
+  zeroAddress,
+  type Abi,
+  type Address,
+  type ContractFunctionParameters,
+} from 'viem'
 
 function validAddress(value?: string | null): Address | undefined {
   if (!value || !isAddress(value) || value.toLowerCase() === zeroAddress) {
     return undefined
   }
   return value as Address
+}
+
+type ReadResult = { result?: unknown }
+
+export interface UseTokenGateOptions {
+  /** Live fields only. Static identity is read once. */
+  refetchInterval?: number
+  /** Fold pair token0/token1/getReserves into the live multicall. */
+  watchPair?: boolean
 }
 
 export interface TokenGateResult {
@@ -46,206 +64,214 @@ export interface TokenGateResult {
   endTime?: bigint
   isSoftCapReached: boolean
   isSoldOut: boolean
+  pairReads?: ManagedPairReads
   refetch: () => Promise<void>
+}
+
+const TOKEN_LIVE_COUNT = 6
+const PRESALE_LIVE_COUNT = 2
+
+function call(
+  address: Address,
+  abi: Abi,
+  functionName: string,
+  args?: readonly unknown[],
+): ContractFunctionParameters {
+  return {
+    address,
+    abi,
+    functionName,
+    args,
+    chainId: PLATFORM_CHAIN_ID,
+  } as ContractFunctionParameters
 }
 
 export function useTokenGate(
   address?: string,
   backendPresaleAddress?: string | null,
+  options: UseTokenGateOptions = {},
 ): TokenGateResult {
+  const { refetchInterval = 30_000, watchPair = false } = options
   const coordinator = getCoordinatorFactory()
   const tokenAddress = validAddress(address)
   const queryTokenAddress = tokenAddress ?? zeroAddress
+  const backendPresale = validAddress(backendPresaleAddress)
+  const tokenKey = tokenAddress ?? ''
+  const [trackedKey, setTrackedKey] = useState(tokenKey)
+  const [seenPresale, setSeenPresale] = useState<Address>()
+  const [seenPair, setSeenPair] = useState<Address>()
+  const [keptStatic, setKeptStatic] = useState<readonly ReadResult[]>()
+  const [keptLive, setKeptLive] = useState<readonly ReadResult[]>()
+  if (trackedKey !== tokenKey) {
+    setTrackedKey(tokenKey)
+    setSeenPresale(undefined)
+    setSeenPair(undefined)
+    setKeptStatic(undefined)
+    setKeptLive(undefined)
+  }
 
-  const baseQuery = useReadContracts({
-    contracts: [
-      {
-        ...coordinator,
-        functionName: 'tokenExists',
-        args: [queryTokenAddress],
-      },
-      {
-        ...coordinator,
-        functionName: 'tokenConfigured',
-        args: [queryTokenAddress],
-      },
-      {
-        ...coordinator,
-        functionName: 'tokenCreators',
-        args: [queryTokenAddress],
-      },
-      {
-        ...coordinator,
-        functionName: 'getTokenPresale',
-        args: [queryTokenAddress],
-      },
-      {
-        address: queryTokenAddress,
-        abi: flapTaxTokenV3Abi,
-        functionName: 'state',
-      },
-      {
-        address: queryTokenAddress,
-        abi: flapTaxTokenV3Abi,
-        functionName: 'name',
-      },
-      {
-        address: queryTokenAddress,
-        abi: flapTaxTokenV3Abi,
-        functionName: 'symbol',
-      },
-      {
-        address: queryTokenAddress,
-        abi: flapTaxTokenV3Abi,
-        functionName: 'decimals',
-      },
-      {
-        address: queryTokenAddress,
-        abi: flapTaxTokenV3Abi,
-        functionName: 'totalSupply',
-      },
-      {
-        address: queryTokenAddress,
-        abi: flapTaxTokenV3Abi,
-        functionName: 'getPoolStateData',
-      },
-      {
-        address: queryTokenAddress,
-        abi: flapTaxTokenV3Abi,
-        functionName: 'mainPool',
-      },
-    ] as const,
+  const presaleAddress = seenPresale ?? backendPresale
+  const queryPresaleAddress = presaleAddress ?? zeroAddress
+  const pairAddress = watchPair ? seenPair : undefined
+
+  const staticContracts: ContractFunctionParameters[] = [
+    call(coordinator.address, coordinator.abi, 'tokenCreators', [
+      queryTokenAddress,
+    ]),
+    call(queryTokenAddress, flapTaxTokenV3Abi, 'name'),
+    call(queryTokenAddress, flapTaxTokenV3Abi, 'symbol'),
+    call(queryTokenAddress, flapTaxTokenV3Abi, 'decimals'),
+    call(queryTokenAddress, flapTaxTokenV3Abi, 'totalSupply'),
+  ]
+  if (presaleAddress) {
+    staticContracts.push(
+      call(queryPresaleAddress, presaleAbi, 'softCap'),
+      call(queryPresaleAddress, presaleAbi, 'hardcap'),
+      call(queryPresaleAddress, presaleAbi, 'presaleShare'),
+      call(queryPresaleAddress, presaleAbi, 'vestingDelay'),
+      call(queryPresaleAddress, presaleAbi, 'vestingRate'),
+      call(queryPresaleAddress, presaleAbi, 'presaleTokenPrice'),
+      call(queryPresaleAddress, presaleAbi, 'maxBuyPerWallet'),
+      call(queryPresaleAddress, presaleAbi, 'startTime'),
+      call(queryPresaleAddress, presaleAbi, 'endTime'),
+    )
+  }
+
+  const liveContracts: ContractFunctionParameters[] = [
+    call(coordinator.address, coordinator.abi, 'tokenExists', [
+      queryTokenAddress,
+    ]),
+    call(coordinator.address, coordinator.abi, 'tokenConfigured', [
+      queryTokenAddress,
+    ]),
+    call(coordinator.address, coordinator.abi, 'getTokenPresale', [
+      queryTokenAddress,
+    ]),
+    call(queryTokenAddress, flapTaxTokenV3Abi, 'state'),
+    call(queryTokenAddress, flapTaxTokenV3Abi, 'getPoolStateData'),
+    call(queryTokenAddress, flapTaxTokenV3Abi, 'mainPool'),
+  ]
+  if (presaleAddress) {
+    liveContracts.push(
+      call(queryPresaleAddress, presaleAbi, 'getLaunchStatus'),
+      call(queryPresaleAddress, presaleAbi, 'lpAddress'),
+    )
+  }
+  if (pairAddress) {
+    liveContracts.push(
+      call(pairAddress, pairQuoteAbi, 'token0'),
+      call(pairAddress, pairQuoteAbi, 'token1'),
+      call(pairAddress, pairQuoteAbi, 'getReserves'),
+    )
+  }
+
+  const staticQuery = useReadContracts({
+    contracts: staticContracts,
     query: {
       enabled: Boolean(tokenAddress),
-      staleTime: 15_000,
-      refetchInterval: 30_000,
+      staleTime: Infinity,
     },
   })
-
-  const chainPresaleAddress = validAddress(
-    baseQuery.data?.[3]?.result as string | undefined,
-  )
-  const presaleAddress =
-    chainPresaleAddress ?? validAddress(backendPresaleAddress)
-  const queryPresaleAddress = presaleAddress ?? zeroAddress
-
-  const presaleQuery = useReadContracts({
-    contracts: [
-      {
-        address: queryPresaleAddress,
-        abi: presaleAbi,
-        functionName: 'getLaunchStatus',
-      },
-      {
-        address: queryPresaleAddress,
-        abi: presaleAbi,
-        functionName: 'softCap',
-      },
-      {
-        address: queryPresaleAddress,
-        abi: presaleAbi,
-        functionName: 'hardcap',
-      },
-      {
-        address: queryPresaleAddress,
-        abi: presaleAbi,
-        functionName: 'presaleShare',
-      },
-      {
-        address: queryPresaleAddress,
-        abi: presaleAbi,
-        functionName: 'vestingDelay',
-      },
-      {
-        address: queryPresaleAddress,
-        abi: presaleAbi,
-        functionName: 'vestingRate',
-      },
-      {
-        address: queryPresaleAddress,
-        abi: presaleAbi,
-        functionName: 'presaleTokenPrice',
-      },
-      {
-        address: queryPresaleAddress,
-        abi: presaleAbi,
-        functionName: 'maxBuyPerWallet',
-      },
-      {
-        address: queryPresaleAddress,
-        abi: presaleAbi,
-        functionName: 'startTime',
-      },
-      {
-        address: queryPresaleAddress,
-        abi: presaleAbi,
-        functionName: 'endTime',
-      },
-      {
-        address: queryPresaleAddress,
-        abi: presaleAbi,
-        functionName: 'lpAddress',
-      },
-    ] as const,
+  const liveQuery = useReadContracts({
+    contracts: liveContracts,
     query: {
-      enabled: Boolean(presaleAddress),
-      staleTime: 15_000,
-      refetchInterval: 30_000,
+      enabled: Boolean(tokenAddress),
+      staleTime: 10_000,
+      refetchInterval,
     },
   })
 
-  const launchStatus = presaleQuery.data?.[0]?.result
-  const poolState = baseQuery.data?.[9]?.result
-  const startTimeValue = presaleQuery.data?.[8]?.result ?? 0n
-  const endTimeValue = presaleQuery.data?.[9]?.result ?? 0n
-  const mainPool = validAddress(baseQuery.data?.[10]?.result)
-  const presalePool = validAddress(presaleQuery.data?.[10]?.result)
-  const bnbAccumulated = launchStatus?.[2] ?? 0n
-  const tokensSubscribed = launchStatus?.[3] ?? 0n
-  const presaleShare = presaleQuery.data?.[3]?.result ?? 0n
-  const softCap = presaleQuery.data?.[1]?.result ?? 0n
-  const hardCap = presaleQuery.data?.[2]?.result ?? 0n
+  const staticResult = staticQuery.data as readonly ReadResult[] | undefined
+  const liveResult = liveQuery.data as readonly ReadResult[] | undefined
+  if (staticResult && staticResult !== keptStatic) setKeptStatic(staticResult)
+  if (liveResult && liveResult !== keptLive) setKeptLive(liveResult)
+  const staticData = staticResult ?? keptStatic
+  const liveData = liveResult ?? keptLive
+
+  const freshPresale = validAddress(liveData?.[2]?.result as string | undefined)
+  const resolvedPresale = freshPresale ?? backendPresale
+  const freshMainPool = validAddress(liveData?.[5]?.result as string | undefined)
+  const freshLp = presaleAddress
+    ? validAddress(
+        liveData?.[TOKEN_LIVE_COUNT + 1]?.result as string | undefined,
+      )
+    : undefined
+  const resolvedPair = freshMainPool ?? freshLp
+  if (freshPresale && freshPresale !== seenPresale) setSeenPresale(freshPresale)
+  if (watchPair && resolvedPair && resolvedPair !== seenPair) {
+    setSeenPair(resolvedPair)
+  }
+
+  const poolState = liveData?.[4]?.result as
+    | { 1?: bigint | number; 2?: bigint | number }
+    | undefined
+  const launchStatus = presaleAddress
+    ? (liveData?.[TOKEN_LIVE_COUNT]?.result as readonly unknown[] | undefined)
+    : undefined
+  const pairIndex = TOKEN_LIVE_COUNT + (presaleAddress ? PRESALE_LIVE_COUNT : 0)
+  const staticPresaleIndex = 5
+  const startTimeValue =
+    (staticData?.[staticPresaleIndex + 7]?.result as bigint | undefined) ?? 0n
+  const endTimeValue =
+    (staticData?.[staticPresaleIndex + 8]?.result as bigint | undefined) ?? 0n
+  const bnbAccumulated = (launchStatus?.[2] as bigint | undefined) ?? 0n
+  const tokensSubscribed = (launchStatus?.[3] as bigint | undefined) ?? 0n
+  const presaleShare =
+    (staticData?.[staticPresaleIndex + 2]?.result as bigint | undefined) ?? 0n
+  const softCap =
+    (staticData?.[staticPresaleIndex]?.result as bigint | undefined) ?? 0n
 
   return {
     tokenAddress,
-    isLoading:
-      baseQuery.isLoading || (Boolean(presaleAddress) && presaleQuery.isLoading),
-    isFetching: baseQuery.isFetching || presaleQuery.isFetching,
-    isError: baseQuery.isError || presaleQuery.isError,
-    tokenExists: baseQuery.data?.[0]?.result ?? false,
-    presaleConfigured: baseQuery.data?.[1]?.result ?? false,
-    creatorAddress: validAddress(baseQuery.data?.[2]?.result),
-    presaleAddress,
+    isLoading: Boolean(tokenAddress) && (!staticData || !liveData),
+    isFetching: staticQuery.isFetching || liveQuery.isFetching,
+    isError: staticQuery.isError || liveQuery.isError,
+    tokenExists: (liveData?.[0]?.result as boolean | undefined) ?? false,
+    presaleConfigured: (liveData?.[1]?.result as boolean | undefined) ?? false,
+    creatorAddress: validAddress(staticData?.[0]?.result as string | undefined),
+    presaleAddress: resolvedPresale,
     tokenState:
-      baseQuery.data?.[4]?.result === undefined
+      liveData?.[3]?.result === undefined
         ? undefined
-        : Number(baseQuery.data[4].result),
-    tokenName: baseQuery.data?.[5]?.result,
-    tokenSymbol: baseQuery.data?.[6]?.result,
-    tokenDecimals: Number(baseQuery.data?.[7]?.result ?? 18),
-    totalSupply: baseQuery.data?.[8]?.result ?? 0n,
+        : Number(liveData[3].result),
+    tokenName: staticData?.[1]?.result as string | undefined,
+    tokenSymbol: staticData?.[2]?.result as string | undefined,
+    tokenDecimals: Number(staticData?.[3]?.result ?? 18),
+    totalSupply: (staticData?.[4]?.result as bigint | undefined) ?? 0n,
     buyTaxBps: poolState ? Number(poolState[1]) : undefined,
     sellTaxBps: poolState ? Number(poolState[2]) : undefined,
-    pairAddress: mainPool ?? presalePool,
-    presaleEnabled: launchStatus?.[0] ?? false,
+    pairAddress: resolvedPair,
+    presaleEnabled: (launchStatus?.[0] as boolean | undefined) ?? false,
     presaleStatus:
       launchStatus?.[1] === undefined ? undefined : Number(launchStatus[1]),
     bnbAccumulated,
     tokensSubscribed,
-    tokensClaimed: launchStatus?.[5] ?? false,
+    tokensClaimed: (launchStatus?.[5] as boolean | undefined) ?? false,
     presaleShare,
     softCap,
-    hardCap,
-    vestingDelay: presaleQuery.data?.[4]?.result ?? 0n,
-    vestingRate: presaleQuery.data?.[5]?.result ?? 0n,
-    presalePrice: presaleQuery.data?.[6]?.result ?? 0n,
-    maxBuyPerWallet: presaleQuery.data?.[7]?.result ?? 0n,
+    hardCap:
+      (staticData?.[staticPresaleIndex + 1]?.result as bigint | undefined) ?? 0n,
+    vestingDelay:
+      (staticData?.[staticPresaleIndex + 3]?.result as bigint | undefined) ?? 0n,
+    vestingRate:
+      (staticData?.[staticPresaleIndex + 4]?.result as bigint | undefined) ?? 0n,
+    presalePrice:
+      (staticData?.[staticPresaleIndex + 5]?.result as bigint | undefined) ?? 0n,
+    maxBuyPerWallet:
+      (staticData?.[staticPresaleIndex + 6]?.result as bigint | undefined) ?? 0n,
     startTime: startTimeValue > 0n ? startTimeValue : undefined,
     endTime: endTimeValue > 0n ? endTimeValue : undefined,
     isSoftCapReached: softCap > 0n && bnbAccumulated >= softCap,
     isSoldOut: presaleShare > 0n && tokensSubscribed >= presaleShare,
+    pairReads: watchPair
+      ? {
+          token0: liveData?.[pairIndex]?.result as Address | undefined,
+          token1: liveData?.[pairIndex + 1]?.result as Address | undefined,
+          reserves: liveData?.[pairIndex + 2]?.result,
+        }
+      : undefined,
     refetch: async () => {
-      await Promise.all([baseQuery.refetch(), presaleQuery.refetch()])
+      await Promise.all([staticQuery.refetch(), liveQuery.refetch()])
     },
   }
 }
