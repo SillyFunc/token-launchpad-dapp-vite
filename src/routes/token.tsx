@@ -374,12 +374,12 @@ export const TokenPage = () => {
 
       <>
         {displayedTab === 'PRESALE' && (
-          <section className="p-3">
+          <section className="p-3 flex-1">
             <TokenPresale gate={gate} symbol={token?.symbol || '--'} />
           </section>
         )}
         {displayedTab === 'CHART' && (
-          <section className="p-3 flex-1">
+          <section className="m-3 flex min-h-0 flex-1 flex-col overflow-hidden">
             <TokenChart
               tokenAddress={gate.tokenAddress}
               pairAddress={gate.pairAddress}
@@ -387,7 +387,7 @@ export const TokenPage = () => {
           </section>
         )}
         {displayedTab === 'INFO' && (
-          <section className="px-3 pt-6">
+          <section className="px-3 pt-6 flex-1">
             <TokenInfo
               token={token}
               totalSupply={gate.totalSupply}
