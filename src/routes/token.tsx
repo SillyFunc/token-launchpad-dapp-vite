@@ -244,7 +244,7 @@ export const TokenPage = () => {
                 />
               </svg>
               <span className="min-w-0 inline-flex items-center gap-0.5 text-[#fb5f16]">
-                <span className='text-xs'>税收详情</span>
+                <span className="text-xs">税收详情</span>
                 <svg
                   viewBox="0 0 16 16"
                   fill="none"
@@ -273,6 +273,12 @@ export const TokenPage = () => {
               </svg>
             </div>
           </div>
+        </div>
+
+        <div className="mt-4 flex items-center gap-1.5 min-w-0 overflow-x-auto overflow-y-hidden [-ms-overflow-style:none] scrollbar-none [&::-webkit-scrollbar]:hidden">
+          <span className="flex h-4 shrink-0 items-center border px-1 text-[10px] font-semibold uppercase leading-[1.4] tracking-normal border-[#F7594B] text-[#F7594B]">
+            销毁 100%
+          </span>
         </div>
 
         <div className="mt-4 grid grid-cols-5 divide-x divide-foreground/10 border-t border-t-foreground/5 pt-3 text-center text-xs">
