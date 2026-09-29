@@ -1,17 +1,15 @@
 import { memo } from 'react'
 import { LineChart, LoaderCircle } from 'lucide-react'
 import type { Address } from 'viem'
+
+import { getPairChartUrl } from '@/lib/links'
 import { m } from '@/paraglide/messages.js'
 
-const KlineChart = memo(function KlineChart({
-  pairAddress,
-}: {
-  pairAddress: Address
-}) {
+const KlineChart = memo(function KlineChart({ src }: { src: string }) {
   return (
     <iframe
       title={m.token_chart_title()}
-      src={`https://www.defined.fi/bsc/${pairAddress}/embed?hideTxTable=1&hideSidebar=1&hideChart=0&hideChartEmptyBars=1&chartSmoothing=0&embedColorMode=DEFAULT&quoteToken=token0`}
+      src={src}
       className="min-h-0 w-full flex-1 transition-opacity duration-200"
       allow="clipboard-write; clipboard-read"
       referrerPolicy="strict-origin-when-cross-origin"
@@ -49,9 +47,11 @@ export function TokenChart({
     )
   }
 
+  const chartUrl = getPairChartUrl(pairAddress)
+
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden border border-[#242424] bg-[#070808] font-jetbrains text-white">
-      <KlineChart pairAddress={pairAddress} />
+      <KlineChart src={chartUrl} />
     </div>
   )
 }

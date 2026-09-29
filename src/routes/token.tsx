@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { isAddress, type Address } from 'viem'
 import { Check, Coins, Copy, ExternalLink } from 'lucide-react'
 
+import pancakeIcon from '@/assets/svgs/pancake.svg'
 import { getTokenByContractAddress } from '@/api/token'
 import { TokenChart } from '@/components/token/token-chart'
 import { TokenInfo } from '@/components/token/token-info'
@@ -19,6 +20,7 @@ import {
   formatPercent,
   formatTokenAmount,
 } from '@/lib/format'
+import { getPancakeSwapUrl } from '@/lib/links'
 import { formatAddress } from '@/lib/utils'
 import { getExplorerAddressUrl } from '@/lib/web3'
 import { TAX_CHANNELS, type TaxChannelKey } from '@/lib/tax-channels'
@@ -299,6 +301,26 @@ export const TokenPage = () => {
                 />
               </svg>
             </div>
+            {tokenAddress && (
+              <a
+                href={getPancakeSwapUrl(tokenAddress)}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="PancakeSwap"
+                title="PancakeSwap"
+                className="inline-flex shrink-0 items-center"
+              >
+                <img
+                  src={pancakeIcon}
+                  alt="PancakeSwap"
+                  width={18}
+                  height={18}
+                  loading="lazy"
+                  decoding="async"
+                  className="h-[18px] w-[18px]"
+                />
+              </a>
+            )}
           </div>
         </div>
 
