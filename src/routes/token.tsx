@@ -390,8 +390,6 @@ export const TokenPage = () => {
             marketCapUsdt={displayedMarketCap}
             changePercent={changePercent}
             creatorAddress={gate.creatorAddress}
-            buyTaxBps={gate.buyTaxBps}
-            sellTaxBps={gate.sellTaxBps}
           />
         )}
       </main>

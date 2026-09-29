@@ -345,6 +345,8 @@
   "token_open_website": "開啟 {name} 官方網站",
   "token_view_explorer": "在 BscScan 查看代幣",
   "token_total_supply": "發行量",
+  "token_circulating_supply": "流通量",
+  "token_max_supply": "最大供應量",
   "token_volume_24h": "24h 交易額",
   "token_market_cap": "市值",
   "token_holders": "持有人",
