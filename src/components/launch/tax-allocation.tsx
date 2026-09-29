@@ -1,34 +1,6 @@
 import { Slider } from '../ui/slider'
 import { FormSectionTitle } from '../common/form-section-title'
-
-const CHANNELS = [
-  {
-    key: 'creator',
-    label: '自动回购金库',
-    sublabel: '',
-    color: 'rgb(254, 129, 11)',
-  },
-  {
-    key: 'burn',
-    label: '銷毀',
-    sublabel: '銷毀',
-    color: 'rgb(91, 49, 255)',
-  },
-  {
-    key: 'dividend',
-    label: '分紅',
-    sublabel: '持有者獎勵',
-    color: 'rgb(208, 255, 0)',
-  },
-  {
-    key: 'liquidity',
-    label: '流動性',
-    sublabel: '增加流動性',
-    color: 'rgb(22, 217, 217)',
-  },
-] as const
-
-type ChannelKey = (typeof CHANNELS)[number]['key']
+import { TAX_CHANNELS, type TaxChannelKey } from '@/lib/tax-channels'
 
 const UNALLOCATED_ARC_COLOR = 'rgb(31, 32, 35)'
 
@@ -108,10 +80,10 @@ export const TaxAllocation: React.FC<TaxAllocationProps> = ({
   onChange,
   errors,
 }) => {
-  const total = CHANNELS.reduce((sum, channel) => sum + value[channel.key], 0)
+  const total = TAX_CHANNELS.reduce((sum, channel) => sum + value[channel.key], 0)
   const unallocated = 100 - total
 
-  const setChannel = (key: ChannelKey, next: number | readonly number[]) => {
+  const setChannel = (key: TaxChannelKey, next: number | readonly number[]) => {
     const raw = Array.isArray(next) ? next[0] : next
     const headroom = 100 - total + value[key]
     const clamped = Math.min(Math.max(Math.round(raw), 0), headroom)
@@ -121,7 +93,7 @@ export const TaxAllocation: React.FC<TaxAllocationProps> = ({
   const donutBackground = (() => {
     const stops: string[] = []
     let allocated = 0
-    for (const channel of CHANNELS) {
+    for (const channel of TAX_CHANNELS) {
       const channelValue = value[channel.key]
       if (channelValue <= 0) continue
       stops.push(`${channel.color} ${allocated}% ${allocated + channelValue}%`)
@@ -173,7 +145,7 @@ export const TaxAllocation: React.FC<TaxAllocationProps> = ({
               </div>
             </div>
             <div className="flex w-full max-w-55 sm:max-w-full min-w-0 flex-col gap-1 text-xs font-light text-foreground">
-              {CHANNELS.map((channel) => (
+              {TAX_CHANNELS.map((channel) => (
                 <div
                   key={channel.key}
                   className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2"
@@ -226,7 +198,7 @@ export const TaxAllocation: React.FC<TaxAllocationProps> = ({
               </button>
             </div>
             <div className="mt-5.5 min-w-0 space-y-5">
-              {CHANNELS.map((channel) => (
+              {TAX_CHANNELS.map((channel) => (
                 <div key={channel.key} className="space-y-3 text-xs">
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex min-w-0 flex-col">

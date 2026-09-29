@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams } from 'react-router'
+import { Link, useParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { isAddress, type Address } from 'viem'
 import { Check, Coins, Copy, ExternalLink } from 'lucide-react'
@@ -21,6 +21,7 @@ import {
 } from '@/lib/format'
 import { formatAddress } from '@/lib/utils'
 import { getExplorerAddressUrl } from '@/lib/web3'
+import { TAX_CHANNELS, type TaxChannelKey } from '@/lib/tax-channels'
 import { m } from '@/paraglide/messages.js'
 
 type TabType = 'PRESALE' | 'CHART' | 'INFO'
@@ -114,6 +115,35 @@ export const TokenPage = () => {
   const sellTax =
     token?.sellTax ??
     (gate.sellTaxBps === undefined ? null : gate.sellTaxBps / 100)
+
+  const allocationBps: Record<TaxChannelKey, number | undefined> = {
+    creator: token?.marketBps,
+    burn: token?.deflationBps,
+    dividend: token?.dividendBps,
+    liquidity: token?.lpBps,
+  }
+  const taxAllocation = TAX_CHANNELS.map((channel) => ({
+    ...channel,
+    percent: (allocationBps[channel.key] ?? 0) / 100,
+  })).filter((channel) => channel.percent > 0)
+
+  const taxDetailsContent = (
+    <>
+      <span className="text-xs">税收详情</span>
+      <svg
+        viewBox="0 0 16 16"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+        className="size-4 shrink-0"
+      >
+        <path
+          d="M11.7712 3.62846C11.9304 3.62846 12.0832 3.69179 12.1957 3.80432C12.3082 3.91684 12.3715 4.06963 12.3715 4.22876V9.88562H11.1709V5.67796L4.41751 12.4314L3.56861 11.5825L10.322 4.82907L6.11438 4.82907L6.11438 3.62846H11.7712Z"
+          fill="currentColor"
+        ></path>
+      </svg>
+    </>
+  )
 
   const handleCopy = async () => {
     if (!tokenAddress || !navigator.clipboard) return
@@ -243,21 +273,18 @@ export const TokenPage = () => {
                   strokeWidth="1"
                 />
               </svg>
-              <span className="min-w-0 inline-flex items-center gap-0.5 text-[#fb5f16]">
-                <span className="text-xs">税收详情</span>
-                <svg
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  aria-hidden="true"
-                  className="size-4 shrink-0"
+              {tokenAddress ? (
+                <Link
+                  to={`/taxinfo/${tokenAddress}`}
+                  className="min-w-0 inline-flex items-center gap-0.5 text-[#fb5f16]"
                 >
-                  <path
-                    d="M11.7712 3.62846C11.9304 3.62846 12.0832 3.69179 12.1957 3.80432C12.3082 3.91684 12.3715 4.06963 12.3715 4.22876V9.88562H11.1709V5.67796L4.41751 12.4314L3.56861 11.5825L10.322 4.82907L6.11438 4.82907L6.11438 3.62846H11.7712Z"
-                    fill="currentColor"
-                  ></path>
-                </svg>
-              </span>
+                  {taxDetailsContent}
+                </Link>
+              ) : (
+                <span className="min-w-0 inline-flex items-center gap-0.5 text-[#fb5f16]">
+                  {taxDetailsContent}
+                </span>
+              )}
               <svg
                 viewBox="0 0 4.5 14"
                 fill="none"
@@ -275,11 +302,19 @@ export const TokenPage = () => {
           </div>
         </div>
 
-        <div className="mt-4 flex items-center gap-1.5 min-w-0 overflow-x-auto overflow-y-hidden [-ms-overflow-style:none] scrollbar-none [&::-webkit-scrollbar]:hidden">
-          <span className="flex h-4 shrink-0 items-center border px-1 text-[10px] font-semibold uppercase leading-[1.4] tracking-normal border-[#F7594B] text-[#F7594B]">
-            销毁 100%
-          </span>
-        </div>
+        {taxAllocation.length > 0 && (
+          <div className="mt-4 flex items-center gap-1.5 min-w-0 overflow-x-auto overflow-y-hidden [-ms-overflow-style:none] scrollbar-none [&::-webkit-scrollbar]:hidden">
+            {taxAllocation.map((channel) => (
+              <span
+                key={channel.key}
+                className="flex h-4 shrink-0 items-center border px-1 text-[10px] font-semibold uppercase leading-[1.4] tracking-normal"
+                style={{ borderColor: channel.color, color: channel.color }}
+              >
+                {channel.label} {formatDecimal(channel.percent)}%
+              </span>
+            ))}
+          </div>
+        )}
 
         <div className="mt-4 grid grid-cols-5 divide-x divide-foreground/10 border-t border-t-foreground/5 pt-3 text-center text-xs">
           <div className="flex flex-col gap-0.5 px-1">

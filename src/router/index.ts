@@ -43,7 +43,7 @@ export const router = createHashRouter([
         Component: SubscriptionPage,
       },
       {
-        path: 'taxinfo',
+        path: 'taxinfo/:address',
         Component: TaxInfoPage,
       },
     ],

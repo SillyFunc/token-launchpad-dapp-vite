@@ -1,5 +1,5 @@
 import { Link } from 'react-router'
-import { Flame, MenuIcon, XIcon } from 'lucide-react'
+import { MenuIcon, XIcon } from 'lucide-react'
 import { ConnectKitButton } from 'connectkit'
 import { formatAddress } from '@/lib/utils'
 import { Button } from '../ui/button'

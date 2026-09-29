@@ -1,6 +1,43 @@
-import { Link } from 'react-router'
+import { useQuery } from '@tanstack/react-query'
+import { Link, useParams } from 'react-router'
+import { isAddress, type Address } from 'viem'
+
+import { getTokenByContractAddress } from '@/api/token'
+import { useTokenGate } from '@/hooks/use-token-gate'
+import { formatDecimal } from '@/lib/format'
+import { formatAddress } from '@/lib/utils'
+import { getExplorerAddressUrl } from '@/lib/web3'
 
 export const TaxInfoPage = () => {
+  const { address: routeAddress = '' } = useParams<{ address: string }>()
+  const tokenAddress = isAddress(routeAddress)
+    ? (routeAddress.toLowerCase() as Address)
+    : undefined
+
+  const { data: token } = useQuery({
+    queryKey: ['tokenDetail', tokenAddress],
+    queryFn: ({ signal }) => getTokenByContractAddress(tokenAddress!, signal),
+    enabled: Boolean(tokenAddress),
+    staleTime: 30_000,
+  })
+  const gate = useTokenGate(tokenAddress)
+
+  const tokenName = token?.name || '--'
+  const tokenSymbol = token?.symbol ? `$${token.symbol}` : '--'
+  const explorerUrl = getExplorerAddressUrl(tokenAddress)
+  const tokenPath = tokenAddress ? `/token/${tokenAddress}` : '/board'
+  const buyTax =
+    token?.buyTax ??
+    (gate.buyTaxBps === undefined ? null : gate.buyTaxBps / 100)
+  const sellTax =
+    token?.sellTax ??
+    (gate.sellTaxBps === undefined ? null : gate.sellTaxBps / 100)
+
+  const handleCopy = () => {
+    if (!tokenAddress || !navigator.clipboard) return
+    void navigator.clipboard.writeText(tokenAddress).catch(() => undefined)
+  }
+
   return (
     <>
       <div className="flex min-w-0 items-center gap-1 text-[0.6875rem] text-xs text-[#A0A3A7] mt-2.5">
@@ -10,9 +47,9 @@ export const TaxInfoPage = () => {
         <span aria-hidden>&gt;</span>
         <Link
           className="min-w-0 truncate transition-colors hover:text-foreground"
-          to="/token/0x60f3168983451378fce54838a1174e1cb56c8888"
+          to={tokenPath}
         >
-          代币名称
+          {tokenName}
         </Link>
         <span aria-hidden>&gt;</span>
         <span className="text-foreground">稅收信息</span>
@@ -112,7 +149,7 @@ export const TaxInfoPage = () => {
               ></span>
               <div className="absolute left-1 top-1 size-10 border border-solid border-[#484B51]">
                 <img
-                  src=""
+                  src={token?.coinImg || ''}
                   alt="代币LOGO"
                   loading="lazy"
                   className="size-full object-cover"
@@ -123,10 +160,10 @@ export const TaxInfoPage = () => {
             <div className="min-w-0 flex-1 flex min-h-10 flex-col justify-center">
               <div className="flex min-w-0 gap-x-3 items-center">
                 <h1 className="min-w-0 wrap-break-word text-base font-medium text-foreground">
-                  代币符号
+                  {tokenSymbol}
                 </h1>
                 <span className="min-w-0 flex-1 text-[#84888C] truncate whitespace-nowrap text-xs">
-                  代币名称
+                  {tokenName}
                 </span>
               </div>
               <div className="mt-1.5 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1">
@@ -140,15 +177,16 @@ export const TaxInfoPage = () => {
                     target="_blank"
                     rel="noopener noreferrer nofollow"
                     className="min-w-0 text-xs leading-[1.35] text-foreground underline decoration-white/70 underline-offset-2 hover:text-[#D0FF00] truncate"
-                    href="https://bscscan.com/address/0x848e2b1cb00dc439a15b03b8c3194e7d08917777"
+                    href={explorerUrl}
                   >
-                    <span>0x848e...7777</span>
+                    <span>{formatAddress(tokenAddress)}</span>
                   </a>
                   <button
                     type="button"
                     className="text-white/35 transition-colors hover:text-white/80 focus-visible:text-white/80 focus-visible:outline-none inline-flex size-3.5 shrink-0 items-center justify-center"
                     title="複製地址"
                     aria-label="複製地址"
+                    onClick={handleCopy}
                   >
                     <span
                       className="relative inline-block size-3.5"
@@ -188,10 +226,10 @@ export const TaxInfoPage = () => {
         <div className="space-y-2.5">
           <div className="grid border border-[#484B51] grid-cols-2">
             <div className="flex min-h-9 items-center justify-center px-2 py-1.5 text-center text-[0.6875rem] leading-[1.35] text-[#2BC235]">
-              買入稅率: 3%
+              買入稅率: {buyTax === null ? '--' : `${formatDecimal(buyTax)}%`}
             </div>
             <div className="flex min-h-9 items-center justify-center border-l border-[#484B51] px-2 py-1.5 text-center text-[0.6875rem] leading-[1.35] text-[#F7594B]">
-              賣出稅率: 3%
+              賣出稅率: {sellTax === null ? '--' : `${formatDecimal(sellTax)}%`}
             </div>
           </div>
         </div>
