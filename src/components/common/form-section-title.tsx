@@ -45,7 +45,7 @@ export const FormSectionTitle: React.FC<FormSectionTitleProps> = (props) => {
           optional && !open ? CollapsibleSectionIcon : ExpandSectionIcon
         }
         aria-hidden="true"
-        className="size-4 absolute -left-6 align-middle"
+        className="size-4 absolute -left-5 align-middle"
       />
       <div className="inline-flex min-w-0 items-center gap-1 ml-1.5">
         <span className="text-base font-medium text-foreground flex items-center">
