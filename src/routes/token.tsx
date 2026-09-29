@@ -11,6 +11,7 @@ import { TokenLayout } from '@/layouts/token-layout'
 import { TokenPresale } from '@/components/token/token-presale'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useTokenGate } from '@/hooks/use-token-gate'
+import { useBnbUsdtPrice } from '@/hooks/use-bnb-usdt-price'
 import { useTokenPrice } from '@/hooks/use-token-price'
 import {
   formatCompactNumber,
@@ -84,14 +85,23 @@ export const TokenPage = () => {
   const tokenSymbol = token?.symbol ? `$${token.symbol}` : '--'
   const explorerUrl = getExplorerAddressUrl(tokenAddress)
   const externalUrl = token?.website || explorerUrl
-  const priceText = priceBNB === null ? '--' : `${formatDecimal(priceBNB)} BNB`
+  const bnbUsdtPrice = useBnbUsdtPrice()
+  const priceUsdt =
+    priceBNB !== null && bnbUsdtPrice !== null ? priceBNB * bnbUsdtPrice : null
+  const priceText = priceUsdt === null ? '--' : `$${formatDecimal(priceUsdt)}`
   const changeText = changePercent === null ? '--' : formatPercent(changePercent)
   const supplyText =
     gate.totalSupply > 0n
       ? formatTokenAmount(gate.totalSupply, gate.tokenDecimals)
       : '--'
+  const displayedMarketCap =
+    isLaunched && marketCapBNB !== null && bnbUsdtPrice !== null
+      ? marketCapBNB * bnbUsdtPrice
+      : null
   const marketCapText =
-    marketCapBNB === null ? '--' : `${formatCompactNumber(marketCapBNB)} BNB`
+    displayedMarketCap === null
+      ? '--'
+      : `$${formatCompactNumber(displayedMarketCap)}`
   const buyTax =
     token?.buyTax ??
     (gate.buyTaxBps === undefined ? null : gate.buyTaxBps / 100)
@@ -279,7 +289,7 @@ export const TokenPage = () => {
             token={token}
             totalSupply={gate.totalSupply}
             tokenDecimals={gate.tokenDecimals}
-            marketCapBNB={marketCapBNB}
+            marketCapUsdt={displayedMarketCap}
             changePercent={changePercent}
             creatorAddress={gate.creatorAddress}
             buyTaxBps={gate.buyTaxBps}

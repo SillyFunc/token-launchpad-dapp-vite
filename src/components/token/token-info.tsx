@@ -78,7 +78,7 @@ export function TokenInfo({
   token,
   totalSupply,
   tokenDecimals,
-  marketCapBNB,
+  marketCapUsdt,
   changePercent,
   creatorAddress,
   buyTaxBps,
@@ -87,7 +87,7 @@ export function TokenInfo({
   token?: TokenDetail
   totalSupply: bigint
   tokenDecimals: number
-  marketCapBNB: number | null
+  marketCapUsdt: number | null
   changePercent: number | null
   creatorAddress?: string
   buyTaxBps?: number
@@ -106,7 +106,7 @@ export function TokenInfo({
   const supplyText =
     totalSupply > 0n ? formatTokenAmount(totalSupply, tokenDecimals) : '--'
   const marketCapText =
-    marketCapBNB === null ? '--' : `${formatCompactNumber(marketCapBNB)} BNB`
+    marketCapUsdt === null ? '--' : `$${formatCompactNumber(marketCapUsdt)}`
   const changeText = changePercent === null ? '--' : formatPercent(changePercent)
   const buyTax = token?.buyTax ?? (buyTaxBps === undefined ? null : buyTaxBps / 100)
   const sellTax = token?.sellTax ?? (sellTaxBps === undefined ? null : sellTaxBps / 100)

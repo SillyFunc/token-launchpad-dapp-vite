@@ -10,6 +10,19 @@ function toFiniteNumber(value: string | number): number | null {
   return Number.isFinite(number) ? number : null
 }
 
+function formatSmallNumber(number: number, significantDigits: number) {
+  const cleaned = Number(number.toPrecision(significantDigits))
+  const decimals = Math.min(
+    20,
+    Math.max(
+      0,
+      significantDigits - 1 - Math.floor(Math.log10(Math.abs(cleaned))),
+    ),
+  )
+  const text = cleaned.toFixed(decimals)
+  return text.includes('.') ? text.replace(/0+$/, '').replace(/\.$/, '') : text
+}
+
 export function formatDecimal(
   value: string | number,
   options?: Intl.NumberFormatOptions,
@@ -17,7 +30,7 @@ export function formatDecimal(
   const number = toFiniteNumber(value)
   if (number === null) return '--'
   if (number !== 0 && Math.abs(number) < 0.000001) {
-    return number.toExponential(4)
+    return formatSmallNumber(number, 6)
   }
 
   return new Intl.NumberFormat(locale(), {
@@ -30,6 +43,9 @@ export function formatDecimal(
 export function formatCompactNumber(value: string | number) {
   const number = toFiniteNumber(value)
   if (number === null) return '--'
+  if (number !== 0 && Math.abs(number) < 0.0001) {
+    return formatSmallNumber(number, 6)
+  }
 
   return new Intl.NumberFormat(locale(), {
     notation: Math.abs(number) >= 10_000 ? 'compact' : 'standard',
