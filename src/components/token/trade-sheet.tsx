@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useBalance, useConnection, useReadContract } from 'wagmi'
-import { Info, Settings2, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import { formatUnits, parseUnits, zeroAddress } from 'viem'
 
 import { Drawer, DrawerClose, DrawerContent } from '@/components/ui/drawer'
