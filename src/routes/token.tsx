@@ -278,12 +278,12 @@ export const TokenPage = () => {
               {tokenAddress ? (
                 <Link
                   to={`/taxinfo/${tokenAddress}`}
-                  className="min-w-0 inline-flex items-center gap-0.5 text-[#fb5f16]"
+                  className="min-w-0 inline-flex items-center gap-0.5 text-[#FE810B]"
                 >
                   {taxDetailsContent}
                 </Link>
               ) : (
-                <span className="min-w-0 inline-flex items-center gap-0.5 text-[#fb5f16]">
+                <span className="min-w-0 inline-flex items-center gap-0.5 text-[#FE810B]">
                   {taxDetailsContent}
                 </span>
               )}
@@ -317,7 +317,7 @@ export const TokenPage = () => {
                   height={18}
                   loading="lazy"
                   decoding="async"
-                  className="h-[18px] w-[18px]"
+                  className="h-4.5 w-4.5"
                 />
               </a>
             )}
