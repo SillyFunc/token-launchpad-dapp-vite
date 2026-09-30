@@ -32,12 +32,12 @@ const config = createConfig({
   ],
   transports: {
     [bsc.id]: fallback([
-      http('https://bsc-mainnet.nodereal.io/v1/52a58f1ed33e4bc0b7e5e9e2eb0acb40'),
-      webSocket('wss://bsc-mainnet.nodereal.io/ws/v1/52a58f1ed33e4bc0b7e5e9e2eb0acb40'),
+      http('https://bsc-rpc.publicnode.com'),
+      webSocket('wss://bsc-rpc.publicnode.com'),
     ]),
     [bscTestnet.id]: fallback([
-      http('https://bsc-testnet.nodereal.io/v1/52a58f1ed33e4bc0b7e5e9e2eb0acb40'),
-      webSocket('wss://bsc-testnet.nodereal.io/ws/v1/52a58f1ed33e4bc0b7e5e9e2eb0acb40'),
+      http('https://bsc-testnet-rpc.publicnode.com'),
+      webSocket('wss://bsc-testnet-rpc.publicnode.com'),
     ]),
   },
 })
