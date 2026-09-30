@@ -421,6 +421,15 @@ export const TokenPage = () => {
           </section>
         )}
       </>
+
+      <div className="z-30 bg-[#070808] px-3 pt-1 relative shrink-0">
+        <button
+          type="button"
+          className="ui20-chamfer flex h-10.25 w-full items-center justify-center border border-white bg-white font-jetbrains text-base font-semibold leading-[1.4] text-[#070808] [--ui20-chamfer-bg:#FFFFFF] [--ui20-chamfer-border:#FFFFFF]"
+        >
+          <span>交易</span>
+        </button>
+      </div>
     </TokenLayout>
   )
 }
