@@ -8,12 +8,13 @@ import pancakeIcon from '@/assets/svgs/pancake.svg'
 import { getTokenByContractAddress } from '@/api/token'
 import { TokenChart } from '@/components/token/token-chart'
 import { TokenInfo } from '@/components/token/token-info'
+import { TradeSheet } from '@/components/token/trade-sheet'
 import { TokenLayout } from '@/layouts/token-layout'
 import { TokenPresale } from '@/components/token/token-presale'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useTokenGate } from '@/hooks/use-token-gate'
 import { useBnbUsdtPrice } from '@/hooks/use-bnb-usdt-price'
-import { useTokenPrice } from '@/hooks/use-token-price'
+import { hasPoolLiquidity, useTokenPrice } from '@/hooks/use-token-price'
 import {
   formatCompactNumber,
   formatDecimal,
@@ -36,6 +37,7 @@ export const TokenPage = () => {
   const { address: routeAddress = '' } = useParams<{ address: string }>()
   const [activeTab, setActiveTab] = useState<TabType>('PRESALE')
   const [copied, setCopied] = useState(false)
+  const [isTradeOpen, setIsTradeOpen] = useState(false)
 
   const tokenAddress = isAddress(routeAddress)
     ? (routeAddress.toLowerCase() as Address)
@@ -66,6 +68,8 @@ export const TokenPage = () => {
   })
 
   const isLaunched = (gate.tokenState ?? 0) >= 2 || gate.presaleStatus === 3
+  const isTradable =
+    (gate.tokenState ?? 0) >= 2 && hasPoolLiquidity(gate.pairReads)
   const hasPresale = gate.presaleConfigured || gate.presaleEnabled
   const visibleTabs: Array<{ value: TabType; label: string }> = gate.isLoading
     ? [{ value: 'INFO', label: m.token_tab_info() }]
@@ -425,11 +429,21 @@ export const TokenPage = () => {
       <div className="z-30 bg-[#070808] px-3 pt-1 relative shrink-0">
         <button
           type="button"
-          className="ui20-chamfer flex h-10.25 w-full items-center justify-center border border-white bg-white font-jetbrains text-base font-semibold leading-[1.4] text-[#070808] [--ui20-chamfer-bg:#FFFFFF] [--ui20-chamfer-border:#FFFFFF]"
+          onClick={() => setIsTradeOpen(true)}
+          disabled={!isTradable}
+          className="flex h-10.25 w-full items-center justify-center border border-white bg-white font-jetbrains text-base font-semibold leading-[1.4] text-[#070808] disabled:cursor-not-allowed disabled:opacity-40"
         >
-          <span>交易</span>
+          <span>{m.token_trade()}</span>
         </button>
       </div>
+
+      <TradeSheet
+        open={isTradeOpen}
+        onOpenChange={setIsTradeOpen}
+        gate={gate}
+        symbol={token?.symbol || gate.tokenSymbol || '--'}
+        tradable={isTradable}
+      />
     </TokenLayout>
   )
 }

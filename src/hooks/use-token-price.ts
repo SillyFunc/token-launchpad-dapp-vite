@@ -43,6 +43,13 @@ export interface ManagedPairReads {
   reserves?: unknown
 }
 
+/** True when both sides of the pair hold reserves (trading is possible). */
+export function hasPoolLiquidity(pairReads?: ManagedPairReads): boolean {
+  const reserve0 = reserveAt(pairReads?.reserves, 0)
+  const reserve1 = reserveAt(pairReads?.reserves, 1)
+  return reserve0 !== null && reserve1 !== null && reserve0 > 0n && reserve1 > 0n
+}
+
 interface UseTokenPriceOptions {
   tokenAddress?: Address
   pairAddress?: Address

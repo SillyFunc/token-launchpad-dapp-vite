@@ -7,6 +7,7 @@ export const addresses = {
     presaleImplementation: '0x6b51064d62018DE9832590f1788078BdFB64ACa5',
     presaleFactory: '0x7A6B4da821F4b2aDB1432E06E7B7aD2f20972A1A',
     coordinatorFactory: '0xc7284f96716E4FbB3F794CB407D882C29aA653B1',
+    router: '0x10ED43C718714eb63d5aA57B78B54704E256024E',
   },
   97: {
     flapTaxTokenImplementation: '0x4073e66Ac74e23E6F1B36feb9C230D8757AcF99d',
@@ -14,6 +15,7 @@ export const addresses = {
     presaleImplementation: '0xE926faBea1e322C293e0a47b3d26327499c1ac78',
     presaleFactory: '0xaD5ec2fBe2efAC35cCecf4c0348cC62db2C24913',
     coordinatorFactory: '0x63e325d9782DD42915a41673dA2Cc29F8e9B8424',
+    router: '0xD99D1c33F9fC3444f8101754aBC46c52416550D1',
     buybackVaultImplementation: '0xe028671051f9b9a305848Ea3F7555962011CF01b',
     buybackVaultFactory: '0xE76857D949CF3D159e967265f95f12b78Ad5DCdd',
     dividendImplementation: '0x29e10a8c5a2774F47F50Fa957994Da3851e32567',

@@ -2,6 +2,7 @@ import { PLATFORM_CHAIN_ID } from '@/lib/web3'
 
 import { buybackVaultFactoryAbi } from './abis/buyback-vault-factory'
 import { coordinatorFactoryAbi } from './abis/coordinator-factory'
+import { pancakeRouterV2Abi } from './abis/pancake-router-v2'
 import { addresses } from './addresses'
 
 export { addresses }
@@ -10,6 +11,7 @@ export { buybackVaultAbi } from './abis/buyback-vault'
 export { buybackVaultFactoryAbi } from './abis/buyback-vault-factory'
 export { coordinatorFactoryAbi } from './abis/coordinator-factory'
 export { flapTaxTokenV3Abi } from './abis/flap-tax-token-v3'
+export { pancakeRouterV2Abi } from './abis/pancake-router-v2'
 export { presaleAbi } from './abis/presale'
 
 /**
@@ -28,6 +30,13 @@ export function getCoordinatorFactory(chainId: number = PLATFORM_CHAIN_ID) {
   return {
     address: getDeployment(chainId).coordinatorFactory,
     abi: coordinatorFactoryAbi,
+  }
+}
+
+export function getPancakeRouter(chainId: number = PLATFORM_CHAIN_ID) {
+  return {
+    address: getDeployment(chainId).router,
+    abi: pancakeRouterV2Abi,
   }
 }
 
