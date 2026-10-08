@@ -77,14 +77,14 @@ export function TokenInfo({
   token,
   totalSupply,
   tokenDecimals,
-  marketCapUsdt,
+  marketCapBNB,
   changePercent,
   creatorAddress,
 }: {
   token?: TokenDetail
   totalSupply: bigint
   tokenDecimals: number
-  marketCapUsdt: number | null
+  marketCapBNB: number | null
   changePercent: number | null
   creatorAddress?: string
 }) {
@@ -97,7 +97,9 @@ export function TokenInfo({
   const supplyText =
     totalSupply > 0n ? formatTokenAmount(totalSupply, tokenDecimals) : '--'
   const marketCapText =
-    marketCapUsdt === null ? '--' : `$${formatCompactNumber(marketCapUsdt)}`
+    marketCapBNB === null
+      ? '--'
+      : `${formatCompactNumber(marketCapBNB)} BNB`
   const changeText = changePercent === null ? '--' : formatPercent(changePercent)
   const changeClass =
     changePercent === null
@@ -141,7 +143,6 @@ export function TokenInfo({
           <InfoRow label={m.token_price_change()}>
             <span className={changeClass}>{changeText}</span>
           </InfoRow>
-          <InfoRow label="FDV">{marketCapText}</InfoRow>
           <InfoRow label={m.token_circulating_supply()}>{supplyText}</InfoRow>
           <InfoRow label={m.token_max_supply()}>{supplyText}</InfoRow>
           <InfoRow label={m.token_created_at()}>{formatCreatedAt(token?.createTime)}</InfoRow>

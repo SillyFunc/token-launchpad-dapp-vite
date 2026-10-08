@@ -16,9 +16,6 @@ export interface TokenRowProps {
   pricing?: BoardTokenPricing
 }
 
-/** Pairs with less than this much USD liquidity are flagged as thin. */
-const LOW_LIQUIDITY_USD = 200
-
 const STATUS_META: Record<BoardStage, { label: () => string; className: string }> = {
   live: {
     label: () => m.board_status_live(),
@@ -46,28 +43,16 @@ export function TokenRow({ token, pricing }: TokenRowProps) {
   const navigate = useNavigate()
   const tokenAddress = token.coinContractAddress || ''
 
-  const {
-    stage = 'not_launched',
-    bnbReserve = null,
-    changePercent = null,
-    liquidityUsd = null,
-  } = pricing ?? {}
+  const { stage = 'not_launched', bnbReserve = null } = pricing ?? {}
 
-  // Prefer the aggregator's USD TVL; fall back to the on-chain BNB reserve.
+  // On-chain BNB reserve as the liquidity signal (aggregator was removed).
   // Pool TVL (both sides combined) below 1 BNB is treated as low liquidity.
   const isLowLiquidity =
     stage === 'live' &&
-    (liquidityUsd !== null
-      ? liquidityUsd < LOW_LIQUIDITY_USD
-      : bnbReserve !== null && Number(formatUnits(bnbReserve, 18)) * 2 < 1)
+    bnbReserve !== null &&
+    Number(formatUnits(bnbReserve, 18)) * 2 < 1
 
   const statusMeta = STATUS_META[stage]
-
-  const isPositive = changePercent !== null && changePercent >= 0
-  const changeText =
-    changePercent !== null
-      ? `${isPositive ? '+' : ''}${changePercent.toFixed(2)}%`
-      : '--'
 
   const handleNavigate = () => {
     if (tokenAddress) {
@@ -135,19 +120,6 @@ export function TokenRow({ token, pricing }: TokenRowProps) {
         {pricing?.priceBNB !== null && pricing?.priceBNB !== undefined
           ? formatDecimalText(pricing.priceBNB, 5)
           : '--'}
-      </TableCell>
-      <TableCell className="w-[15%] px-1 py-3 text-right">
-        <span
-          className={`inline-flex h-8 w-full min-w-0 items-center justify-center px-1 text-xs font-medium leading-none ${
-            isPositive
-              ? 'bg-[#2bc235] text-white'
-              : changePercent !== null
-                ? 'bg-[#ff4a55] text-white'
-                : 'bg-neutral-800 text-neutral-500'
-          }`}
-        >
-          {changeText}
-        </span>
       </TableCell>
     </TableRow>
   )

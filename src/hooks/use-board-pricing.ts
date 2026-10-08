@@ -11,8 +11,6 @@ import {
 import { flapTaxTokenV3Abi, presaleAbi, getCoordinatorFactory } from '@/contracts'
 
 import type { BoardItemResponse } from '@/api/board'
-import { useDexQuotes } from '@/hooks/use-dex-quotes'
-import { WRAPPED_NATIVE_ADDRESS } from '@/lib/web3'
 
 // This is the external PancakeSwap V2 pair interface. Launchpad ABIs live in
 // @/contracts.
@@ -31,15 +29,9 @@ export type BoardStage =
 export interface BoardTokenPricing {
   totalSupply: bigint | undefined
   stage: BoardStage
-  /** BNB price (on-chain reserves, or DEX when the pair is WBNB-quoted). */
+  /** BNB price from on-chain reserves (or the presale price before launch). */
   priceBNB: number | null
-  /** USD price straight from the aggregator; null when there is no market. */
-  priceUsd: number | null
   bnbReserve: bigint | null
-  /** Real 24h change from the DEX aggregator; null when no market data. */
-  changePercent: number | null
-  volume24h: number | null
-  liquidityUsd: number | null
 }
 
 type LaunchStatus = readonly [boolean, bigint, bigint, bigint, boolean, boolean]
@@ -223,11 +215,7 @@ export function useBoardPricing(
         totalSupply: s.totalSupply,
         stage: 'not_launched',
         priceBNB: null,
-        priceUsd: null,
         bnbReserve: null,
-        changePercent: null,
-        volume24h: null,
-        liquidityUsd: null,
       }
     }
 
@@ -242,11 +230,7 @@ export function useBoardPricing(
           totalSupply: s.totalSupply,
           stage: 'live',
           priceBNB: null,
-          priceUsd: null,
           bnbReserve: null,
-          changePercent: null,
-          volume24h: null,
-          liquidityUsd: null,
         }
         continue
       }
@@ -258,11 +242,7 @@ export function useBoardPricing(
           priceBNB: s.presalePrice
             ? Number(formatUnits(s.presalePrice, 18))
             : null,
-          priceUsd: null,
           bnbReserve: null,
-          changePercent: null,
-          volume24h: null,
-          liquidityUsd: null,
         }
         continue
       }
@@ -272,11 +252,7 @@ export function useBoardPricing(
           totalSupply: s.totalSupply,
           stage: 'failed',
           priceBNB: null,
-          priceUsd: null,
           bnbReserve: null,
-          changePercent: null,
-          volume24h: null,
-          liquidityUsd: null,
         }
       }
     }
@@ -302,46 +278,12 @@ export function useBoardPricing(
         priceBNB:
           Number(formatUnits(bnbReserve, 18)) /
           Number(formatUnits(tokenReserve, s.tokenDecimals)),
-        priceUsd: null,
         bnbReserve,
-        changePercent: null,
-        volume24h: null,
-        liquidityUsd: null,
       }
     })
 
     return map
   }, [tokenStates, pairStates, liveCandidates, phase3Data])
 
-  // Market data comes from the DEX aggregator (through the dex-cache worker).
-  // The on-chain reads above stay authoritative for the launch stage.
-  const { data: dexData } = useDexQuotes(entries.map((entry) => entry.address))
-
-  return useMemo(() => {
-    const quotes = dexData?.quotes ?? {}
-    const out: Record<string, BoardTokenPricing> = {}
-
-    for (const [key, pricing] of Object.entries(aggregated)) {
-      const quote = quotes[key]
-      // priceNative is only a BNB price when the pair is quoted in WBNB.
-      const dexPriceBNB =
-        quote?.priceNative != null &&
-        quote.quoteTokenAddress.toLowerCase() ===
-          WRAPPED_NATIVE_ADDRESS.toLowerCase()
-          ? quote.priceNative
-          : null
-
-      out[key] = {
-        ...pricing,
-        priceBNB: dexPriceBNB ?? pricing.priceBNB,
-        priceUsd: quote?.priceUsd ?? null,
-        // Real 24h change; null means "no live market" and renders as --.
-        changePercent: quote?.change24h ?? null,
-        volume24h: quote?.volume24h ?? null,
-        liquidityUsd: quote?.liquidityUsd ?? null,
-      }
-    }
-
-    return out
-  }, [aggregated, dexData])
+  return aggregated
 }
