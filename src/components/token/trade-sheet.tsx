@@ -109,6 +109,11 @@ export function TradeSheet({
     quote.minOut !== null &&
     !insufficient
 
+  const accentBgClass =
+    side === 'sell' ? 'bg-[#F7594B]' : 'bg-[#FE810B]'
+  const accentHoverClass =
+    side === 'sell' ? 'hover:bg-[#F7594B]/90' : 'hover:bg-[#FE810B]/90'
+
   const submitLabel = !tradable
     ? m.token_trade_not_live()
     : parsedAmount === undefined || parsedAmount === 0n
@@ -194,7 +199,7 @@ export function TradeSheet({
                     className={cn(
                       'border border-transparent text-sm font-semibold py-1 focus-visible:outline-none',
                       side === value
-                        ? 'bg-[#FE810B] text-[#070808]'
+                        ? `${accentBgClass} text-white`
                         : 'text-[#A0A3A7]',
                     )}
                   >
@@ -282,7 +287,11 @@ export function TradeSheet({
                       : m.token_trade_swapping()
                   }
                   disabled={!canSubmit}
-                  className=" h-11 w-full border-0 bg-[#FE810B] font-jetbrains text-base font-semibold text-[#070808] hover:bg-[#FE810B]/90"
+                  className={cn(
+                    'h-11 w-full border-0 font-jetbrains text-base font-semibold text-white',
+                    accentBgClass,
+                    accentHoverClass,
+                  )}
                 >
                   {submitLabel}
                 </Web3ActionButton>
