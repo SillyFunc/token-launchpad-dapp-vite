@@ -31,7 +31,13 @@ export interface BoardTokenPricing {
   stage: BoardStage
   /** BNB price from on-chain reserves (or the presale price before launch). */
   priceBNB: number | null
+  /** USD price straight from the aggregator; null when there is no market. */
+  priceUsd: number | null
   bnbReserve: bigint | null
+  /** Real 24h change from the DEX aggregator; null when no market data. */
+  changePercent: number | null
+  volume24h: number | null
+  liquidityUsd: number | null
 }
 
 type LaunchStatus = readonly [boolean, bigint, bigint, bigint, boolean, boolean]
@@ -215,7 +221,11 @@ export function useBoardPricing(
         totalSupply: s.totalSupply,
         stage: 'not_launched',
         priceBNB: null,
+        priceUsd: null,
         bnbReserve: null,
+        changePercent: null,
+        volume24h: null,
+        liquidityUsd: null,
       }
     }
 
@@ -230,7 +240,11 @@ export function useBoardPricing(
           totalSupply: s.totalSupply,
           stage: 'live',
           priceBNB: null,
+          priceUsd: null,
           bnbReserve: null,
+          changePercent: null,
+          volume24h: null,
+          liquidityUsd: null,
         }
         continue
       }
@@ -242,7 +256,11 @@ export function useBoardPricing(
           priceBNB: s.presalePrice
             ? Number(formatUnits(s.presalePrice, 18))
             : null,
+          priceUsd: null,
           bnbReserve: null,
+          changePercent: null,
+          volume24h: null,
+          liquidityUsd: null,
         }
         continue
       }
@@ -252,7 +270,11 @@ export function useBoardPricing(
           totalSupply: s.totalSupply,
           stage: 'failed',
           priceBNB: null,
+          priceUsd: null,
           bnbReserve: null,
+          changePercent: null,
+          volume24h: null,
+          liquidityUsd: null,
         }
       }
     }
@@ -278,7 +300,11 @@ export function useBoardPricing(
         priceBNB:
           Number(formatUnits(bnbReserve, 18)) /
           Number(formatUnits(tokenReserve, s.tokenDecimals)),
+        priceUsd: null,
         bnbReserve,
+        changePercent: null,
+        volume24h: null,
+        liquidityUsd: null,
       }
     })
 

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import {
   Flame,
@@ -11,11 +11,17 @@ import {
   X,
 } from 'lucide-react'
 
+import SortIcon from '@/assets/svgs/sort-default.svg'
 import boardBanner from '@/assets/images/board-banner.png'
 import type { BoardItemResponse } from '@/api/board'
 import { usePopularTokens } from '@/hooks/use-board'
 import { useBoardPricing } from '@/hooks/use-board-pricing'
-import { formatDecimalText } from '@/lib/format'
+import {
+  formatCompactNumber,
+  formatDecimalText,
+  formatPercent,
+} from '@/lib/format'
+import { cn } from '@/lib/utils'
 import { m } from '@/paraglide/messages.js'
 
 const FILTER_OPTIONS = [
@@ -174,16 +180,29 @@ export const BoardPage = () => {
       )}
 
       <div className="w-full border-x border-b border-[#484B51] bg-background">
-        <div className="sticky top-14.5 z-20 h-10 grid grid-cols-[minmax(0,1fr)_64px] gap-5 items-center border-y border-y-[#484B51] bg-[#131516] px-2 text-[#A0A3A7] text-[0.625rem]">
-          <span className="truncate min-w-0">稅率</span>
+        <div className="sticky top-14.5 z-20 h-10 grid grid-cols-[minmax(0,1fr)_64px_64px] gap-5 items-center border-y border-y-[#484B51] bg-[#131516] px-2 text-[#A0A3A7] text-[0.625rem]">
+          <span className="truncate min-w-0">市值/24H 交易額/稅率</span>
           <span className="text-right">价格</span>
+          <button
+            type="button"
+            aria-label="24h 涨跌幅"
+            className="inline-flex min-w-0 items-center gap-0.5 uppercase transition-colors hover:text-white justify-end text-right"
+          >
+            <span className="truncate">24h 涨跌幅</span>
+            <img
+              alt=""
+              aria-hidden
+              src={SortIcon}
+              className="shrink-0 size-3.5"
+            />
+          </button>
         </div>
         <div className="divide-y divide-[#1F2023] bg-transparent">
           {isLoading ? (
             Array.from({ length: 6 }).map((_, index) => (
               <div
                 key={index}
-                className="grid h-13 items-center bg-background px-2 grid-cols-[minmax(0,1fr)_64px] gap-5"
+                className="grid h-13 items-center bg-background px-2 grid-cols-[minmax(0,1fr)_64px_64px] gap-5"
               >
                 <div className="flex items-center gap-2.5">
                   <div className="size-7.5 shrink-0 animate-pulse bg-[#2F3737]" />
@@ -193,6 +212,7 @@ export const BoardPage = () => {
                   </div>
                 </div>
                 <div className="h-3 w-12 animate-pulse bg-[#2F3737] justify-self-end" />
+                <div className="h-6 w-full animate-pulse bg-[#2F3737]" />
               </div>
             ))
           ) : isError ? (
@@ -275,12 +295,19 @@ function BoardListRow({
   const stage = pricing?.stage ?? 'not_launched'
   const isPresale = stage === 'presale'
 
+  const marketCap = pricing?.liquidityUsd ?? null
+  const volume24h = pricing?.volume24h ?? null
+  const priceUsd = pricing?.priceUsd ?? null
+  const change24h = pricing?.changePercent ?? null
+
   const hasTax =
     isConfiguredTaxRate(token.buyTax) || isConfiguredTaxRate(token.sellTax)
 
   const taxText = hasTax
     ? `${isConfiguredTaxRate(token.buyTax) ? token.buyTax : 0}%/${isConfiguredTaxRate(token.sellTax) ? token.sellTax : 0}%`
     : '--'
+
+  const isPositive = change24h !== null && change24h >= 0
 
   const handleNavigate = () => {
     if (tokenAddress) navigate(`/token/${tokenAddress}`)
@@ -297,7 +324,7 @@ function BoardListRow({
           handleNavigate()
         }
       }}
-      className="grid h-13 items-center bg-background px-2 text-white [content-visibility:auto] [contain-intrinsic-size:auto_52px] cursor-pointer grid-cols-[minmax(0,1fr)_64px] gap-5"
+      className="grid h-13 items-center bg-background px-2 text-white [content-visibility:auto] [contain-intrinsic-size:auto_52px] cursor-pointer grid-cols-[minmax(0,1fr)_64px_64px] gap-5"
     >
       <div className="h-full flex items-center gap-2.5">
         <div className="shrink-0 overflow-hidden border border-[#313131] relative size-7.5 bg-[#111]">
@@ -325,14 +352,36 @@ function BoardListRow({
             {hasTax && <TaxBadge showPresale={isPresale} />}
           </div>
           <div className="flex items-center gap-1 text-[0.625rem] text-[#A0A3A7] min-w-0">
+            <span className="truncate">
+              {marketCap !== null ? `$${formatCompactNumber(marketCap)}` : '--'}
+            </span>
+            <div className="h-1.75 w-px bg-[#484B51]"></div>
+            <span className="truncate">
+              {volume24h !== null ? `$${formatCompactNumber(volume24h)}` : '--'}
+            </span>
+            <div className="h-1.75 w-px bg-[#484B51]"></div>
             <span className="truncate">{taxText}</span>
           </div>
         </div>
       </div>
-      <div className="min-w-0 truncate text-right font-mono text-[11px] font-bold text-[#AAAAAA]">
-        {pricing?.priceBNB !== null && pricing?.priceBNB !== undefined
-          ? formatDecimalText(pricing.priceBNB, 5)
-          : '--'}
+      <div className="min-w-0 truncate text-right font-medium tracking-normal text-foreground text-xs">
+        {priceUsd !== null ? `$${formatDecimalText(priceUsd, 5)}` : '--'}
+      </div>
+      <div className="text-right">
+        {change24h === null ? (
+          <span className="inline-flex h-7 items-center justify-center font-medium tracking-normal text-white/40 bg-white/5 text-xs w-full">
+            --
+          </span>
+        ) : (
+          <span
+            className={cn(
+              'inline-flex h-7 items-center justify-center font-medium tracking-normal text-white text-xs w-full',
+              isPositive ? 'bg-[#2bc235]' : 'bg-[#FF4A55]',
+            )}
+          >
+            {formatPercent(change24h)}
+          </span>
+        )}
       </div>
     </div>
   )
