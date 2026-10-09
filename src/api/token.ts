@@ -61,6 +61,7 @@ export interface SaveTokenParams {
   salt?: string
   /** 选择预留 CA 时传入对应的代币合约地址 */
   coinContractAddress?: string
+  /** 发币费，BNB 个数。来自 coordinator.creationFee()，不要传 wei。 */
   creationFee?: number
   launchType: number
   website: string

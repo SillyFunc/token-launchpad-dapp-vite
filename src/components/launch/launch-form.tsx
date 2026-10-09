@@ -2,8 +2,9 @@ import { useMemo, useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useForm } from '@tanstack/react-form'
 import { useQueryClient } from '@tanstack/react-query'
-import { isAddress, type Hex } from 'viem'
+import { formatEther, isAddress, type Hex } from 'viem'
 import { useConfig, useConnection } from 'wagmi'
+import { readContract } from 'wagmi/actions'
 import { ArrowRightIcon } from 'lucide-react'
 import { z } from 'zod'
 
@@ -19,6 +20,7 @@ import { FormSectionTitle } from '@/components/common/form-section-title'
 import { Slider } from '@/components/common/slider'
 import { Web3ActionButton } from '@/components/common/web3-action-button'
 import { ReservedAddressSelect } from '@/components/launch/reserved-address-select'
+import { getCoordinatorFactory } from '@/contracts'
 import { boardKeys } from '@/hooks/use-board'
 import {
   reservedAddressKeys,
@@ -417,6 +419,10 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
 
       try {
         const submission = (async () => {
+          const creationFeePromise = readContract(config, {
+            ...getCoordinatorFactory(),
+            functionName: 'creationFee',
+          })
           let salt: string
           if (selectedReservedAddress) {
             salt = selectedReservedAddress.salt
@@ -460,6 +466,7 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
             taxDuration: PLATFORM_TAX_DURATION_DAYS,
             antiFarmerDuration: Number(value.antiFarmerDuration),
             liqExpectedOutputAmount: 0,
+            creationFee: Number(formatEther(await creationFeePromise)),
             // Four-channel tax allocation, in contract bps (percents are
             // slider integers, so the ×100 conversion is exact).
             marketBps: value.taxAllocation.creator * 100,
