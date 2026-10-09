@@ -2,13 +2,11 @@
 import { useNavigate } from 'react-router'
 import {
   Flame,
-  Search,
   SlidersHorizontal,
   AlignJustify,
   Grid2X2,
   ChevronDown,
   Coins,
-  X,
 } from 'lucide-react'
 
 import SortIcon from '@/assets/svgs/sort-default.svg'
@@ -40,8 +38,6 @@ function isConfiguredTaxRate(value: number | undefined): boolean {
 export const BoardPage = () => {
   const [activeFilter, setActiveFilter] = useState<string>('hot')
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false)
-  const [isSearchOpen, setIsSearchOpen] = useState(false)
-  const [searchKeyword, setSearchKeyword] = useState('')
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
 
   const { data: tokens, isLoading, isError, refetch } = usePopularTokens()
@@ -54,16 +50,6 @@ export const BoardPage = () => {
   const activeFilterLabel =
     FILTER_OPTIONS.find((option) => option.value === activeFilter)?.label() ??
     activeFilter
-
-  const displayedTokens = tokenList.filter((t) => {
-    if (!searchKeyword.trim()) return true
-    const kw = searchKeyword.toLowerCase()
-    return (
-      t.name.toLowerCase().includes(kw) ||
-      t.symbol.toLowerCase().includes(kw) ||
-      t.address.toLowerCase().includes(kw)
-    )
-  })
 
   return (
     <div className="relative mx-auto flex w-full flex-col pb-24 pt-3 text-white space-y-3">
@@ -115,15 +101,6 @@ export const BoardPage = () => {
         </div>
 
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setIsSearchOpen((prev) => !prev)}
-            className="flex h-7 items-center gap-1 rounded border border-white/10 bg-black px-2.5 text-xs text-white transition-all hover:bg-white/5 active:translate-y-0.5"
-          >
-            <Search className="size-3.5 text-white" />
-            <span>{m.board_search_trending()}</span>
-          </button>
-
           <div className="flex h-7 items-center divide-x divide-white/10 rounded border border-white/10 bg-black">
             <button
               type="button"
@@ -156,28 +133,6 @@ export const BoardPage = () => {
           </button>
         </div>
       </div>
-
-      {isSearchOpen && (
-        <div className="relative flex items-center">
-          <Search className="absolute left-3 size-3.5 text-neutral-500" />
-          <input
-            type="text"
-            value={searchKeyword}
-            onChange={(e) => setSearchKeyword(e.target.value)}
-            placeholder={m.board_search_placeholder()}
-            className="h-8 w-full rounded border border-[#484b51] bg-[#131516] pl-8 pr-8 text-xs text-white placeholder:text-neutral-500 focus:border-[#FE810B] focus:outline-none"
-          />
-          {searchKeyword && (
-            <button
-              type="button"
-              onClick={() => setSearchKeyword('')}
-              className="absolute right-2.5 text-neutral-400 hover:text-white"
-            >
-              <X className="size-3.5" />
-            </button>
-          )}
-        </div>
-      )}
 
       <div className="w-full border-x border-b border-[#484B51] bg-background">
         <div className="sticky top-14.5 z-20 h-10 grid grid-cols-[minmax(0,1fr)_64px_64px] gap-5 items-center border-y border-y-[#484B51] bg-[#131516] px-2 text-[#A0A3A7] text-[0.625rem]">
@@ -227,15 +182,13 @@ export const BoardPage = () => {
                 {m.board_reload()}
               </button>
             </div>
-          ) : displayedTokens.length === 0 ? (
+          ) : tokenList.length === 0 ? (
             <div className="flex flex-col items-center justify-center p-12 text-center text-xs text-neutral-500">
               <Coins className="mb-2 size-6 text-neutral-600" />
-              <span>
-                {searchKeyword ? m.board_empty_search() : m.board_empty()}
-              </span>
+              <span>{m.board_empty()}</span>
             </div>
           ) : (
-            displayedTokens.map((token) => {
+            tokenList.map((token) => {
               const key = String(token.coinContractAddress || '').toLowerCase()
               return (
                 <BoardListRow
