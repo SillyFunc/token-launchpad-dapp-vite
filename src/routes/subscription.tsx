@@ -10,6 +10,7 @@ import {
 import { useSubscriptionList } from '@/hooks/use-subscription'
 import { useConnection } from 'wagmi'
 import type { SubscriptionItemResponse } from '@/api/subscription'
+import { PageTitle } from '@/components/common/page-title'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -241,14 +242,10 @@ export const SubscriptionPage = () => {
   return (
     <section className="mx-auto flex w-full flex-1 flex-col gap-6 py-8">
       <header className="flex items-start justify-between gap-4">
-        <div className="flex min-w-0 flex-col gap-1">
-          <h1 className="font-heading text-2xl font-semibold text-foreground">
-            {m.subscription_page_title()}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {m.subscription_page_description()}
-          </p>
-        </div>
+        <PageTitle
+          title={m.subscription_page_title()}
+          description={m.subscription_page_description()}
+        />
         {query.isFetching && !query.isLoading ? (
           <div
             className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground"
