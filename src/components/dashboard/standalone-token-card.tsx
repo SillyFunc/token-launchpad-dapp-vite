@@ -74,15 +74,10 @@ export const StandaloneTokenCard: React.FC<StandaloneTokenCardProps> = ({
           )}
 
           {isClaimedDirectly && (
-            <>
-              <p className="text-center text-xs text-green-300">
-                {m.dashboard_token_claimed()}
-              </p>
-              <ViewDetailsButton
-                tokenAddress={resolvedAddress}
-                onView={onView}
-              />
-            </>
+            <ViewDetailsButton
+              tokenAddress={resolvedAddress}
+              onView={onView}
+            />
           )}
 
           {stage !== 'prelaunch' && !isClaimedDirectly && (

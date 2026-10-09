@@ -41,7 +41,6 @@ export const PresaleTokenCard: React.FC<PresaleTokenCardProps> = ({
   const isOpenAction = stage === 'prelaunch' && Boolean(gate.presaleAddress)
   const isEndAction = stage === 'presale'
   const isFailed = stage === 'failed'
-  const showsClaimedNotice = stage === 'live' && gate.tokensClaimed
   // Detail entry for every stage that does not own the footer outright. During
   // an active presale it sits next to "end presale" as a secondary action.
   const showsViewAction = !isOpenAction && !isFailed
@@ -102,11 +101,6 @@ export const PresaleTokenCard: React.FC<PresaleTokenCardProps> = ({
             </Button>
           )}
 
-          {showsClaimedNotice && (
-            <p className="text-center text-xs text-green-300">
-              {m.dashboard_token_claimed()}
-            </p>
-          )}
         </>
       }
     />
