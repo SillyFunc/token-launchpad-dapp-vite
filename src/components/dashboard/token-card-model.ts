@@ -254,7 +254,7 @@ function formatWalletLimitBnb(gate: TokenGateResult, token: BoardItemResponse) {
 }
 
 export function formatDays(value: number | undefined) {
-  if (value === undefined || value === null || value <= 0) return '--'
+  if (value === undefined || value === null || value < 0) return '--'
   const count = formatDecimal(value, { maximumFractionDigits: 0 })
   return value === 1 ? m.duration_day({ count }) : m.duration_days({ count })
 }

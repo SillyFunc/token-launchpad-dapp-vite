@@ -242,10 +242,6 @@ export const DetailRow: React.FC<DetailRowProps> = ({
   )
 }
 
-export interface CopyableAddressProps {
-  address: Address
-}
-
 export interface TokenBasicDetailsProps {
   state: TokenCardState
 }
@@ -254,8 +250,7 @@ export interface TokenBasicDetailsProps {
 export const TokenBasicDetails: React.FC<TokenBasicDetailsProps> = ({
   state,
 }) => {
-  const { token, tokenAddress, reservedAddress, buyTax, sellTax, totalSupply } =
-    state
+  const { token, tokenAddress, buyTax, sellTax, totalSupply } = state
 
   return (
     <>
@@ -264,11 +259,6 @@ export const TokenBasicDetails: React.FC<TokenBasicDetailsProps> = ({
         icon={PercentIcon}
         label={m.dashboard_buy_sell_tax()}
         value={`${formatTax(buyTax)} / ${formatTax(sellTax)}`}
-      />
-      <DetailRow
-        icon={PercentIcon}
-        label={m.dashboard_tax_duration()}
-        value={formatDays(token.taxDuration)}
       />
       <DetailRow
         icon={ShieldCheckIcon}
@@ -286,13 +276,6 @@ export const TokenBasicDetails: React.FC<TokenBasicDetailsProps> = ({
         value={formatAddress(token.feeRecipient)}
         mono
       />
-      {reservedAddress && (
-        <DetailRow
-          icon={WalletIcon}
-          label={m.dashboard_reserved_ca()}
-          value={<CopyableAddress address={reservedAddress} />}
-        />
-      )}
     </DetailSection>
     <TaxAllocationDetails token={token} symbol={state.tokenSymbol} />
     </>
@@ -469,42 +452,5 @@ const VaultConfigDetails: React.FC<{ token: BoardItemResponse }> = ({
         mono
       />
     </DetailSection>
-  )
-}/** Address with its own copy affordance, used inside detail rows. */
-export const CopyableAddress: React.FC<CopyableAddressProps> = ({ address }) => {
-  const [copied, setCopied] = useState(false)
-
-  const handleCopy = async () => {
-    if (!navigator.clipboard) return
-
-    try {
-      await navigator.clipboard.writeText(address)
-      setCopied(true)
-      window.setTimeout(() => setCopied(false), 2_000)
-    } catch {
-      setCopied(false)
-    }
-  }
-
-  return (
-    <div className="flex items-center justify-end gap-1">
-      <span className="font-mono" title={address}>
-        {formatAddress(address)}
-      </span>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-xs"
-        aria-label={m.dashboard_copy_reserved_ca()}
-        onClick={() => void handleCopy()}
-        className="text-neutral-400 hover:text-white"
-      >
-        {copied ? (
-          <CheckIcon className="text-green-400" aria-hidden="true" />
-        ) : (
-          <CopyIcon aria-hidden="true" />
-        )}
-      </Button>
-    </div>
   )
 }
