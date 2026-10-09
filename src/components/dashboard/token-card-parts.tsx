@@ -10,7 +10,7 @@ import {
   ShieldCheckIcon,
   WalletIcon,
 } from 'lucide-react'
-import type { Address } from 'viem'
+import { formatEther, type Address } from 'viem'
 
 import type { BoardItemResponse } from '@/api/board'
 import { Badge } from '@/components/ui/badge'
@@ -23,6 +23,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { formatDecimal } from '@/lib/format'
 import { formatAddress } from '@/lib/utils'
 import { getExplorerAddressUrl } from '@/lib/web3'
 import { m } from '@/paraglide/messages.js'
@@ -291,6 +292,164 @@ export const TokenBasicDetails: React.FC<TokenBasicDetailsProps> = ({
           value={<CopyableAddress address={reservedAddress} />}
         />
       )}
+      <TaxAllocationDetails token={token} symbol={state.tokenSymbol} />
+      <VaultConfigDetails token={token} />
+    </>
+  )
+}
+
+function DetailHeading({ children }: { children: string }) {
+  return (
+    <div className="py-2 text-[11px] font-semibold tracking-wide text-[#FFA546]">
+      {children}
+    </div>
+  )
+}
+
+function formatBps(bps: number | undefined) {
+  return bps == null ? '--' : `${formatDecimal(bps / 100)}%`
+}
+
+function formatUtc8(seconds: number | undefined) {
+  if (!seconds) return '--'
+  const time = new Date(seconds * 1000 + 8 * 3600 * 1000)
+    .toISOString()
+    .slice(0, 16)
+    .replace('T', ' ')
+  return m.dashboard_vault_first_execute_value({ time })
+}
+
+function formatInterval(seconds: number | undefined) {
+  if (!seconds) return '--'
+  if (seconds % 86_400 === 0) {
+    return m.duration_days({ count: formatDecimal(seconds / 86_400) })
+  }
+  if (seconds % 3_600 === 0) {
+    return m.dashboard_vault_interval_hours({
+      count: formatDecimal(seconds / 3_600),
+    })
+  }
+  return m.dashboard_vault_interval_minutes({
+    count: formatDecimal(Math.round(seconds / 60)),
+  })
+}
+
+function formatBnbText(wei: string | undefined) {
+  if (!wei) return '--'
+  try {
+    return `${formatDecimal(formatEther(BigInt(wei)))} BNB`
+  } catch {
+    return '--'
+  }
+}
+
+const TaxAllocationDetails: React.FC<{
+  token: BoardItemResponse
+  symbol: string
+}> = ({ token, symbol }) => {
+  const configured = token.marketBps != null
+  const dividendBps = token.dividendBps ?? 0
+  const minBalance = String(token.minDividendBalance ?? '0')
+
+  return (
+    <>
+      <DetailHeading>{m.dashboard_tax_allocation()}</DetailHeading>
+      <DetailRow
+        icon={PercentIcon}
+        label={m.dashboard_tax_channel_creator()}
+        value={formatBps(configured ? token.marketBps : undefined)}
+      />
+      <DetailRow
+        icon={PercentIcon}
+        label={m.dashboard_tax_channel_burn()}
+        value={formatBps(configured ? (token.deflationBps ?? 0) : undefined)}
+      />
+      <DetailRow
+        icon={PercentIcon}
+        label={m.dashboard_tax_channel_dividend()}
+        value={formatBps(configured ? dividendBps : undefined)}
+      />
+      <DetailRow
+        icon={PercentIcon}
+        label={m.dashboard_tax_channel_liquidity()}
+        value={formatBps(configured ? (token.lpBps ?? 0) : undefined)}
+      />
+      {configured && dividendBps > 0 && (
+        <DetailRow
+          icon={CoinsIcon}
+          label={m.dashboard_tax_min_balance()}
+          value={
+            symbol && symbol !== '--'
+              ? m.dashboard_token_amount({
+                  amount: formatDecimal(minBalance),
+                  symbol,
+                })
+              : formatDecimal(minBalance)
+          }
+        />
+      )}
+    </>
+  )
+}
+
+const VaultConfigDetails: React.FC<{ token: BoardItemResponse }> = ({
+  token,
+}) => {
+  if (token.buybackVaultEnabled !== 1) return null
+
+  const trigger = token.triggerType ?? 0
+  const includesTime = trigger === 0 || trigger === 2
+  const includesBalance = trigger === 1 || trigger === 2
+  const triggerLabel =
+    trigger === 1
+      ? m.dashboard_vault_trigger_balance()
+      : trigger === 2
+        ? m.dashboard_vault_trigger_both()
+        : m.dashboard_vault_trigger_time()
+
+  return (
+    <>
+      <DetailHeading>{m.dashboard_vault_config()}</DetailHeading>
+      <DetailRow
+        icon={CoinsIcon}
+        label={m.dashboard_vault_mode()}
+        value={
+          token.mode === 1
+            ? m.dashboard_vault_mode_lp()
+            : m.dashboard_vault_mode_token()
+        }
+      />
+      <DetailRow
+        icon={ShieldCheckIcon}
+        label={m.dashboard_vault_trigger()}
+        value={triggerLabel}
+      />
+      {includesTime && (
+        <DetailRow
+          icon={ShieldCheckIcon}
+          label={m.dashboard_vault_first_execute()}
+          value={formatUtc8(token.firstExecuteAt)}
+        />
+      )}
+      {includesBalance && (
+        <DetailRow
+          icon={CoinsIcon}
+          label={m.dashboard_vault_trigger_amount()}
+          value={formatBnbText(token.triggerAmount)}
+          mono
+        />
+      )}
+      <DetailRow
+        icon={ShieldCheckIcon}
+        label={m.dashboard_vault_interval()}
+        value={formatInterval(token.intervalSeconds)}
+      />
+      <DetailRow
+        icon={CoinsIcon}
+        label={m.dashboard_vault_buyback_amount()}
+        value={formatBnbText(token.buybackAmount)}
+        mono
+      />
     </>
   )
 }/** Address with its own copy affordance, used inside detail rows. */
