@@ -15,8 +15,8 @@ export interface TaxChannel {
 export const TAX_CHANNELS: readonly TaxChannel[] = [
   {
     key: 'creator',
-    label: '自动回购金库',
-    sublabel: '',
+    label: '创作者资金钱包',
+    sublabel: '开发者、营销等',
     color: 'rgb(254, 129, 11)',
   },
   {
