@@ -197,7 +197,7 @@ export const SubscriptionPage = () => {
   } else {
     content = (
       <>
-        <ul className="grid gap-3 lg:grid-cols-2">
+        <ul className="grid gap-3 grid-cols-1">
           {subscriptions.map((item) => (
             <li key={item.id}>
               <SubscriptionCard item={item} />
@@ -239,7 +239,7 @@ export const SubscriptionPage = () => {
   }
 
   return (
-    <section className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 py-8">
+    <section className="mx-auto flex w-full flex-1 flex-col gap-6 py-8">
       <header className="flex items-start justify-between gap-4">
         <div className="flex min-w-0 flex-col gap-1">
           <h1 className="font-heading text-2xl font-semibold text-foreground">
