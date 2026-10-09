@@ -459,6 +459,8 @@
   "token_request_refund": "申請退款",
   "token_nothing_to_refund": "目前沒有可退款金額",
   "token_countdown_days": "{days} 天 {time}",
+  "duration_day": "{count} 天",
+  "duration_days": "{count} 天",
   "board_filter_hot": "熱門",
   "board_filter_new": "最新",
   "board_filter_market_cap": "市值榜",

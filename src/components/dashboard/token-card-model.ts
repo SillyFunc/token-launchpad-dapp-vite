@@ -1,4 +1,4 @@
-import { getAddress, isAddress, type Address } from 'viem'
+import { getAddress, isAddress, parseEther, type Address } from 'viem'
 
 import type { BoardItemResponse } from '@/api/board'
 import type { TokenGateResult } from '@/hooks/use-token-gate'
@@ -175,12 +175,7 @@ export function buildTokenCardState(
         : token.presaleTokenPrice > 0
           ? `${formatDecimal(token.presaleTokenPrice)} BNB`
           : '--',
-    walletLimit:
-      gate.maxBuyPerWallet > 0n
-        ? formatBnbAmount(gate.maxBuyPerWallet)
-        : token.maxBuyPerWallet > 0
-          ? `${formatDecimal(token.maxBuyPerWallet)} BNB`
-          : '--',
+    walletLimit: formatWalletLimitBnb(gate, token),
     raised:
       gate.presaleAddress && gate.bnbAccumulated > 0n
         ? formatBnbAmount(gate.bnbAccumulated)
@@ -229,10 +224,39 @@ export function getCardMode(state: {
   return 'standalone'
 }
 
+const TOKEN_SCALE = 10n ** 18n
+
+function ceilDivide(value: bigint, divisor: bigint) {
+  if (divisor <= 0n) return 0n
+  return (value + divisor - 1n) / divisor
+}
+
+function formatWalletLimitBnb(gate: TokenGateResult, token: BoardItemResponse) {
+  if (gate.maxBuyPerWallet > 0n && gate.presalePrice > 0n) {
+    return formatBnbAmount(
+      ceilDivide(gate.maxBuyPerWallet * gate.presalePrice, TOKEN_SCALE),
+    )
+  }
+
+  if (token.maxBuyPerWallet > 0 && token.presaleTokenPrice > 0) {
+    try {
+      const tokensWei = parseEther(String(token.maxBuyPerWallet))
+      const priceWei = parseEther(String(token.presaleTokenPrice))
+      if (tokensWei > 0n && priceWei > 0n) {
+        return formatBnbAmount(ceilDivide(tokensWei * priceWei, TOKEN_SCALE))
+      }
+    } catch {
+      return '--'
+    }
+  }
+
+  return '--'
+}
+
 export function formatDays(value: number | undefined) {
-  return value === undefined || value === null || value <= 0
-    ? '--'
-    : `${formatDecimal(value, { maximumFractionDigits: 2 })}d`
+  if (value === undefined || value === null || value <= 0) return '--'
+  const count = formatDecimal(value, { maximumFractionDigits: 0 })
+  return value === 1 ? m.duration_day({ count }) : m.duration_days({ count })
 }
 
 export function formatTax(value: number | undefined, fallback?: number) {

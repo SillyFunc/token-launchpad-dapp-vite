@@ -459,6 +459,8 @@
   "token_request_refund": "Request refund",
   "token_nothing_to_refund": "Nothing to refund",
   "token_countdown_days": "{days}d {time}",
+  "duration_day": "{count} day",
+  "duration_days": "{count} days",
   "board_filter_hot": "Trending",
   "board_filter_new": "Newest",
   "board_filter_market_cap": "Market cap",
