@@ -599,7 +599,7 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
           </Link>
         </div>
 
-        <div className="flex flex-col space-y-10 p-4">
+        <div className="flex flex-col space-y-10 p-3">
           <CollapsibleFormSection title="预留 CA">
             <form.Field name="reservedAddress">
               {(field) => (
