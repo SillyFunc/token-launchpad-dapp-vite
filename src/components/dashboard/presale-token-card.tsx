@@ -14,7 +14,12 @@ import { getContractErrorMessage } from '@/lib/contract-error'
 import { toast } from '@/lib/toast'
 import { useWriteContractTx } from '@/hooks/use-contract-tx'
 import { m } from '@/paraglide/messages.js'
-import { DetailRow, TokenBasicDetails, TokenCardShell } from './token-card-parts'
+import {
+  DetailRow,
+  DetailSection,
+  TokenBasicDetails,
+  TokenCardShell,
+} from './token-card-parts'
 import type { TokenCardState } from './token-card-model'
 
 export interface PresaleTokenCardProps {
@@ -113,7 +118,7 @@ const PresaleDetails: React.FC<{ state: TokenCardState }> = ({ state }) => {
   if (!tokenAddress) return null
 
   return (
-    <div className="flex flex-col gap-3 border border-[#2F3737] bg-[#17191b] p-3 text-xs">
+    <DetailSection title={m.dashboard_presale_info()} divided={false}>
       <div className="flex flex-col divide-y divide-white/5 border-b border-white/5 pb-1">
         <DetailRow
           icon={RocketIcon}
@@ -168,7 +173,7 @@ const PresaleDetails: React.FC<{ state: TokenCardState }> = ({ state }) => {
           showDivider
         />
       )}
-    </div>
+    </DetailSection>
   )
 }
 

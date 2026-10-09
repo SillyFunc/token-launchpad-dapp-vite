@@ -160,11 +160,11 @@ export const TokenCardShell: React.FC<TokenCardShellProps> = ({
               m.dashboard_no_description()}
           </p>
 
-          <div className="flex flex-col divide-y divide-[#2F3737]/60 border border-[#2F3737] bg-[#17191b] px-3 py-1 text-xs">
-            {details}
-          </div>
+          {details}
 
           {presaleDetails}
+
+          <VaultConfigDetails token={token} />
 
           {(token.website || token.twitter || token.telegram) && (
             <div className="flex items-center gap-3 pt-1 text-xs text-neutral-400">
@@ -259,6 +259,7 @@ export const TokenBasicDetails: React.FC<TokenBasicDetailsProps> = ({
 
   return (
     <>
+    <DetailSection title={m.dashboard_basic_info()}>
       <DetailRow
         icon={PercentIcon}
         label={m.dashboard_buy_sell_tax()}
@@ -292,17 +293,36 @@ export const TokenBasicDetails: React.FC<TokenBasicDetailsProps> = ({
           value={<CopyableAddress address={reservedAddress} />}
         />
       )}
-      <TaxAllocationDetails token={token} symbol={state.tokenSymbol} />
-      <VaultConfigDetails token={token} />
+    </DetailSection>
+    <TaxAllocationDetails token={token} symbol={state.tokenSymbol} />
     </>
   )
 }
 
-function DetailHeading({ children }: { children: string }) {
+export function DetailSection({
+  title,
+  children,
+  divided = true,
+}: {
+  title: string
+  children: ReactNode
+  divided?: boolean
+}) {
   return (
-    <div className="py-2 text-[11px] font-semibold tracking-wide text-[#FFA546]">
-      {children}
-    </div>
+    <section className="border border-[#2F3737] bg-[#17191b]">
+      <h3 className="border-b border-[#2F3737]/60 px-3 py-2 text-11 font-semibold tracking-wide text-[#FFA546]">
+        {title}
+      </h3>
+      <div
+        className={
+          divided
+            ? 'flex flex-col divide-y divide-[#2F3737]/60 px-3 py-1 text-xs'
+            : 'flex flex-col gap-3 p-3 text-xs'
+        }
+      >
+        {children}
+      </div>
+    </section>
   )
 }
 
@@ -352,8 +372,7 @@ const TaxAllocationDetails: React.FC<{
   const minBalance = String(token.minDividendBalance ?? '0')
 
   return (
-    <>
-      <DetailHeading>{m.dashboard_tax_allocation()}</DetailHeading>
+    <DetailSection title={m.dashboard_tax_allocation()}>
       <DetailRow
         icon={PercentIcon}
         label={m.dashboard_tax_channel_creator()}
@@ -388,7 +407,7 @@ const TaxAllocationDetails: React.FC<{
           }
         />
       )}
-    </>
+    </DetailSection>
   )
 }
 
@@ -408,8 +427,7 @@ const VaultConfigDetails: React.FC<{ token: BoardItemResponse }> = ({
         : m.dashboard_vault_trigger_time()
 
   return (
-    <>
-      <DetailHeading>{m.dashboard_vault_config()}</DetailHeading>
+    <DetailSection title={m.dashboard_vault_config()}>
       <DetailRow
         icon={CoinsIcon}
         label={m.dashboard_vault_mode()}
@@ -450,7 +468,7 @@ const VaultConfigDetails: React.FC<{ token: BoardItemResponse }> = ({
         value={formatBnbText(token.buybackAmount)}
         mono
       />
-    </>
+    </DetailSection>
   )
 }/** Address with its own copy affordance, used inside detail rows. */
 export const CopyableAddress: React.FC<CopyableAddressProps> = ({ address }) => {
