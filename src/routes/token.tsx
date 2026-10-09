@@ -413,7 +413,6 @@ export const TokenPage = () => {
               totalSupply={gate.totalSupply}
               tokenDecimals={gate.tokenDecimals}
               marketCapBNB={displayedMarketCap}
-              changePercent={changePercent}
               creatorAddress={gate.creatorAddress}
             />
           </section>

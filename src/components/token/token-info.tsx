@@ -4,11 +4,7 @@ import { isAddress } from 'viem'
 
 import type { TokenDetail } from '@/api/token'
 import { formatAddress } from '@/lib/utils'
-import {
-  formatCompactNumber,
-  formatPercent,
-  formatTokenAmount,
-} from '@/lib/format'
+import { formatCompactNumber, formatTokenAmount } from '@/lib/format'
 import { getExplorerAddressUrl } from '@/lib/web3'
 import { m } from '@/paraglide/messages.js'
 
@@ -78,14 +74,12 @@ export function TokenInfo({
   totalSupply,
   tokenDecimals,
   marketCapBNB,
-  changePercent,
   creatorAddress,
 }: {
   token?: TokenDetail
   totalSupply: bigint
   tokenDecimals: number
   marketCapBNB: number | null
-  changePercent: number | null
   creatorAddress?: string
 }) {
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null)
@@ -100,13 +94,6 @@ export function TokenInfo({
     marketCapBNB === null
       ? '--'
       : `${formatCompactNumber(marketCapBNB)} BNB`
-  const changeText = changePercent === null ? '--' : formatPercent(changePercent)
-  const changeClass =
-    changePercent === null
-      ? 'text-foreground'
-      : changePercent >= 0
-        ? 'text-[#0ECB81]'
-        : 'text-[#F7594B]'
   const mediaLinks = [
     { label: m.token_website(), href: token?.website },
     { label: 'Telegram', href: token?.telegram },
@@ -136,13 +123,11 @@ export function TokenInfo({
 
       <InfoSectionTitle title={m.token_details()}>
         <div className="flex flex-col gap-1.5">
-          <InfoRow label={m.token_volume_24h()}>--</InfoRow>
           <InfoRow label={m.token_liquidity()}>--</InfoRow>
           <InfoRow label={m.token_market_cap()}>{marketCapText}</InfoRow>
           <InfoRow label={m.token_holders()}>--</InfoRow>
-          <InfoRow label={m.token_price_change()}>
-            <span className={changeClass}>{changeText}</span>
-          </InfoRow>
+          <InfoRow label={m.token_volume_24h()}>--</InfoRow>
+          <InfoRow label={m.token_fdv()}>--</InfoRow>
           <InfoRow label={m.token_circulating_supply()}>{supplyText}</InfoRow>
           <InfoRow label={m.token_max_supply()}>{supplyText}</InfoRow>
           <InfoRow label={m.token_created_at()}>{formatCreatedAt(token?.createTime)}</InfoRow>

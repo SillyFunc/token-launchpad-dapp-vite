@@ -346,6 +346,7 @@
   "token_open_website": "Open {name} website",
   "token_view_explorer": "View token on BscScan",
   "token_total_supply": "Total supply",
+  "token_fdv": "FDV",
   "token_circulating_supply": "Circulating supply",
   "token_max_supply": "Max supply",
   "token_volume_24h": "24h Vol",
