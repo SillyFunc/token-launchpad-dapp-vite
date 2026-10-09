@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { ArrowUpRight, ChevronRight } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react'
+import { useConnection } from 'wagmi'
 import { Drawer, DrawerContent, DrawerTitle } from '@/components/ui/drawer'
 import { m } from '@/paraglide/messages.js'
 import { getLocale, setLocale } from '@/paraglide/runtime.js'
@@ -12,9 +13,14 @@ interface SidebarProps {
 }
 
 const navItems = [
-  { label: () => m.nav_home(), path: '/board' },
-  { label: () => m.nav_launch(), path: '/launch' },
-  { label: () => m.nav_dashboard(), path: '/dashboard' },
+  { label: () => m.nav_home(), path: '/board', requiresWallet: false },
+  { label: () => m.nav_launch(), path: '/launch', requiresWallet: false },
+  { label: () => m.nav_dashboard(), path: '/dashboard', requiresWallet: false },
+  {
+    label: () => m.nav_subscriptions(),
+    path: '/subscription',
+    requiresWallet: true,
+  },
 ]
 
 const languages = [
@@ -23,7 +29,11 @@ const languages = [
 ] as const
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
+  const { address } = useConnection()
   const [isLangOpen, setIsLangOpen] = useState(false)
+  const visibleNavItems = navItems.filter(
+    (item) => !item.requiresWallet || Boolean(address),
+  )
   const currentLocale = getLocale()
   const currentLanguage =
     languages.find(({ locale }) => locale === currentLocale) ?? languages[1]
@@ -63,7 +73,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         <DrawerTitle className="sr-only">{m.sidebar_menu()}</DrawerTitle>
 
         <nav className="flex flex-1 flex-col overflow-y-auto">
-          {navItems.map((item) => (
+          {visibleNavItems.map((item) => (
             <Link
               key={item.path}
               to={item.path}
