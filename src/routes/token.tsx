@@ -70,6 +70,7 @@ export const TokenPage = () => {
   const isTradable =
     (gate.tokenState ?? 0) >= 2 && hasPoolLiquidity(gate.pairReads)
   const hasPresale = gate.presaleConfigured || gate.presaleEnabled
+  const showTrade = !hasPresale || isLaunched
   const visibleTabs: Array<{ value: TabType; label: string }> = gate.isLoading
     ? [{ value: 'INFO', label: m.token_tab_info() }]
     : isLaunched
@@ -419,24 +420,28 @@ export const TokenPage = () => {
         )}
       </>
 
-      <div className="z-30 bg-[#070808] px-3 pt-1 relative shrink-0">
-        <button
-          type="button"
-          onClick={() => setIsTradeOpen(true)}
-          disabled={!isTradable}
-          className="flex h-10.25 w-full items-center justify-center border border-white bg-white font-jetbrains text-base font-semibold leading-[1.4] text-[#070808] disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          <span>{m.token_trade()}</span>
-        </button>
-      </div>
+      {showTrade && (
+        <div className="z-30 bg-[#070808] px-3 pt-1 relative shrink-0">
+          <button
+            type="button"
+            onClick={() => setIsTradeOpen(true)}
+            disabled={!isTradable}
+            className="flex h-10.25 w-full items-center justify-center border border-white bg-white font-jetbrains text-base font-semibold leading-[1.4] text-[#070808] disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <span>{m.token_trade()}</span>
+          </button>
+        </div>
+      )}
 
-      <TradeSheet
-        open={isTradeOpen}
-        onOpenChange={setIsTradeOpen}
-        gate={gate}
-        symbol={token?.symbol || gate.tokenSymbol || '--'}
-        tradable={isTradable}
-      />
+      {showTrade && (
+        <TradeSheet
+          open={isTradeOpen}
+          onOpenChange={setIsTradeOpen}
+          gate={gate}
+          symbol={token?.symbol || gate.tokenSymbol || '--'}
+          tradable={isTradable}
+        />
+      )}
     </TokenLayout>
   )
 }
