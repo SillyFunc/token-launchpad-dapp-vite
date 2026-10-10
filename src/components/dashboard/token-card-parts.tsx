@@ -1,6 +1,7 @@
-import { useState, type ReactNode } from 'react'
+import { useId, useState, type ReactNode } from 'react'
 import {
   CheckIcon,
+  ChevronDownIcon,
   CoinsIcon,
   CopyIcon,
   ExternalLinkIcon,
@@ -304,17 +305,41 @@ export function DetailSection({
   title,
   children,
   divided = true,
+  collapsible = false,
 }: {
   title: string
   children: ReactNode
   divided?: boolean
+  /** Adds a title-bar toggle. Collapsible sections start collapsed. */
+  collapsible?: boolean
 }) {
+  const [isOpen, setIsOpen] = useState(!collapsible)
+  const contentId = useId()
+
   return (
     <section className="border border-[#2F3737] bg-[#17191b]">
       <h3 className="border-b border-[#2F3737]/60 px-3 py-2 text-11 font-semibold tracking-wide text-[#FFA546]">
-        {title}
+        {collapsible ? (
+          <button
+            type="button"
+            aria-expanded={isOpen}
+            aria-controls={contentId}
+            onClick={() => setIsOpen((open) => !open)}
+            className="flex w-full cursor-pointer items-center justify-between gap-2 text-left"
+          >
+            <span>{title}</span>
+            <ChevronDownIcon
+              className={`size-4 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+              aria-hidden="true"
+            />
+          </button>
+        ) : (
+          title
+        )}
       </h3>
       <div
+        id={contentId}
+        hidden={collapsible && !isOpen}
         className={
           divided
             ? 'flex flex-col divide-y divide-[#2F3737]/60 px-3 py-1 text-xs'
@@ -407,7 +432,7 @@ const TaxAllocationDetails: React.FC<{
       : formatTokenAmount(amount)
 
   return (
-    <DetailSection title={m.dashboard_tax_allocation()}>
+    <DetailSection title={m.dashboard_tax_allocation()} collapsible>
       <DetailRow
         icon={PercentIcon}
         label={m.dashboard_tax_channel_creator()}
@@ -490,7 +515,7 @@ const VaultConfigDetails: React.FC<{ token: BoardItemResponse }> = ({
         : m.dashboard_vault_trigger_time()
 
   return (
-    <DetailSection title={m.dashboard_vault_config()}>
+    <DetailSection title={m.dashboard_vault_config()} collapsible>
       <DetailRow
         icon={CoinsIcon}
         label={m.dashboard_vault_mode()}
@@ -560,7 +585,7 @@ const VaultRuntimeDetails: React.FC<{
       : formatTokenAmount(amount)
 
   return (
-    <DetailSection title={m.dashboard_vault_runtime()}>
+    <DetailSection title={m.dashboard_vault_runtime()} collapsible>
       <DetailRow
         icon={FlameIcon}
         label={

@@ -120,7 +120,7 @@ const PresaleDetails: React.FC<{ state: TokenCardState }> = ({ state }) => {
   if (!tokenAddress) return null
 
   return (
-    <DetailSection title={m.dashboard_presale_info()} divided={false}>
+    <DetailSection title={m.dashboard_presale_info()} divided={false} collapsible>
       <div className="flex flex-col divide-y divide-white/5 border-b border-white/5 pb-1">
         <DetailRow
           icon={RocketIcon}
