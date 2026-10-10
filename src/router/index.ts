@@ -8,6 +8,7 @@ import { PresalePage } from '@/routes/presale'
 import { TokenPage } from '@/routes/token'
 import { SubscriptionPage } from '@/routes/subscription'
 import { TaxInfoPage } from '@/routes/tax-info'
+import { MePage } from '@/routes/me'
 
 export const router = createHashRouter([
   {
@@ -45,6 +46,10 @@ export const router = createHashRouter([
       {
         path: 'taxinfo/:address',
         Component: TaxInfoPage,
+      },
+      {
+        path: 'me',
+        Component: MePage,
       },
     ],
   },
