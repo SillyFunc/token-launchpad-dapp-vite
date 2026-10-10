@@ -88,7 +88,10 @@ export const HeldTokenCard: React.FC<HeldTokenCardProps> = ({ token }) => {
                   : formatBnbAmount(token.claimableBNB)}
               </span>
             </div>
-            <ClaimDividendButton dividendContract={token.dividendContract} />
+            <ClaimDividendButton
+              dividendContract={token.dividendContract}
+              claimableBNB={token.claimableBNB}
+            />
           </>
         ) : null}
         <Link
@@ -103,9 +106,10 @@ export const HeldTokenCard: React.FC<HeldTokenCardProps> = ({ token }) => {
   )
 }
 
-const ClaimDividendButton: React.FC<{ dividendContract: NonNullable<HeldToken['dividendContract']> }> = ({
-  dividendContract,
-}) => {
+const ClaimDividendButton: React.FC<{
+  dividendContract: NonNullable<HeldToken['dividendContract']>
+  claimableBNB: bigint | null
+}> = ({ dividendContract, claimableBNB }) => {
   const config = useConfig()
   const { address } = useConnection()
   const { execute } = useWriteContractTx()
@@ -170,8 +174,9 @@ const ClaimDividendButton: React.FC<{ dividendContract: NonNullable<HeldToken['d
       variant="outline"
       loading={isClaiming}
       loadingText={m.me_asset_claiming()}
+      disabled={claimableBNB === null || claimableBNB === 0n}
       onAction={handleClaim}
-      className="h-auto min-h-10.5 w-full rounded-none border-[#84888C] bg-transparent py-3 text-[13px] font-normal uppercase leading-[1.4] tracking-[-0.052px] text-white hover:border-[#D0FF00] hover:bg-transparent hover:text-[#D0FF00]"
+      className="h-auto min-h-10.5 w-full rounded-none border-[#84888C] bg-transparent py-3 text-[13px] font-normal uppercase leading-[1.4] tracking-[-0.052px] text-white hover:border-[#D0FF00] hover:bg-transparent hover:text-[#D0FF00] disabled:cursor-not-allowed disabled:border-[#484B51] disabled:text-[#84888C] disabled:opacity-40 disabled:hover:border-[#484B51] disabled:hover:bg-transparent disabled:hover:text-[#84888C]"
     >
       {m.me_asset_claim_dividend()}
     </Web3ActionButton>
