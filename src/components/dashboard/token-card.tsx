@@ -1,6 +1,7 @@
 import type { Address } from 'viem'
 
 import type { BoardItemResponse } from '@/api/board'
+import type { BuybackVaultStats } from '@/hooks/use-buyback-vault-stats'
 import type { TokenGateResult } from '@/hooks/use-token-gate'
 import type { TaxChannelYield } from '@/hooks/use-tax-channel-yields'
 import { PresaleTokenCard } from './presale-token-card'
@@ -20,6 +21,9 @@ export interface TokenCardProps {
   /** Settled tax-channel totals. `null` means the token has no processor. */
   taxYield?: TaxChannelYield | null
   taxYieldLoading?: boolean
+  /** Buyback totals from the token's vault. `null` until the read settles. */
+  vaultStats?: BuybackVaultStats | null
+  vaultStatsLoading?: boolean
   /** Reports a freshly issued address back to the page-level gate reader. */
   onIssued: (tokenAddress: Address) => void
   onEdit: (token: BoardItemResponse) => void
@@ -47,6 +51,8 @@ export function TokenCard({
   tokenAddress,
   taxYield,
   taxYieldLoading = false,
+  vaultStats,
+  vaultStatsLoading = false,
   onIssued,
   onEdit,
   onPresale,
@@ -60,6 +66,8 @@ export function TokenCard({
     reservedAddress,
     taxYield,
     taxYieldLoading,
+    vaultStats,
+    vaultStatsLoading,
   )
 
   switch (getCardMode(state)) {

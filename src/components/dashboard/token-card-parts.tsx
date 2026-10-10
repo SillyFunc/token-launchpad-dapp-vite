@@ -4,8 +4,10 @@ import {
   CoinsIcon,
   CopyIcon,
   ExternalLinkIcon,
+  FlameIcon,
   GlobeIcon,
   PercentIcon,
+  RepeatIcon,
   SendIcon,
   ShieldCheckIcon,
   WalletIcon,
@@ -13,6 +15,7 @@ import {
 import { formatEther, type Address } from 'viem'
 
 import type { BoardItemResponse } from '@/api/board'
+import type { BuybackVaultStats } from '@/hooks/use-buyback-vault-stats'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -41,6 +44,8 @@ export interface TokenCardShellProps {
   tokenSymbol: string
   stage: TokenStage
   tokenAddress?: Address
+  vaultStats?: BuybackVaultStats | null
+  vaultStatsLoading?: boolean
   details: ReactNode
   presaleDetails?: ReactNode
   footer: ReactNode
@@ -53,6 +58,8 @@ export const TokenCardShell: React.FC<TokenCardShellProps> = ({
   tokenSymbol,
   stage,
   tokenAddress,
+  vaultStats,
+  vaultStatsLoading = false,
   details,
   presaleDetails,
   footer,
@@ -165,6 +172,12 @@ export const TokenCardShell: React.FC<TokenCardShellProps> = ({
           {presaleDetails}
 
           <VaultConfigDetails token={token} />
+          <VaultRuntimeDetails
+            token={token}
+            symbol={tokenSymbol}
+            stats={vaultStats}
+            loading={vaultStatsLoading}
+          />
 
           {(token.website || token.twitter || token.telegram) && (
             <div className="flex items-center gap-3 pt-1 text-xs text-neutral-400">
@@ -517,6 +530,64 @@ const VaultConfigDetails: React.FC<{ token: BoardItemResponse }> = ({
         label={m.dashboard_vault_buyback_amount()}
         value={formatBnbText(token.buybackAmount)}
         mono
+      />
+    </DetailSection>
+  )
+}
+
+/**
+ * Live totals from the token's buyback vault, read from chain rather than the
+ * backend echo, so they reflect what actually executed. Rendered only for
+ * tokens that have a vault; a pending or failed read shows "--" rather than a
+ * misleading zero.
+ */
+const VaultRuntimeDetails: React.FC<{
+  token: BoardItemResponse
+  symbol: string
+  stats?: BuybackVaultStats | null
+  loading: boolean
+}> = ({ token, symbol, stats, loading }) => {
+  if (token.buybackVaultEnabled !== 1 && !stats) return null
+
+  // Fall back to the submitted mode while the read settles, so the burn row
+  // still picks the right label.
+  const isLpMode = (stats?.mode ?? Number(token.mode ?? 0)) === 1
+  const renderValue = (render: (stats: BuybackVaultStats) => string) =>
+    loading || !stats ? '--' : render(stats)
+  const tokenAmount = (amount: bigint) =>
+    symbol && symbol !== '--'
+      ? m.dashboard_token_amount({ amount: formatTokenAmount(amount), symbol })
+      : formatTokenAmount(amount)
+
+  return (
+    <DetailSection title={m.dashboard_vault_runtime()}>
+      <DetailRow
+        icon={FlameIcon}
+        label={
+          isLpMode
+            ? m.dashboard_vault_total_lp_burned()
+            : m.dashboard_vault_total_burned()
+        }
+        value={renderValue((value) =>
+          isLpMode
+            ? formatTokenAmount(value.totalLpBurned)
+            : tokenAmount(value.totalBurnedToken),
+        )}
+      />
+      <DetailRow
+        icon={WalletIcon}
+        label={m.dashboard_vault_total_spent()}
+        value={renderValue((value) => formatBnbAmount(value.totalBuybackBNB))}
+      />
+      <DetailRow
+        icon={RepeatIcon}
+        label={m.dashboard_vault_executions()}
+        value={renderValue((value) => formatDecimal(value.buybackCount.toString()))}
+      />
+      <DetailRow
+        icon={CoinsIcon}
+        label={m.dashboard_vault_treasury()}
+        value={renderValue((value) => formatBnbAmount(value.treasuryBNB))}
       />
     </DetailSection>
   )

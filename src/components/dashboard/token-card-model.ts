@@ -1,6 +1,7 @@
 import { getAddress, isAddress, parseEther, type Address } from 'viem'
 
 import type { BoardItemResponse } from '@/api/board'
+import type { BuybackVaultStats } from '@/hooks/use-buyback-vault-stats'
 import type { TokenGateResult } from '@/hooks/use-token-gate'
 import type { TaxChannelYield } from '@/hooks/use-tax-channel-yields'
 import { formatBnbAmount, formatDecimal, formatTokenAmount } from '@/lib/format'
@@ -137,6 +138,8 @@ export interface TokenCardState {
   hasConfiguredPresale: boolean
   taxYield?: TaxChannelYield | null
   taxYieldLoading: boolean
+  vaultStats?: BuybackVaultStats | null
+  vaultStatsLoading: boolean
 }
 
 export function buildTokenCardState(
@@ -146,6 +149,8 @@ export function buildTokenCardState(
   reservedAddress: Address | undefined,
   taxYield?: TaxChannelYield | null,
   taxYieldLoading = false,
+  vaultStats?: BuybackVaultStats | null,
+  vaultStatsLoading = false,
 ): TokenCardState {
   const tokenSymbol = gate.tokenSymbol || token.symbol || '--'
   const hasConfiguredPresale = gate.presaleConfigured || gate.presaleEnabled
@@ -200,6 +205,8 @@ export function buildTokenCardState(
     hasConfiguredPresale,
     taxYield,
     taxYieldLoading,
+    vaultStats,
+    vaultStatsLoading,
   }
 }
 

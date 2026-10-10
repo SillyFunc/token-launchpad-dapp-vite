@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/empty'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useBoardList } from '@/hooks/use-board'
+import { useBuybackVaultStats } from '@/hooks/use-buyback-vault-stats'
 import { useTaxChannelYields } from '@/hooks/use-tax-channel-yields'
 import { useTokenGates } from '@/hooks/use-token-gate'
 import { m } from '@/paraglide/messages.js'
@@ -63,7 +64,7 @@ export const DashboardPage = () => {
     [tokenList, issuedAddresses],
   )
   const gates = useTokenGates(gateInputs)
-  const yieldAddresses = useMemo(
+  const chainTokenAddresses = useMemo(
     () =>
       tokenList.flatMap((token) => {
         const key = getTokenKey(token)
@@ -75,7 +76,8 @@ export const DashboardPage = () => {
       }),
     [gates, issuedAddresses, tokenList],
   )
-  const taxYields = useTaxChannelYields(yieldAddresses)
+  const taxYields = useTaxChannelYields(chainTokenAddresses)
+  const vaults = useBuybackVaultStats(chainTokenAddresses)
 
   useEffect(() => {
     if (!focusTokenId || isLoading || isFetching || isError) return
@@ -221,6 +223,12 @@ export const DashboardPage = () => {
                       : undefined
                   }
                   taxYieldLoading={Boolean(resolvedAddress) && taxYields.isLoading}
+                  vaultStats={
+                    resolvedAddress
+                      ? vaults.byAddress[resolvedAddress.toLowerCase()]
+                      : undefined
+                  }
+                  vaultStatsLoading={Boolean(resolvedAddress) && vaults.isLoading}
                   onIssued={(issued) =>
                     setIssuedAddresses((prev) => ({ ...prev, [key]: issued }))
                   }

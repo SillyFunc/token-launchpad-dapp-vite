@@ -36,6 +36,8 @@ export const UnissuedTokenCard: React.FC<UnissuedTokenCardProps> = ({
       tokenSymbol={state.tokenSymbol}
       stage={stage}
       tokenAddress={state.tokenAddress}
+      vaultStats={state.vaultStats}
+      vaultStatsLoading={state.vaultStatsLoading}
       details={<TokenBasicDetails state={state} />}
       footer={
         <>

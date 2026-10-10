@@ -51,6 +51,8 @@ export const StandaloneTokenCard: React.FC<StandaloneTokenCardProps> = ({
       tokenSymbol={state.tokenSymbol}
       stage={stage}
       tokenAddress={resolvedAddress}
+      vaultStats={state.vaultStats}
+      vaultStatsLoading={state.vaultStatsLoading}
       details={<TokenBasicDetails state={state} />}
       footer={
         <>

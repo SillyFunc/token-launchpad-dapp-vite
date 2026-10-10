@@ -57,6 +57,8 @@ export const PresaleTokenCard: React.FC<PresaleTokenCardProps> = ({
       tokenSymbol={state.tokenSymbol}
       stage={stage}
       tokenAddress={tokenAddress}
+      vaultStats={state.vaultStats}
+      vaultStatsLoading={state.vaultStatsLoading}
       details={<TokenBasicDetails state={state} />}
       presaleDetails={<PresaleDetails state={state} />}
       footer={
