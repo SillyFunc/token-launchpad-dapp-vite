@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/empty'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useBoardList } from '@/hooks/use-board'
+import { useTaxChannelYields } from '@/hooks/use-tax-channel-yields'
 import { useTokenGates } from '@/hooks/use-token-gate'
 import { m } from '@/paraglide/messages.js'
 
@@ -62,6 +63,19 @@ export const DashboardPage = () => {
     [tokenList, issuedAddresses],
   )
   const gates = useTokenGates(gateInputs)
+  const yieldAddresses = useMemo(
+    () =>
+      tokenList.flatMap((token) => {
+        const key = getTokenKey(token)
+        const candidate = issuedAddresses[key] ?? getTokenAddress(token)
+        const resolved =
+          issuedAddresses[key] ??
+          (gates[key]?.tokenExists ? candidate : undefined)
+        return resolved ? [resolved] : []
+      }),
+    [gates, issuedAddresses, tokenList],
+  )
+  const taxYields = useTaxChannelYields(yieldAddresses)
 
   useEffect(() => {
     if (!focusTokenId || isLoading || isFetching || isError) return
@@ -128,7 +142,10 @@ export const DashboardPage = () => {
             variant="outline"
             size="sm"
             type="button"
-            onClick={() => void refetch()}
+            onClick={() => {
+              void refetch()
+              void taxYields.refetch()
+            }}
             disabled={isLoading || isFetching}
             className="cursor-pointer border-[#484b51] bg-[#131516] text-xs text-neutral-300 hover:bg-white/10"
           >
@@ -198,6 +215,12 @@ export const DashboardPage = () => {
                   token={token}
                   gate={gate}
                   tokenAddress={resolvedAddress}
+                  taxYield={
+                    resolvedAddress
+                      ? taxYields.byAddress[resolvedAddress.toLowerCase()]
+                      : undefined
+                  }
+                  taxYieldLoading={Boolean(resolvedAddress) && taxYields.isLoading}
                   onIssued={(issued) =>
                     setIssuedAddresses((prev) => ({ ...prev, [key]: issued }))
                   }

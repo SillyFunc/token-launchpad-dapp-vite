@@ -23,7 +23,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { formatDecimal } from '@/lib/format'
+import { formatBnbAmount, formatDecimal, formatTokenAmount } from '@/lib/format'
 import { formatAddress } from '@/lib/utils'
 import { getExplorerAddressUrl } from '@/lib/web3'
 import { m } from '@/paraglide/messages.js'
@@ -277,7 +277,12 @@ export const TokenBasicDetails: React.FC<TokenBasicDetailsProps> = ({
         mono
       />
     </DetailSection>
-    <TaxAllocationDetails token={token} symbol={state.tokenSymbol} />
+    <TaxAllocationDetails
+      token={token}
+      symbol={state.tokenSymbol}
+      taxYield={state.taxYield}
+      taxYieldLoading={state.taxYieldLoading}
+    />
     </>
   )
 }
@@ -306,6 +311,21 @@ export function DetailSection({
         {children}
       </div>
     </section>
+  )
+}
+
+function ChannelValue({
+  share,
+  produced,
+}: {
+  share: string
+  produced: string
+}) {
+  return (
+    <span className="flex flex-col items-end gap-0.5">
+      <span>{share}</span>
+      <span className="text-[11px] font-normal text-neutral-400">{produced}</span>
+    </span>
   )
 }
 
@@ -346,35 +366,82 @@ function formatBnbText(wei: string | undefined) {
   }
 }
 
+function formatProduced(
+  yieldValue: TokenCardState['taxYield'],
+  loading: boolean,
+  format: (yieldValue: NonNullable<TokenCardState['taxYield']>) => string,
+) {
+  if (loading || yieldValue === undefined) return '--'
+  if (yieldValue === null) return '--'
+  return format(yieldValue)
+}
+
 const TaxAllocationDetails: React.FC<{
   token: BoardItemResponse
   symbol: string
-}> = ({ token, symbol }) => {
+  taxYield?: TokenCardState['taxYield']
+  taxYieldLoading: boolean
+}> = ({ token, symbol, taxYield, taxYieldLoading }) => {
   const configured = token.marketBps != null
   const dividendBps = token.dividendBps ?? 0
   const minBalance = String(token.minDividendBalance ?? '0')
+  const tokenAmount = (amount: bigint) =>
+    symbol && symbol !== '--'
+      ? m.dashboard_token_amount({
+          amount: formatTokenAmount(amount),
+          symbol,
+        })
+      : formatTokenAmount(amount)
 
   return (
     <DetailSection title={m.dashboard_tax_allocation()}>
       <DetailRow
         icon={PercentIcon}
         label={m.dashboard_tax_channel_creator()}
-        value={formatBps(configured ? token.marketBps : undefined)}
+        value={
+          <ChannelValue
+            share={formatBps(configured ? token.marketBps : undefined)}
+            produced={formatProduced(taxYield, taxYieldLoading, (value) =>
+              formatBnbAmount(value.marketingBNB),
+            )}
+          />
+        }
       />
       <DetailRow
         icon={PercentIcon}
         label={m.dashboard_tax_channel_burn()}
-        value={formatBps(configured ? (token.deflationBps ?? 0) : undefined)}
+        value={
+          <ChannelValue
+            share={formatBps(configured ? (token.deflationBps ?? 0) : undefined)}
+            produced={formatProduced(taxYield, taxYieldLoading, (value) =>
+              tokenAmount(value.burnedTokens),
+            )}
+          />
+        }
       />
       <DetailRow
         icon={PercentIcon}
         label={m.dashboard_tax_channel_dividend()}
-        value={formatBps(configured ? dividendBps : undefined)}
+        value={
+          <ChannelValue
+            share={formatBps(configured ? dividendBps : undefined)}
+            produced={formatProduced(taxYield, taxYieldLoading, (value) =>
+              formatBnbAmount(value.dividendBNB),
+            )}
+          />
+        }
       />
       <DetailRow
         icon={PercentIcon}
         label={m.dashboard_tax_channel_liquidity()}
-        value={formatBps(configured ? (token.lpBps ?? 0) : undefined)}
+        value={
+          <ChannelValue
+            share={formatBps(configured ? (token.lpBps ?? 0) : undefined)}
+            produced={formatProduced(taxYield, taxYieldLoading, (value) =>
+              `${formatBnbAmount(value.liquidityBNB)} / ${tokenAmount(value.liquidityTokens)}`,
+            )}
+          />
+        }
       />
       {configured && dividendBps > 0 && (
         <DetailRow

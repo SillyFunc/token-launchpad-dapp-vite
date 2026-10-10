@@ -14,6 +14,7 @@ export { dividendAbi } from './abis/dividend'
 export { flapTaxTokenV3Abi } from './abis/flap-tax-token-v3'
 export { pancakeRouterV2Abi } from './abis/pancake-router-v2'
 export { presaleAbi } from './abis/presale'
+export { taxProcessorAbi } from './abis/tax-processor'
 
 /**
  * Deployment accessors. Resolved lazily per call instead of at module scope so

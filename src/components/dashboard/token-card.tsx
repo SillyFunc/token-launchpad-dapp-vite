@@ -2,6 +2,7 @@ import type { Address } from 'viem'
 
 import type { BoardItemResponse } from '@/api/board'
 import type { TokenGateResult } from '@/hooks/use-token-gate'
+import type { TaxChannelYield } from '@/hooks/use-tax-channel-yields'
 import { PresaleTokenCard } from './presale-token-card'
 import { StandaloneTokenCard } from './standalone-token-card'
 import { UnissuedTokenCard } from './unissued-token-card'
@@ -16,6 +17,9 @@ export interface TokenCardProps {
   gate: TokenGateResult
   /** Resolved on-chain address; `undefined` until the token exists. */
   tokenAddress?: Address
+  /** Settled tax-channel totals. `null` means the token has no processor. */
+  taxYield?: TaxChannelYield | null
+  taxYieldLoading?: boolean
   /** Reports a freshly issued address back to the page-level gate reader. */
   onIssued: (tokenAddress: Address) => void
   onEdit: (token: BoardItemResponse) => void
@@ -41,13 +45,22 @@ export function TokenCard({
   token,
   gate,
   tokenAddress,
+  taxYield,
+  taxYieldLoading = false,
   onIssued,
   onEdit,
   onPresale,
   onView,
 }: TokenCardProps) {
   const reservedAddress = getReservedAddress(token, tokenAddress)
-  const state = buildTokenCardState(token, gate, tokenAddress, reservedAddress)
+  const state = buildTokenCardState(
+    token,
+    gate,
+    tokenAddress,
+    reservedAddress,
+    taxYield,
+    taxYieldLoading,
+  )
 
   switch (getCardMode(state)) {
     case 'unissued':

@@ -2,6 +2,7 @@ import { getAddress, isAddress, parseEther, type Address } from 'viem'
 
 import type { BoardItemResponse } from '@/api/board'
 import type { TokenGateResult } from '@/hooks/use-token-gate'
+import type { TaxChannelYield } from '@/hooks/use-tax-channel-yields'
 import { formatBnbAmount, formatDecimal, formatTokenAmount } from '@/lib/format'
 import { isPredictedTokenAddress } from '@/lib/vanity-salt'
 import { getPresaleProgress } from '@/lib/utils'
@@ -134,6 +135,8 @@ export interface TokenCardState {
   softCapProgress: number
   hardCapProgress: number
   hasConfiguredPresale: boolean
+  taxYield?: TaxChannelYield | null
+  taxYieldLoading: boolean
 }
 
 export function buildTokenCardState(
@@ -141,6 +144,8 @@ export function buildTokenCardState(
   gate: TokenGateResult,
   tokenAddress: Address | undefined,
   reservedAddress: Address | undefined,
+  taxYield?: TaxChannelYield | null,
+  taxYieldLoading = false,
 ): TokenCardState {
   const tokenSymbol = gate.tokenSymbol || token.symbol || '--'
   const hasConfiguredPresale = gate.presaleConfigured || gate.presaleEnabled
@@ -193,6 +198,8 @@ export function buildTokenCardState(
     softCapProgress: getPresaleProgress(gate.bnbAccumulated, gate.softCap),
     hardCapProgress: getPresaleProgress(gate.bnbAccumulated, gate.hardCap),
     hasConfiguredPresale,
+    taxYield,
+    taxYieldLoading,
   }
 }
 
