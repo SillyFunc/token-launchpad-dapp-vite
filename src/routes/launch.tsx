@@ -26,8 +26,8 @@ export const LaunchPage = () => {
   })
 
   return (
-    <div className="relative mx-auto flex w-full flex-col pt-6">
-      <div className="mb-4">
+    <div className="relative mx-auto flex w-full flex-col">
+      <div className="sticky top-16 z-40 -mx-3 bg-black px-3 pb-4 pt-6">
         <PageTitle
           title={isEditMode ? m.launch_edit_title() : m.launch_create_title()}
         />
