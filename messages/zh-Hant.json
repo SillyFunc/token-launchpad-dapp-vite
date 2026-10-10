@@ -508,5 +508,13 @@
   "board_status_awaiting_launch": "待開盤",
   "board_status_failed": "預售失敗",
   "board_status_not_launched": "未開盤",
-  "board_low_liquidity": "低流動性"
+  "board_low_liquidity": "低流動性",
+  "me_assets_loading": "正在讀取持有的代幣……",
+  "me_assets_error": "無法讀取持有的代幣",
+  "me_assets_empty": "此錢包尚未持有本平台代幣",
+  "me_assets_connect": "請連接錢包以查看持有的代幣",
+  "me_asset_price": "價格",
+  "me_asset_change_24h": "24小時變化",
+  "me_asset_quantity": "數量",
+  "me_asset_buy_more": "買入更多"
 }

@@ -1,12 +1,25 @@
 import { useState } from 'react'
 import { useConnection, useReadContract } from 'wagmi'
 import { zeroAddress } from 'viem'
-import { ArrowRight, Check, Copy, Pencil, Share2 } from 'lucide-react'
+import { Check, Copy, Pencil, Share2, TriangleAlertIcon } from 'lucide-react'
 
+import { HeldTokenCard } from '@/components/me/held-token-card'
 import { PageTitle } from '@/components/common/page-title'
+import { Button } from '@/components/ui/button'
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty'
+import { Spinner } from '@/components/ui/spinner'
 import { getCoordinatorFactory } from '@/contracts'
+import { useHeldTokens } from '@/hooks/use-held-tokens'
 import { formatAddress } from '@/lib/utils'
 import { PLATFORM_CHAIN_ID } from '@/lib/web3'
+import { m } from '@/paraglide/messages.js'
 
 export const MePage = () => {
   const { address } = useConnection()
@@ -19,9 +32,12 @@ export const MePage = () => {
     args: [address ?? zeroAddress],
     query: { enabled: Boolean(address) },
   })
+  const held = useHeldTokens(address)
   const shortAddress = formatAddress(address)
   const createdTokenCount =
     address && createdCount !== undefined ? createdCount.toString() : '--'
+  const heldTokenCount =
+    address && held.isSuccess ? String(held.data.length) : '--'
 
   const handleCopyAddress = async () => {
     if (!address || !navigator.clipboard) return
@@ -36,7 +52,7 @@ export const MePage = () => {
   }
 
   return (
-    <div className="h-full pt-6 flex flex-col">
+    <div className="h-full py-6 flex flex-col">
       <PageTitle title="我的主页" />
       <div className="relative bg-transparent mt-4">
         <div aria-hidden>
@@ -111,7 +127,7 @@ export const MePage = () => {
               持有代币
             </span>
             <span className="truncate text-15 font-medium leading-[1.4] text-white">
-              --
+              {heldTokenCount}
             </span>
             <span className="inline-flex truncate text-11 leading-[1.4] text-[#84888C]">
               <span>个代币</span>
@@ -131,65 +147,99 @@ export const MePage = () => {
         </div>
       </div>
       <div className="flex w-full flex-1 flex-col pt-5">
-        <div className="bg-[#070808] [-ms-overflow-style:none] scrollbar-none [&::-webkit-scrollbar]:hidden">
-          <div className="space-y-3">
-            <div className="flex flex-col gap-3 border border-[#484B51] px-4 py-5 text-white">
-              <div className="flex min-w-0 items-center">
-                <div className="inline-flex min-w-0 max-w-full items-center gap-1.5 text-15 font-medium leading-[1.4] tracking-[-0.4px] text-white">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#D0FF00] text-10 font-semibold text-black">
-                    --
-                  </span>
-                  <span className="flex min-w-0 items-center gap-2">
-                    <span className="truncate">--</span>
-                    <span className="truncate text-xs font-normal leading-[1.4] text-[#84888C]">
-                      --
-                    </span>
-                  </span>
-                </div>
-              </div>
-              <div className="h-px w-full bg-[#303236]" aria-hidden="true"></div>
-              <div className="flex flex-col gap-3">
-                <div className="flex min-w-0 items-center justify-between gap-4">
-                  <span className="text-sm font-normal leading-4.5 text-[#A0A3A7]">
-                    價格
-                  </span>
-                  <span className="text-sm font-normal leading-[1.4] text-white">
-                    --
-                  </span>
-                </div>
-                <div className="flex min-w-0 items-center justify-between gap-4">
-                  <span className="text-sm font-normal leading-4.5 text-[#A0A3A7]">
-                    24小時變化
-                  </span>
-                  <span className="text-sm font-normal leading-[1.4] text-[#84888C]">
-                    --
-                  </span>
-                </div>
-                <div className="flex min-w-0 items-start justify-between gap-4">
-                  <span className="text-sm font-normal leading-4.5 text-[#A0A3A7]">
-                    數量
-                  </span>
-                  <span className="flex min-w-0 flex-col items-end gap-0.5 text-right">
-                    <span className="text-sm font-normal leading-[1.4] text-white">
-                      --
-                    </span>
-                    <span className="text-xs font-normal leading-[1.4] text-[#84888C]">
-                      --
-                    </span>
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  disabled
-                  className="flex min-h-10.5 w-full items-center justify-center gap-1 border border-[#84888C] py-3 text-[13px] font-normal uppercase leading-[1.4] tracking-[-0.052px] text-white transition-colors hover:border-[#D0FF00] hover:text-[#D0FF00] disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  买入更多
-                  <ArrowRight className="size-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <HeldTokenList
+          connected={Boolean(address)}
+          tokens={held.data}
+          isLoading={held.isLoading}
+          isError={held.isError}
+          isFetching={held.isFetching}
+          onRetry={() => void held.refetch()}
+        />
+      </div>
+    </div>
+  )
+}
+
+interface HeldTokenListProps {
+  connected: boolean
+  tokens: ReturnType<typeof useHeldTokens>['data']
+  isLoading: boolean
+  isError: boolean
+  isFetching: boolean
+  onRetry: () => void
+}
+
+const HeldTokenList: React.FC<HeldTokenListProps> = ({
+  connected,
+  tokens,
+  isLoading,
+  isError,
+  isFetching,
+  onRetry,
+}) => {
+  if (!connected) {
+    return (
+      <Empty className="min-h-48 border border-[#484B51]">
+        <EmptyHeader>
+          <EmptyTitle>{m.me_assets_connect()}</EmptyTitle>
+        </EmptyHeader>
+      </Empty>
+    )
+  }
+
+  if (isLoading) {
+    return (
+      <Empty className="min-h-48 border border-[#484B51]" aria-live="polite">
+        <EmptyHeader>
+          <EmptyMedia>
+            <Spinner className="size-6" aria-label={m.me_assets_loading()} />
+          </EmptyMedia>
+          <EmptyTitle>{m.me_assets_loading()}</EmptyTitle>
+        </EmptyHeader>
+      </Empty>
+    )
+  }
+
+  if (isError) {
+    return (
+      <Empty className="min-h-48 border border-[#484B51]">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <TriangleAlertIcon />
+          </EmptyMedia>
+          <EmptyTitle>{m.me_assets_error()}</EmptyTitle>
+        </EmptyHeader>
+        <EmptyContent>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={isFetching}
+            onClick={onRetry}
+          >
+            {isFetching ? <Spinner data-icon="inline-start" /> : null}
+            {m.retry()}
+          </Button>
+        </EmptyContent>
+      </Empty>
+    )
+  }
+
+  if (!tokens?.length) {
+    return (
+      <Empty className="min-h-48 border border-[#484B51]">
+        <EmptyHeader>
+          <EmptyDescription>{m.me_assets_empty()}</EmptyDescription>
+        </EmptyHeader>
+      </Empty>
+    )
+  }
+
+  return (
+    <div className="bg-[#070808] [-ms-overflow-style:none] scrollbar-none [&::-webkit-scrollbar]:hidden">
+      <div className="space-y-3">
+        {tokens.map((token) => (
+          <HeldTokenCard key={token.address} token={token} />
+        ))}
       </div>
     </div>
   )

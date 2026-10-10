@@ -60,6 +60,36 @@ interface UseTokenPriceOptions {
   managedPairReads?: ManagedPairReads
 }
 
+export function quoteBnbPrice({
+  tokenAddress,
+  token0,
+  token1,
+  reserves,
+  tokenDecimals,
+}: {
+  tokenAddress: Address
+  token0?: Address
+  token1?: Address
+  reserves?: unknown
+  tokenDecimals: number
+}): number | null {
+  const reserve0 = reserveAt(reserves, 0)
+  const reserve1 = reserveAt(reserves, 1)
+  if (!token0 || !token1 || reserve0 === null || reserve1 === null) return null
+
+  const token = tokenAddress.toLowerCase()
+  const wbnb = WRAPPED_NATIVE_ADDRESS.toLowerCase()
+  const side0 = token0.toLowerCase()
+  const side1 = token1.toLowerCase()
+  const tokenReserve =
+    side0 === token ? reserve0 : side1 === token ? reserve1 : null
+  const wbnbReserve =
+    side0 === wbnb ? reserve0 : side1 === wbnb ? reserve1 : null
+  if (tokenReserve === null || wbnbReserve === null) return null
+
+  return priceFromReserves(wbnbReserve, tokenReserve, tokenDecimals)
+}
+
 export function useTokenPrice({
   tokenAddress,
   pairAddress,
@@ -100,24 +130,15 @@ export function useTokenPrice({
   const token0 = managedPairReads?.token0 ?? query.data?.[0]?.result
   const token1 = managedPairReads?.token1 ?? query.data?.[1]?.result
   const reserves = managedPairReads?.reserves ?? query.data?.[2]?.result
-  const reserve0 = reserveAt(reserves, 0)
-  const reserve1 = reserveAt(reserves, 1)
-  let livePrice: number | null = null
-
-  if (tokenAddress && token0 && token1 && reserve0 !== null && reserve1 !== null) {
-    const token = tokenAddress.toLowerCase()
-    const wbnb = WRAPPED_NATIVE_ADDRESS.toLowerCase()
-    const side0 = token0.toLowerCase()
-    const side1 = token1.toLowerCase()
-    const tokenReserve =
-      side0 === token ? reserve0 : side1 === token ? reserve1 : null
-    const wbnbReserve =
-      side0 === wbnb ? reserve0 : side1 === wbnb ? reserve1 : null
-
-    if (tokenReserve !== null && wbnbReserve !== null) {
-      livePrice = priceFromReserves(wbnbReserve, tokenReserve, tokenDecimals)
-    }
-  }
+  const livePrice = tokenAddress
+    ? quoteBnbPrice({
+        tokenAddress,
+        token0,
+        token1,
+        reserves,
+        tokenDecimals,
+      })
+    : null
 
   const baselinePrice =
     presalePrice > 0n ? Number(formatUnits(presalePrice, 18)) : null

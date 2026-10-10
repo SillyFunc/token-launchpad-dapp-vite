@@ -508,5 +508,13 @@
   "board_status_awaiting_launch": "Awaiting launch",
   "board_status_failed": "Presale failed",
   "board_status_not_launched": "Not launched",
-  "board_low_liquidity": "Low liquidity"
+  "board_low_liquidity": "Low liquidity",
+  "me_assets_loading": "Loading holdings…",
+  "me_assets_error": "Couldn't load holdings",
+  "me_assets_empty": "This wallet doesn't hold any platform tokens",
+  "me_assets_connect": "Connect a wallet to see holdings",
+  "me_asset_price": "Price",
+  "me_asset_change_24h": "24h change",
+  "me_asset_quantity": "Quantity",
+  "me_asset_buy_more": "Buy more"
 }
