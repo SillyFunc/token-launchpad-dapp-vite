@@ -311,7 +311,7 @@ function BoardGridCard({
   }
 
   return (
-    <div
+    <article
       role={tokenAddress ? 'link' : undefined}
       tabIndex={tokenAddress ? 0 : undefined}
       onClick={handleNavigate}
@@ -385,7 +385,7 @@ function BoardGridCard({
           </span>
         )}
       </div>
-    </div>
+    </article>
   )
 }
 
