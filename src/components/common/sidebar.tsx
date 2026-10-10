@@ -21,6 +21,11 @@ const navItems = [
     path: '/subscription',
     requiresWallet: true,
   },
+  {
+    label: () => m.nav_my_profile(),
+    path: '/me',
+    requiresWallet: true,
+  },
 ]
 
 const languages = [
