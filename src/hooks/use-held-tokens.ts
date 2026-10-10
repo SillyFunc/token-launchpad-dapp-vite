@@ -9,9 +9,14 @@ import {
   type ContractFunctionParameters,
 } from 'viem'
 
-import { flapTaxTokenV3Abi, getCoordinatorFactory, presaleAbi } from '@/contracts'
+import {
+  dividendAbi,
+  flapTaxTokenV3Abi,
+  getCoordinatorFactory,
+  presaleAbi,
+} from '@/contracts'
 import { pairQuoteAbi, quoteBnbPrice } from '@/hooks/use-token-price'
-import { PLATFORM_CHAIN_ID } from '@/lib/web3'
+import { PLATFORM_CHAIN_ID, WRAPPED_NATIVE_ADDRESS } from '@/lib/web3'
 
 export interface HeldToken {
   address: Address
@@ -19,6 +24,8 @@ export interface HeldToken {
   symbol: string
   balance: bigint
   priceBNB: number | null
+  dividendContract?: Address
+  claimableBNB: bigint | null
 }
 
 const PAIR_PAGE_SIZE = 50n
@@ -67,6 +74,27 @@ function readSlot(results: readonly unknown[], index: number) {
   return value.status === 'success' ? value.result : undefined
 }
 
+function claimableBnbOf(
+  reads: readonly unknown[],
+  dividendHeld: { index: number }[],
+  tokenIndex: number,
+): bigint | null {
+  const dividendIndex = dividendHeld.findIndex((item) => item.index === tokenIndex)
+  if (dividendIndex < 0) return null
+
+  const dividendToken = readAddress(readSlot(reads, dividendIndex * 2))
+  const amount = readSlot(reads, dividendIndex * 2 + 1)
+  if (
+    !dividendToken ||
+    dividendToken.toLowerCase() !== WRAPPED_NATIVE_ADDRESS.toLowerCase() ||
+    typeof amount !== 'bigint'
+  ) {
+    return null
+  }
+
+  return amount
+}
+
 function readAddress(value: unknown): Address | undefined {
   if (typeof value !== 'string' || !isAddress(value, { strict: false })) return undefined
   if (value.toLowerCase() === zeroAddress) return undefined
@@ -75,11 +103,18 @@ function readAddress(value: unknown): Address | undefined {
 
 async function withBnbPrices(
   config: Config,
+  account: Address,
   held: HeldDraft[],
   signal: AbortSignal,
 ): Promise<HeldToken[]> {
   if (held.length === 0) return []
 
+  const dividendContracts = held.map((token) => ({
+    address: token.address,
+    abi: flapTaxTokenV3Abi,
+    chainId: PLATFORM_CHAIN_ID,
+    functionName: 'dividendContract' as const,
+  }))
   const metaContracts = held.flatMap((token) => [
       {
         address: token.address,
@@ -100,10 +135,44 @@ async function withBnbPrices(
         functionName: 'decimals',
       },
   ])
-  const meta = await readContracts(config, {
-    allowFailure: true,
-    contracts: metaContracts as readonly ContractFunctionParameters[],
+  const [meta, dividendReads] = await Promise.all([
+    readContracts(config, {
+      allowFailure: true,
+      contracts: metaContracts as readonly ContractFunctionParameters[],
+    }),
+    readContracts(config, {
+      allowFailure: true,
+      contracts: dividendContracts as readonly ContractFunctionParameters[],
+    }),
+  ])
+  throwIfAborted(signal)
+
+  const dividendHeld = held.flatMap((_, index) => {
+    const dividendContract = readAddress(readSlot(dividendReads, index))
+    return dividendContract ? [{ index, dividendContract }] : []
   })
+  const claimContracts = dividendHeld.flatMap((item) => [
+    {
+      address: item.dividendContract,
+      abi: dividendAbi,
+      chainId: PLATFORM_CHAIN_ID,
+      functionName: 'dividendToken' as const,
+    },
+    {
+      address: item.dividendContract,
+      abi: dividendAbi,
+      chainId: PLATFORM_CHAIN_ID,
+      functionName: 'withdrawableDividendOf' as const,
+      args: [account] as const,
+    },
+  ])
+  const claimReads =
+    claimContracts.length === 0
+      ? []
+      : await readContracts(config, {
+          allowFailure: true,
+          contracts: claimContracts as readonly ContractFunctionParameters[],
+        })
   throwIfAborted(signal)
 
   const presaleHeld = held.flatMap((token, index) =>
@@ -224,6 +293,8 @@ async function withBnbPrices(
       symbol: quote.token.symbol,
       balance: quote.token.balance,
       priceBNB,
+      dividendContract: readAddress(readSlot(dividendReads, index)),
+      claimableBNB: claimableBnbOf(claimReads, dividendHeld, index),
     }
   })
 }
@@ -305,7 +376,7 @@ export function useHeldTokens(account?: Address) {
         })
       }
 
-      return withBnbPrices(config, held, signal)
+      return withBnbPrices(config, account, held, signal)
     },
   })
 }

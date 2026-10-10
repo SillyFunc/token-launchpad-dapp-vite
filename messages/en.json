@@ -516,5 +516,10 @@
   "me_asset_price": "Price",
   "me_asset_change_24h": "24h change",
   "me_asset_quantity": "Quantity",
-  "me_asset_buy_more": "Buy more"
+  "me_asset_buy_more": "Buy more",
+  "me_asset_claimable": "Claimable dividends",
+  "me_asset_claim_dividend": "Claim dividends",
+  "me_asset_claiming": "Claiming dividends…",
+  "me_asset_claim_success": "Dividends claimed",
+  "me_asset_claim_empty": "Nothing to claim"
 }

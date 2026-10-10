@@ -1,9 +1,19 @@
+import { useState } from 'react'
 import { Link } from 'react-router'
+import { useQueryClient } from '@tanstack/react-query'
 import { ArrowRight } from 'lucide-react'
+import { useConfig, useConnection } from 'wagmi'
+import { readContract } from 'wagmi/actions'
 
-import type { HeldToken } from '@/hooks/use-held-tokens'
-import { formatDecimal, formatTokenAmount } from '@/lib/format'
+import { Web3ActionButton } from '@/components/common/web3-action-button'
+import { dividendAbi } from '@/contracts'
+import { useWriteContractTx } from '@/hooks/use-contract-tx'
+import { heldTokenKeys, type HeldToken } from '@/hooks/use-held-tokens'
+import { getContractErrorMessage } from '@/lib/contract-error'
+import { formatBnbAmount, formatDecimal, formatTokenAmount } from '@/lib/format'
+import { toast } from '@/lib/toast'
 import { formatAddress } from '@/lib/utils'
+import { PLATFORM_CHAIN_ID } from '@/lib/web3'
 import { m } from '@/paraglide/messages.js'
 
 export interface HeldTokenCardProps {
@@ -66,6 +76,21 @@ export const HeldTokenCard: React.FC<HeldTokenCardProps> = ({ token }) => {
             </span>
           </span>
         </div>
+        {token.dividendContract ? (
+          <>
+            <div className="flex min-w-0 items-center justify-between gap-4">
+              <span className="text-sm font-normal leading-4.5 text-[#A0A3A7]">
+                {m.me_asset_claimable()}
+              </span>
+              <span className="text-sm font-normal leading-[1.4] text-white">
+                {token.claimableBNB === null
+                  ? '--'
+                  : formatBnbAmount(token.claimableBNB)}
+              </span>
+            </div>
+            <ClaimDividendButton dividendContract={token.dividendContract} />
+          </>
+        ) : null}
         <Link
           to={tokenPath}
           className="flex min-h-10.5 w-full items-center justify-center gap-1 border border-[#84888C] py-3 text-[13px] font-normal uppercase leading-[1.4] tracking-[-0.052px] text-white transition-colors hover:border-[#D0FF00] hover:text-[#D0FF00]"
@@ -75,5 +100,80 @@ export const HeldTokenCard: React.FC<HeldTokenCardProps> = ({ token }) => {
         </Link>
       </div>
     </div>
+  )
+}
+
+const ClaimDividendButton: React.FC<{ dividendContract: NonNullable<HeldToken['dividendContract']> }> = ({
+  dividendContract,
+}) => {
+  const config = useConfig()
+  const { address } = useConnection()
+  const { execute } = useWriteContractTx()
+  const queryClient = useQueryClient()
+  const [isClaiming, setIsClaiming] = useState(false)
+
+  const handleClaim = async () => {
+    if (!address || isClaiming) return
+
+    setIsClaiming(true)
+    try {
+      const claimable = await readContract(config, {
+        address: dividendContract,
+        abi: dividendAbi,
+        chainId: PLATFORM_CHAIN_ID,
+        functionName: 'withdrawableDividendOf',
+        args: [address],
+      })
+      if (claimable === 0n) {
+        toast.error(m.me_asset_claim_empty())
+        return
+      }
+
+      const { receipt } = await execute({
+        address: dividendContract,
+        abi: dividendAbi,
+        functionName: 'withdrawDividends',
+      })
+      const applyClaimable = (claimableBNB: bigint) => {
+        queryClient.setQueryData<HeldToken[]>(
+          heldTokenKeys.byAccount(address),
+          (tokens) =>
+            tokens?.map((token) =>
+              token.dividendContract?.toLowerCase() ===
+              dividendContract.toLowerCase()
+                ? { ...token, claimableBNB }
+                : token,
+            ),
+        )
+      }
+      applyClaimable(0n)
+      const confirmed = await readContract(config, {
+        address: dividendContract,
+        abi: dividendAbi,
+        chainId: PLATFORM_CHAIN_ID,
+        functionName: 'withdrawableDividendOf',
+        args: [address],
+        blockNumber: receipt.blockNumber,
+      }).catch(() => 0n)
+      applyClaimable(confirmed < claimable ? confirmed : 0n)
+      toast.success(m.token_transaction_confirmed(), m.me_asset_claim_success())
+    } catch (error) {
+      toast.error(m.token_transaction_failed(), getContractErrorMessage(error))
+    } finally {
+      setIsClaiming(false)
+    }
+  }
+
+  return (
+    <Web3ActionButton
+      type="button"
+      variant="outline"
+      loading={isClaiming}
+      loadingText={m.me_asset_claiming()}
+      onAction={handleClaim}
+      className="h-auto min-h-10.5 w-full rounded-none border-[#84888C] bg-transparent py-3 text-[13px] font-normal uppercase leading-[1.4] tracking-[-0.052px] text-white hover:border-[#D0FF00] hover:bg-transparent hover:text-[#D0FF00]"
+    >
+      {m.me_asset_claim_dividend()}
+    </Web3ActionButton>
   )
 }

@@ -516,5 +516,10 @@
   "me_asset_price": "價格",
   "me_asset_change_24h": "24小時變化",
   "me_asset_quantity": "數量",
-  "me_asset_buy_more": "買入更多"
+  "me_asset_buy_more": "買入更多",
+  "me_asset_claimable": "可領取分紅",
+  "me_asset_claim_dividend": "領取分紅",
+  "me_asset_claiming": "正在領取分紅……",
+  "me_asset_claim_success": "分紅已領取",
+  "me_asset_claim_empty": "暫無可領取的分紅"
 }
