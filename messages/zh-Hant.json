@@ -531,5 +531,10 @@
   "me_asset_claim_dividend": "領取分紅",
   "me_asset_claiming": "正在領取分紅……",
   "me_asset_claim_success": "分紅已領取",
-  "me_asset_claim_empty": "暫無可領取的分紅"
+  "me_asset_claim_empty": "暫無可領取的分紅",
+  "wallet_menu_open": "打開錢包菜單",
+  "wallet_menu_title": "錢包",
+  "wallet_menu_profile": "我的個人資料",
+  "wallet_menu_explorer": "在區塊鏈瀏覽器中查看",
+  "wallet_menu_disconnect": "斷開連接"
 }

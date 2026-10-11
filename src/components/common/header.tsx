@@ -3,6 +3,9 @@ import iconHarborUrl from '@/assets/svgs/icon-harbor.svg?url'
 import { MenuIcon, XIcon } from 'lucide-react'
 import { ConnectKitButton } from 'connectkit'
 import type React from 'react'
+import { useState } from 'react'
+import { useConnection } from 'wagmi'
+import { WalletMenu } from '@/components/common/wallet-menu'
 import { m } from '@/paraglide/messages.js'
 
 interface HeaderProps {
@@ -10,6 +13,9 @@ interface HeaderProps {
   onToggleMenu: () => void
 }
 export const Header: React.FC<HeaderProps> = ({ isMenuOpen, onToggleMenu }) => {
+  const { address } = useConnection()
+  const [isWalletMenuOpen, setIsWalletMenuOpen] = useState(false)
+
   return (
     <header className="sticky inset-x-0 top-0 z-50 flex h-16 items-center justify-between border-b border-b-[#484B51] bg-[#070808] px-3">
       <div className="flex items-center gap-3">
@@ -85,8 +91,8 @@ export const Header: React.FC<HeaderProps> = ({ isMenuOpen, onToggleMenu }) => {
                   type="button"
                   data-testid="mobile-header-wallet-button"
                   className="ui20-connect-chamfer grid h-9 w-9 shrink-0 place-items-center border border-[#FE810B] bg-background text-[#FE810B] transition-colors hover:bg-[#FE810B] hover:text-black [--ui20-chamfer-bg:#070808] [--ui20-chamfer-border:#FE810B] hover:[--ui20-chamfer-bg:#FE810B]"
-                  aria-label="我的個人資料"
-                  onClick={show}
+                  aria-label={m.wallet_menu_open()}
+                  onClick={() => setIsWalletMenuOpen(true)}
                 >
                   <span
                     aria-hidden
@@ -101,6 +107,13 @@ export const Header: React.FC<HeaderProps> = ({ isMenuOpen, onToggleMenu }) => {
             }
           }}
         </ConnectKitButton.Custom>
+        {address && (
+          <WalletMenu
+            open={isWalletMenuOpen}
+            onOpenChange={setIsWalletMenuOpen}
+            address={address}
+          />
+        )}
       </div>
     </header>
   )

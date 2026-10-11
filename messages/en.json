@@ -531,5 +531,10 @@
   "me_asset_claim_dividend": "Claim dividends",
   "me_asset_claiming": "Claiming dividends…",
   "me_asset_claim_success": "Dividends claimed",
-  "me_asset_claim_empty": "Nothing to claim"
+  "me_asset_claim_empty": "Nothing to claim",
+  "wallet_menu_open": "Open wallet menu",
+  "wallet_menu_title": "Wallet",
+  "wallet_menu_profile": "My profile",
+  "wallet_menu_explorer": "View on block explorer",
+  "wallet_menu_disconnect": "Disconnect"
 }
