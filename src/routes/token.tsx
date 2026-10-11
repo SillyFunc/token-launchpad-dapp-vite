@@ -12,6 +12,7 @@ import { TradeSheet } from '@/components/token/trade-sheet'
 import { TokenLayout } from '@/layouts/token-layout'
 import { TokenPresale } from '@/components/token/token-presale'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 import { useTokenGate } from '@/hooks/use-token-gate'
 import { hasPoolLiquidity, useTokenPrice } from '@/hooks/use-token-price'
 import {
@@ -35,7 +36,7 @@ const tabLineClass =
 export const TokenPage = () => {
   const { address: routeAddress = '' } = useParams<{ address: string }>()
   const [activeTab, setActiveTab] = useState<TabType>('PRESALE')
-  const [copied, setCopied] = useState(false)
+  const { copy, copiedText } = useCopyToClipboard()
   const [isTradeOpen, setIsTradeOpen] = useState(false)
 
   const tokenAddress = isAddress(routeAddress)
@@ -146,18 +147,6 @@ export const TokenPage = () => {
     </>
   )
 
-  const handleCopy = async () => {
-    if (!tokenAddress || !navigator.clipboard) return
-
-    try {
-      await navigator.clipboard.writeText(tokenAddress)
-      setCopied(true)
-      window.setTimeout(() => setCopied(false), 2_000)
-    } catch {
-      setCopied(false)
-    }
-  }
-
   return (
     <TokenLayout>
       <header className="shrink-0 bg-[#070808] p-3">
@@ -235,11 +224,11 @@ export const TokenPage = () => {
                   type="button"
                   aria-label={m.token_copy_address()}
                   disabled={!tokenAddress}
-                  onClick={() => void handleCopy()}
+                  onClick={() => void copy(tokenAddress)}
                   className="inline-flex items-center gap-1 text-foreground underline underline-offset-2 transition-colors hover:text-primary focus-visible:text-primary focus-visible:outline-none disabled:cursor-not-allowed disabled:no-underline disabled:opacity-60"
                 >
                   {formatAddress(tokenAddress)}
-                  {copied ? (
+                  {copiedText === tokenAddress ? (
                     <Check className="ml-1 size-3 text-[#0ECB81]" />
                   ) : (
                     <Copy className="ml-1 size-3" />

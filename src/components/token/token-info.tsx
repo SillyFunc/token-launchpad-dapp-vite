@@ -1,8 +1,9 @@
-import { type ReactNode, useState } from 'react'
+import { type ReactNode } from 'react'
 import { Check, Copy, ExternalLink } from 'lucide-react'
 import { isAddress } from 'viem'
 
 import type { TokenDetail } from '@/api/token'
+import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 import { formatAddress } from '@/lib/utils'
 import { formatCompactNumber, formatTokenAmount } from '@/lib/format'
 import { getExplorerAddressUrl } from '@/lib/web3'
@@ -82,7 +83,7 @@ export function TokenInfo({
   marketCapBNB: number | null
   creatorAddress?: string
 }) {
-  const [copiedAddress, setCopiedAddress] = useState<string | null>(null)
+  const { copy, copiedText } = useCopyToClipboard()
   const description = token?.meta || m.token_no_description()
   const creator = creatorAddress || token?.creatorAddress || ''
   const creatorExplorerUrl = isAddress(creator)
@@ -101,17 +102,6 @@ export function TokenInfo({
   ].filter(
     (item): item is { label: string; href: string } => Boolean(item.href),
   )
-
-  const handleCopy = async (address?: string) => {
-    if (!address || !navigator.clipboard) return
-    try {
-      await navigator.clipboard.writeText(address)
-      setCopiedAddress(address)
-      window.setTimeout(() => setCopiedAddress(null), 2_000)
-    } catch {
-      setCopiedAddress(null)
-    }
-  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -137,11 +127,11 @@ export function TokenInfo({
                 type="button"
                 aria-label={m.token_copy_creator()}
                 disabled={!creator}
-                onClick={() => void handleCopy(creator)}
+                onClick={() => void copy(creator)}
                 className="inline-flex items-center gap-1 underline underline-offset-2 transition-colors hover:text-primary focus-visible:text-primary focus-visible:outline-none disabled:cursor-not-allowed disabled:no-underline disabled:opacity-60"
               >
                 {formatAddress(creator)}
-                {copiedAddress === creator ? (
+                {copiedText === creator ? (
                   <Check className="size-3 text-[#0ECB81]" />
                 ) : (
                   <Copy className="size-3" />

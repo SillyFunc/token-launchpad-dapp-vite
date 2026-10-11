@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Spinner } from '@/components/ui/spinner'
 import { toast } from '@/lib/toast'
+import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 import {
   CoordinatorError,
   FALLBACK_RESERVATION_FEE_WEI,
@@ -115,14 +116,7 @@ export const PrelaunchPage = () => {
     refetch,
   } = useReservedAddresses()
   const [isReserving, setIsReserving] = useState(false)
-  const [copiedAddress, setCopiedAddress] = useState<string | null>(null)
-
-  const handleCopy = (value: string) => {
-    void navigator.clipboard.writeText(value)
-    setCopiedAddress(value)
-    showToast('success', m.prelaunch_copied())
-    setTimeout(() => setCopiedAddress(null), 2000)
-  }
+  const { copy, copiedText } = useCopyToClipboard()
 
   const handleGenerate = () => {
     regenerate()
@@ -371,10 +365,10 @@ export const PrelaunchPage = () => {
                           variant="ghost"
                           size="icon-sm"
                           aria-label={m.prelaunch_copy_address()}
-                          onClick={() => handleCopy(item.contractAddress)}
+                          onClick={() => void copy(item.contractAddress)}
                           className="text-[#84888c] hover:text-white"
                         >
-                          {copiedAddress === item.contractAddress ? (
+                          {copiedText === item.contractAddress ? (
                             <Check className="size-3.5 text-[#7adfa1]" />
                           ) : (
                             <Copy className="size-3.5" />

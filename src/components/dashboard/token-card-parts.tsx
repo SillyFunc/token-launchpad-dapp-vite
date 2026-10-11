@@ -19,6 +19,7 @@ import type { BoardItemResponse } from '@/api/board'
 import type { BuybackVaultStats } from '@/hooks/use-buyback-vault-stats'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 import {
   Card,
   CardContent,
@@ -65,20 +66,8 @@ export const TokenCardShell: React.FC<TokenCardShellProps> = ({
   presaleDetails,
   footer,
 }) => {
-  const [copiedAddress, setCopiedAddress] = useState<Address>()
+  const { copy, copiedText } = useCopyToClipboard()
   const stageStyle = stageStyles[stage]
-
-  const handleCopy = async (address: Address) => {
-    if (!navigator.clipboard) return
-
-    try {
-      await navigator.clipboard.writeText(address)
-      setCopiedAddress(address)
-      window.setTimeout(() => setCopiedAddress(undefined), 2_000)
-    } catch {
-      setCopiedAddress(undefined)
-    }
-  }
 
   return (
     <Card className="flex h-full flex-col justify-between overflow-hidden border border-[#484b51] bg-[#131516] p-0 text-white shadow-lg transition-all hover:border-[#FE810B]/60">
@@ -126,10 +115,10 @@ export const TokenCardShell: React.FC<TokenCardShellProps> = ({
                       variant="ghost"
                       size="icon-xs"
                       aria-label={m.dashboard_copy_address()}
-                      onClick={() => void handleCopy(tokenAddress)}
+                      onClick={() => void copy(tokenAddress)}
                       className="text-neutral-400 hover:text-white"
                     >
-                      {copiedAddress === tokenAddress ? (
+                      {copiedText === tokenAddress ? (
                         <CheckIcon
                           className="text-green-400"
                           aria-hidden="true"

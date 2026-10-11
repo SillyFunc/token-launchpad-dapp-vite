@@ -3,6 +3,9 @@ import { Link, useParams } from 'react-router'
 import { isAddress, type Address } from 'viem'
 
 import { getTokenByContractAddress } from '@/api/token'
+import { Check } from 'lucide-react'
+
+import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 import { useTokenGate } from '@/hooks/use-token-gate'
 import { formatDecimal } from '@/lib/format'
 import { formatAddress } from '@/lib/utils'
@@ -33,10 +36,8 @@ export const TaxInfoPage = () => {
     token?.sellTax ??
     (gate.sellTaxBps === undefined ? null : gate.sellTaxBps / 100)
 
-  const handleCopy = () => {
-    if (!tokenAddress || !navigator.clipboard) return
-    void navigator.clipboard.writeText(tokenAddress).catch(() => undefined)
-  }
+  const { copy, copiedText } = useCopyToClipboard()
+  const copied = Boolean(tokenAddress) && copiedText === tokenAddress
 
   return (
     <>
@@ -186,8 +187,11 @@ export const TaxInfoPage = () => {
                     className="text-white/35 transition-colors hover:text-white/80 focus-visible:text-white/80 focus-visible:outline-none inline-flex size-3.5 shrink-0 items-center justify-center"
                     title="複製地址"
                     aria-label="複製地址"
-                    onClick={handleCopy}
+                    onClick={() => void copy(tokenAddress)}
                   >
+                    {copied ? (
+                      <Check className="size-3.5 text-[#2BC235]" aria-hidden="true" />
+                    ) : (
                     <span
                       className="relative inline-block size-3.5"
                       aria-hidden="true"
@@ -205,6 +209,7 @@ export const TaxInfoPage = () => {
                         ></path>
                       </svg>
                     </span>
+                    )}
                   </button>
                   <span
                     aria-hidden="true"

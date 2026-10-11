@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useConnection, useReadContract } from 'wagmi'
 import { zeroAddress } from 'viem'
 import { Check, Copy, Pencil, Share2, TriangleAlertIcon } from 'lucide-react'
@@ -16,6 +15,7 @@ import {
 } from '@/components/ui/empty'
 import { Spinner } from '@/components/ui/spinner'
 import { getCoordinatorFactory } from '@/contracts'
+import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 import { useHeldTokens } from '@/hooks/use-held-tokens'
 import { formatAddress } from '@/lib/utils'
 import { PLATFORM_CHAIN_ID } from '@/lib/web3'
@@ -23,7 +23,8 @@ import { m } from '@/paraglide/messages.js'
 
 export const MePage = () => {
   const { address } = useConnection()
-  const [copied, setCopied] = useState(false)
+  const { copy, copiedText } = useCopyToClipboard()
+  const copied = Boolean(address) && copiedText === address
   const coordinator = getCoordinatorFactory()
   const { data: createdCount } = useReadContract({
     ...coordinator,
@@ -38,18 +39,6 @@ export const MePage = () => {
     address && createdCount !== undefined ? createdCount.toString() : '--'
   const heldTokenCount =
     address && held.isSuccess ? String(held.data.length) : '--'
-
-  const handleCopyAddress = async () => {
-    if (!address || !navigator.clipboard) return
-
-    try {
-      await navigator.clipboard.writeText(address)
-      setCopied(true)
-      window.setTimeout(() => setCopied(false), 2_000)
-    } catch {
-      setCopied(false)
-    }
-  }
 
   return (
     <div className="h-full py-6 flex flex-col">
@@ -79,7 +68,7 @@ export const MePage = () => {
             <div className="grid w-full grid-cols-[minmax(0,1fr)_minmax(0,1fr)_32px] items-center gap-3">
               <button
                 type="button"
-                onClick={() => void handleCopyAddress()}
+                onClick={() => void copy(address)}
                 disabled={!address}
                 className="flex h-8 min-w-0 items-center justify-center gap-2 border border-[#484B51] px-3 text-13 font-medium text-white transition-colors hover:border-[#D9FF33] hover:text-[#D9FF33] disabled:cursor-not-allowed disabled:opacity-40"
               >

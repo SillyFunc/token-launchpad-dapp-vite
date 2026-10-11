@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { Check, Flame, ChevronDown, Coins } from 'lucide-react'
 
@@ -14,10 +14,9 @@ import {
   formatPercent,
   formatShortAddress,
 } from '@/lib/format'
+import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 import { cn } from '@/lib/utils'
 import { m } from '@/paraglide/messages.js'
-
-const COPIED_DURATION_MS = 1500
 
 const FILTER_OPTIONS = [
   { value: 'hot', label: () => m.board_filter_hot() },
@@ -300,23 +299,8 @@ function BoardGridCard({
   const change24h = pricing?.changePercent ?? null
   const isPositive = change24h !== null && change24h >= 0
 
-  const [copied, setCopied] = useState(false)
-
-  useEffect(() => {
-    if (!copied) return
-    const timer = window.setTimeout(() => setCopied(false), COPIED_DURATION_MS)
-    return () => window.clearTimeout(timer)
-  }, [copied])
-
-  const handleCopy = async () => {
-    if (!tokenAddress || !navigator.clipboard) return
-    try {
-      await navigator.clipboard.writeText(tokenAddress)
-      setCopied(true)
-    } catch {
-      // Clipboard permission can be denied; the address stays visible on the card.
-    }
-  }
+  const { copy, copiedText } = useCopyToClipboard()
+  const copied = copiedText === tokenAddress
 
   return (
     <article className="group relative flex w-full max-w-full min-w-0 items-center overflow-hidden border border-[#484B51] bg-background text-white [content-visibility:auto] [contain-intrinsic-size:auto_123px] cursor-pointer">
@@ -385,7 +369,7 @@ function BoardGridCard({
           </span>
           <button
             type="button"
-            onClick={() => void handleCopy()}
+            onClick={() => void copy(tokenAddress)}
             aria-label={m.dashboard_copy_address()}
             className="pointer-events-auto relative z-2 grid h-5 w-5 shrink-0 place-items-center text-[#A0A3A7] transition-colors hover:text-white"
           >
