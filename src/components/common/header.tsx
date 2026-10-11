@@ -1,4 +1,5 @@
 import { Link } from 'react-router'
+import iconFireUrl from '@/assets/svgs/icon-fire.svg?url'
 import { Flame, MenuIcon, Wallet, XIcon } from 'lucide-react'
 import { ConnectKitButton } from 'connectkit'
 import { formatAddress } from '@/lib/utils'
@@ -13,7 +14,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ isMenuOpen, onToggleMenu }) => {
   return (
     <header className="sticky inset-x-0 top-0 z-50 flex h-16 items-center justify-between border-b border-b-[#484B51] bg-[#070808] px-3">
-      <div className="flex items-center space-x-3">
+      <div className="flex items-center gap-3">
         <button
           type="button"
           aria-label={isMenuOpen ? m.close_menu() : m.open_menu()}
@@ -33,6 +34,20 @@ export const Header: React.FC<HeaderProps> = ({ isMenuOpen, onToggleMenu }) => {
             )}
           </div>
         </button>
+        <Link
+          className="flex items-center justify-center text-[#FE810B]"
+          to="/board"
+          aria-label="Launchpad Home"
+        >
+          <span
+            aria-hidden
+            className="block shrink-0 bg-current [-webkit-mask-position:center] [-webkit-mask-repeat:no-repeat] [-webkit-mask-size:contain] mask-center mask-no-repeat mask-contain size-6"
+            style={{
+              WebkitMaskImage: `url("${iconFireUrl}")`,
+              maskImage: `url("${iconFireUrl}")`,
+            }}
+          ></span>
+        </Link>
       </div>
       <div className="flex shrink-0 items-center gap-2">
         {/* shadow-[0_3px_0_0_#963000] */}
