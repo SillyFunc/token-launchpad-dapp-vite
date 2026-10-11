@@ -1,5 +1,7 @@
-import { useId } from 'react'
+import { useEffect, useId, useState } from 'react'
 import SliderLabelIcon from '@/assets/svgs/tax-rate-pointer.svg'
+
+const NOTICE_DURATION_MS = 1500
 
 export interface TaxSliderProps {
   label: string
@@ -10,6 +12,8 @@ export interface TaxSliderProps {
   step?: number
   required?: boolean
   id?: string
+  /** Shown above the slider while the user drags below `minNotice.value`. */
+  minNotice?: { value: number; message: string }
 }
 
 export const Slider: React.FC<TaxSliderProps> = ({
@@ -21,6 +25,7 @@ export const Slider: React.FC<TaxSliderProps> = ({
   step = 1,
   required = false,
   id,
+  minNotice,
 }) => {
   const generatedId = useId()
   const inputId = id ?? `tax-slider-${generatedId.replace(/:/g, '')}`
@@ -30,6 +35,21 @@ export const Slider: React.FC<TaxSliderProps> = ({
     range > 0
       ? Math.min(100, Math.max(0, ((safeValue - min) / range) * 100))
       : 0
+  const [isNoticeVisible, setIsNoticeVisible] = useState(false)
+
+  useEffect(() => {
+    if (!isNoticeVisible) return
+    const timer = window.setTimeout(
+      () => setIsNoticeVisible(false),
+      NOTICE_DURATION_MS,
+    )
+    return () => window.clearTimeout(timer)
+  }, [isNoticeVisible])
+
+  const handleChange = (next: number) => {
+    if (minNotice && next < minNotice.value) setIsNoticeVisible(true)
+    onChange(next)
+  }
 
   return (
     <div className="flex flex-col gap-2">
@@ -55,7 +75,15 @@ export const Slider: React.FC<TaxSliderProps> = ({
         </output>
       </div>
 
-      <div className="flex flex-col gap-1.5">
+      <div className="relative flex flex-col gap-1.5">
+        {minNotice && isNoticeVisible && (
+          <div
+            role="status"
+            className="absolute -top-8 left-0 z-10 whitespace-nowrap border border-[#FE810B] bg-[#141517] px-2 py-1 text-xs text-[#FFA546] shadow-lg"
+          >
+            {minNotice.message}
+          </div>
+        )}
         <div className="relative flex items-center py-1">
           <div className="h-1 w-full bg-[#757575]" aria-hidden="true">
             <div
@@ -72,7 +100,7 @@ export const Slider: React.FC<TaxSliderProps> = ({
             value={safeValue}
             required={required}
             aria-label={label}
-            onChange={(event) => onChange(Number(event.currentTarget.value))}
+            onChange={(event) => handleChange(Number(event.currentTarget.value))}
             className="absolute inset-0 h-full w-full cursor-pointer opacity-0 focus:outline-none focus-visible:outline-none focus:ring-0"
           />
           <div

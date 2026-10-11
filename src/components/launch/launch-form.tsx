@@ -737,6 +737,10 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
                     label={m.launch_sell_tax()}
                     required
                     value={field.state.value}
+                    minNotice={{
+                      value: SELL_TAX_MIN_PERCENT,
+                      message: m.launch_sell_tax_min_notice(),
+                    }}
                     onChange={(next) =>
                       field.handleChange(Math.max(SELL_TAX_MIN_PERCENT, next))
                     }

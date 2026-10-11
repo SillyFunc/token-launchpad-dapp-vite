@@ -536,5 +536,6 @@
   "wallet_menu_title": "錢包",
   "wallet_menu_profile": "我的個人資料",
   "wallet_menu_explorer": "在區塊鏈瀏覽器中查看",
-  "wallet_menu_disconnect": "斷開連接"
+  "wallet_menu_disconnect": "斷開連接",
+  "launch_sell_tax_min_notice": "賣出稅最低為1%"
 }

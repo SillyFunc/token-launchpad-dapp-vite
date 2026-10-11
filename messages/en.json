@@ -536,5 +536,6 @@
   "wallet_menu_title": "Wallet",
   "wallet_menu_profile": "My profile",
   "wallet_menu_explorer": "View on block explorer",
-  "wallet_menu_disconnect": "Disconnect"
+  "wallet_menu_disconnect": "Disconnect",
+  "launch_sell_tax_min_notice": "Sell tax is at least 1%"
 }
