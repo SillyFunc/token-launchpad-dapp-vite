@@ -169,3 +169,22 @@
     background-color: #FE810B;
   }
 }
+
+@supports (corner-shape:bevel) {
+    .ui20-chamfer, .ui20-chamfer-left {
+        clip-path: none;
+        background: #070808 !important;
+    }
+    .ui20-connect-chamfer {
+        clip-path: none;
+        background: var(--ui20-chamfer-bg, #070808);
+    }
+}
+
+@supports (corner-shape:bevel) {
+    .ui20-chamfer, .ui20-connect-chamfer {
+        border-radius: 10px 4px;
+        corner-shape: bevel round;
+        border: 1px solid #FE810B !important;
+    }
+}
