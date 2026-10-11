@@ -14,9 +14,6 @@ export interface WalletMenuProps {
   address: Address
 }
 
-const itemClass =
-  'flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-white transition-colors hover:bg-white/5 active:bg-white/10'
-
 export const WalletMenu: React.FC<WalletMenuProps> = ({
   open,
   onOpenChange,
@@ -44,28 +41,28 @@ export const WalletMenu: React.FC<WalletMenuProps> = ({
           </button>
         </div>
 
-        <div className="flex flex-col divide-y divide-[#2F3737] py-1  border-t border-[#FE810B] bg-[#070808] w-full">
+        <div className="flex flex-col border-t border-[#FE810B] bg-[#070808] w-full">
           <button
             type="button"
-            className={itemClass}
+            className="flex w-full px-6 pt-8 pb-5 shrink-0 items-center gap-2 text-left text-sm font-normal leading-normal text-white transition-colors hover:bg-[#131516] focus-visible:bg-[#131516] focus-visible:outline-none"
             onClick={() => {
               close()
               navigate('/me')
             }}
           >
-            <User className="size-4 text-[#A0A3A7]" aria-hidden="true" />
+            <User className="size-5" aria-hidden="true" />
             {m.wallet_menu_profile()}
           </button>
 
           <button
             type="button"
-            className={itemClass}
+            className="flex w-full px-6 py-5 shrink-0 items-center gap-2 text-left text-sm font-normal leading-normal text-white transition-colors hover:bg-[#131516] focus-visible:bg-[#131516] focus-visible:outline-none"
             onClick={() => void copy(address)}
           >
             {copied ? (
-              <Check className="size-4 text-[#2BC235]" aria-hidden="true" />
+              <Check className="size-5 text-[#2BC235]" aria-hidden="true" />
             ) : (
-              <Copy className="size-4 text-[#A0A3A7]" aria-hidden="true" />
+              <Copy className="size-5" aria-hidden="true" />
             )}
             {m.dashboard_copy_address()}
           </button>
@@ -75,25 +72,22 @@ export const WalletMenu: React.FC<WalletMenuProps> = ({
               href={explorerUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className={itemClass}
+              className="flex w-full px-6 py-5 shrink-0 items-center gap-2 text-left text-sm font-normal leading-normal text-white transition-colors hover:bg-[#131516] focus-visible:bg-[#131516] focus-visible:outline-none"
             >
-              <ExternalLink
-                className="size-4 text-[#A0A3A7]"
-                aria-hidden="true"
-              />
+              <ExternalLink className="size-5" aria-hidden="true" />
               {m.wallet_menu_explorer()}
             </a>
           )}
 
           <button
             type="button"
-            className={`${itemClass} text-[#FF4A55]`}
+            className="flex w-full px-6 pt-5 pb-8 shrink-0 items-center gap-2 text-left text-sm font-normal leading-normal text-[#F7594B] transition-colors hover:bg-[#131516] focus-visible:bg-[#131516] focus-visible:outline-none"
             onClick={() => {
               disconnect()
               close()
             }}
           >
-            <LogOut className="size-4" aria-hidden="true" />
+            <LogOut className="size-5" aria-hidden="true" />
             {m.wallet_menu_disconnect()}
           </button>
         </div>
