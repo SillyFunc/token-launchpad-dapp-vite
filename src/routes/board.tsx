@@ -1,8 +1,9 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router'
-import { Flame, ChevronDown, Coins } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Link, useNavigate } from 'react-router'
+import { Check, Flame, ChevronDown, Coins } from 'lucide-react'
 
 import SortIcon from '@/assets/svgs/sort-default.svg'
+import BnbIcon from '@/assets/bnb-icon.svg'
 import boardBanner from '@/assets/images/board-banner.png'
 import type { BoardItemResponse } from '@/api/board'
 import { usePopularTokens } from '@/hooks/use-board'
@@ -11,9 +12,12 @@ import {
   formatCompactNumber,
   formatDecimalText,
   formatPercent,
+  formatShortAddress,
 } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { m } from '@/paraglide/messages.js'
+
+const COPIED_DURATION_MS = 1500
 
 const FILTER_OPTIONS = [
   { value: 'hot', label: () => m.board_filter_hot() },
@@ -155,26 +159,26 @@ export const BoardPage = () => {
                 className="h-4 w-4 shrink-0"
               >
                 <path
-                  fill-rule="evenodd"
-                  clip-rule="evenodd"
+                  fillRule="evenodd"
+                  clipRule="evenodd"
                   d="M2.66665 1.3335C1.93027 1.3335 1.33331 1.93045 1.33331 2.66683V6.00016C1.33331 6.73656 1.93027 7.3335 2.66665 7.3335H5.99998C6.73637 7.3335 7.33331 6.73655 7.33331 6.00016V2.66683C7.33331 1.93046 6.73638 1.3335 5.99998 1.3335H2.66665ZM2.66665 2.66683H5.99998V6.00016H2.66665V2.66683Z"
                   fill="currentColor"
                 ></path>
                 <path
-                  fill-rule="evenodd"
-                  clip-rule="evenodd"
+                  fillRule="evenodd"
+                  clipRule="evenodd"
                   d="M2.66665 8.66683C1.93027 8.66683 1.33331 9.26377 1.33331 10.0002V13.3335C1.33331 14.0699 1.93027 14.6668 2.66665 14.6668H5.99998C6.73637 14.6668 7.33331 14.0699 7.33331 13.3335V10.0002C7.33331 9.26377 6.73637 8.66683 5.99998 8.66683H2.66665ZM2.66665 10.0002H5.99998V13.3335H2.66665V10.0002Z"
                   fill="currentColor"
                 ></path>
                 <path
-                  fill-rule="evenodd"
-                  clip-rule="evenodd"
+                  fillRule="evenodd"
+                  clipRule="evenodd"
                   d="M8.66665 2.66683C8.66665 1.93046 9.26358 1.3335 9.99998 1.3335H13.3333C14.0697 1.3335 14.6666 1.93046 14.6666 2.66683V6.00016C14.6666 6.73655 14.0697 7.3335 13.3333 7.3335H9.99998C9.26359 7.3335 8.66665 6.73655 8.66665 6.00016V2.66683ZM13.3333 2.66683H9.99998V6.00016H13.3333V2.66683Z"
                   fill="currentColor"
                 ></path>
                 <path
-                  fill-rule="evenodd"
-                  clip-rule="evenodd"
+                  fillRule="evenodd"
+                  clipRule="evenodd"
                   d="M9.99998 8.66683C9.26359 8.66683 8.66665 9.26377 8.66665 10.0002V13.3335C8.66665 14.0699 9.26359 14.6668 9.99998 14.6668H13.3333C14.0697 14.6668 14.6666 14.0699 14.6666 13.3335V10.0002C14.6666 9.26377 14.0697 8.66683 13.3333 8.66683H9.99998ZM9.99998 10.0002H13.3333V13.3335H9.99998V10.0002Z"
                   fill="currentColor"
                 ></path>
@@ -290,101 +294,166 @@ function BoardGridCard({
   token: BoardItemResponse
   pricing: Pricing
 }) {
-  const navigate = useNavigate()
   const tokenAddress = token.coinContractAddress || ''
 
-  const stage = pricing?.stage ?? 'not_launched'
-  const isPresale = stage === 'presale'
   const marketCap = pricing?.liquidityUsd ?? null
-  const priceUsd = pricing?.priceUsd ?? null
   const change24h = pricing?.changePercent ?? null
   const isPositive = change24h !== null && change24h >= 0
 
-  const hasTax =
-    isConfiguredTaxRate(token.buyTax) || isConfiguredTaxRate(token.sellTax)
-  const taxText = hasTax
-    ? `${isConfiguredTaxRate(token.buyTax) ? token.buyTax : 0}%/${isConfiguredTaxRate(token.sellTax) ? token.sellTax : 0}%`
-    : '--'
+  const [copied, setCopied] = useState(false)
 
-  const handleNavigate = () => {
-    if (tokenAddress) navigate(`/token/${tokenAddress}`)
+  useEffect(() => {
+    if (!copied) return
+    const timer = window.setTimeout(() => setCopied(false), COPIED_DURATION_MS)
+    return () => window.clearTimeout(timer)
+  }, [copied])
+
+  const handleCopy = async () => {
+    if (!tokenAddress || !navigator.clipboard) return
+    try {
+      await navigator.clipboard.writeText(tokenAddress)
+      setCopied(true)
+    } catch {
+      // Clipboard permission can be denied; the address stays visible on the card.
+    }
   }
 
   return (
-    <article
-      role={tokenAddress ? 'link' : undefined}
-      tabIndex={tokenAddress ? 0 : undefined}
-      onClick={handleNavigate}
-      onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault()
-          handleNavigate()
-        }
-      }}
-      className="flex cursor-pointer flex-col gap-3 border border-[#484B51] bg-[#131516] p-3 text-white transition-colors hover:border-[#FE810B]/60 [content-visibility:auto] [contain-intrinsic-size:auto_160px]"
-    >
-      <div className="flex items-center gap-3">
-        <div className="relative size-12 shrink-0 overflow-hidden border border-[#313131] bg-[#111]">
-          {token.coinImg ? (
-            <img
-              src={token.coinImg}
-              alt={token.name}
-              loading="lazy"
-              decoding="async"
-              onError={(event) => {
-                event.currentTarget.style.display = 'none'
-              }}
-              className="absolute inset-0 size-full object-cover"
-            />
-          ) : (
-            <Coins className="absolute inset-0 m-auto size-5 text-[#FFA546]" />
-          )}
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex min-w-0 items-center gap-1">
-            <span className="min-w-0 truncate text-sm font-medium uppercase text-foreground">
-              ${token.symbol || token.name}
+    <article className="group relative flex w-full max-w-full min-w-0 items-center overflow-hidden border border-[#484B51] bg-background text-white [content-visibility:auto] [contain-intrinsic-size:auto_123px] cursor-pointer">
+      <div className="pointer-events-none relative z-1 flex w-25.75 shrink-0 flex-col items-start">
+        <div className="-mb-px grid h-26 w-full place-items-center rounded-tl-[8px] border-r border-[#484B51] p-3">
+          <div className="relative h-20 w-20 shrink-0">
+            <span
+              aria-hidden="true"
+              className="ui20-token-avatar-cut absolute inset-0 bg-[#484B51]"
+            ></span>
+            <span className="inline-block shrink-0 overflow-hidden border-[#313131] ui20-token-avatar-cut absolute left-px top-px h-19.5 w-19.5 border-0 bg-[#111] [--ui20-token-avatar-cut-size:13px]">
+              {token.coinImg ? (
+                <img
+                  alt={token.name}
+                  loading="lazy"
+                  width="78"
+                  height="78"
+                  decoding="async"
+                  className="absolute inset-0 h-full w-full object-cover transition-opacity duration-150 opacity-100"
+                  src={token.coinImg}
+                  onError={(event) => {
+                    event.currentTarget.style.display = 'none'
+                  }}
+                />
+              ) : (
+                <Coins className="absolute inset-0 m-auto size-8 text-[#FFA546]" />
+              )}
             </span>
-            {hasTax && <TaxBadge showPresale={isPresale} />}
-          </div>
-          <div className="mt-0.5 truncate text-[0.625rem] text-[#A0A3A7]">
-            {token.name}
           </div>
         </div>
       </div>
-
-      <div className="grid grid-cols-2 gap-2 text-[0.625rem] text-[#A0A3A7]">
-        <div className="flex flex-col gap-0.5">
-          <span>市值</span>
-          <span className="truncate text-xs font-medium text-foreground">
-            {marketCap !== null ? `$${formatCompactNumber(marketCap)}` : '--'}
-          </span>
+      <div className="pointer-events-none relative z-1 flex h-full min-w-0 flex-1 flex-col justify-center gap-2 p-3">
+        <div className="flex min-w-0 items-center gap-2 tracking-0">
+          <h3 className="max-w-[58%] shrink-0 truncate text-base font-semibold uppercase leading-[1.4] text-white">
+            ${token.symbol || token.name}
+          </h3>
+          <p className="min-w-0 truncate text-xs font-medium leading-[1.4] text-[#A0A3A7]">
+            {token.fullName || token.name}
+          </p>
         </div>
-        <div className="flex flex-col gap-0.5 text-right">
-          <span>价格</span>
-          <span className="truncate text-xs font-medium text-foreground">
-            {priceUsd !== null ? `$${formatDecimalText(priceUsd, 5)}` : '--'}
-          </span>
+        <div className="flex min-w-0 items-center gap-1">
+          <img
+            alt=""
+            aria-hidden="true"
+            loading="lazy"
+            width="16"
+            height="16"
+            decoding="async"
+            className="shrink-0 h-4 w-4 rounded-full object-contain"
+            src={BnbIcon}
+          />
+          <div className="flex min-w-0 items-center gap-1 text-xs leading-[1.4]">
+            <span className="text-[#84888C]">[</span>
+            <span className="text-[#84888C]">{m.board_card_market_cap()}</span>
+            <span className="text-white">
+              {marketCap !== null ? `$${formatCompactNumber(marketCap)}` : '--'}
+            </span>
+            <span className="text-[#84888C]">]</span>
+          </div>
         </div>
-      </div>
-
-      <div className="flex items-center justify-between gap-2 text-[0.625rem] text-[#A0A3A7]">
-        <span className="truncate">{taxText}</span>
-        {change24h === null ? (
-          <span className="inline-flex h-6 items-center justify-center bg-white/5 px-2 text-xs font-medium text-white/40">
-            --
+        <div className="flex min-w-0 items-center gap-1 text-xs leading-[1.4]">
+          <span className="text-[#84888C]">[</span>
+          <span className="text-[#84888C]">{m.board_card_ca()}</span>
+          <span className="truncate underline decoration-white underline-offset-2">
+            {formatShortAddress(tokenAddress)}
           </span>
-        ) : (
-          <span
-            className={cn(
-              'inline-flex h-6 items-center justify-center px-2 text-xs font-medium text-white',
-              isPositive ? 'bg-[#2bc235]' : 'bg-[#FF4A55]',
-            )}
+          <button
+            type="button"
+            onClick={() => void handleCopy()}
+            aria-label={m.dashboard_copy_address()}
+            className="pointer-events-auto relative z-2 grid h-5 w-5 shrink-0 place-items-center text-[#A0A3A7] transition-colors hover:text-white"
           >
-            {formatPercent(change24h)}
-          </span>
-        )}
+            {copied ? (
+              <Check
+                className="size-4 text-[#2BC235]"
+                aria-hidden="true"
+              />
+            ) : (
+              <span className="relative inline-block h-4 w-4" aria-hidden="true">
+                <svg
+                  viewBox="0 0 14.834 14.834"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  preserveAspectRatio="none"
+                  className="absolute inset-[12.92%_12.91%_12.91%_12.92%]"
+                >
+                  <path
+                    d="M10.7503 3.33333C10.9492 3.33333 11.1403 3.41241 11.2809 3.55306C11.4216 3.69371 11.5007 3.88475 11.5007 4.08366V14.0837C11.5007 14.4979 11.1645 14.834 10.7503 14.834H0.750326C0.336112 14.834 1.51715e-08 14.4979 0 14.0837V4.08366C4.41037e-06 3.66945 0.336115 3.33333 0.750326 3.33333H10.7503ZM1.50065 13.3333H10V4.83398H1.50065V13.3333ZM14.0837 0C14.2826 8.3105e-08 14.4736 0.0790748 14.6143 0.219727C14.7549 0.360379 14.834 0.551414 14.834 0.750326V10.7503H13.3333V1.50065H4.08366V0H14.0837Z"
+                    fill="currentColor"
+                  ></path>
+                </svg>
+              </span>
+            )}
+          </button>
+          <span className="text-[#84888C]">]</span>
+        </div>
+        <div className="flex w-full items-center justify-between">
+          <div className="flex items-center gap-1 text-xs leading-[1.4]">
+            <span className="text-[#84888C]">{m.board_card_change_24h()}</span>
+            <span
+              className={cn(
+                'font-medium tracking-0',
+                change24h === null
+                  ? 'text-white/40'
+                  : isPositive
+                    ? 'text-[#2BC235]'
+                    : 'text-[#FF4A55]',
+              )}
+            >
+              {formatPercent(change24h)}
+            </span>
+          </div>
+          <Link
+            to={`/taxinfo/${tokenAddress}`}
+            className="pointer-events-auto relative z-2 flex items-center text-xs leading-[1.4] text-[#FE810B] transition-colors hover:text-white"
+          >
+            <span>{m.board_tax_details()}</span>
+            <svg
+              viewBox="0 0 16 16"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+              className="h-4 w-4"
+            >
+              <path
+                d="M11.7712 3.62846C11.9304 3.62846 12.0832 3.69179 12.1957 3.80432C12.3082 3.91684 12.3715 4.06963 12.3715 4.22876V9.88562H11.1709V5.67796L4.41751 12.4314L3.56861 11.5825L10.322 4.82907L6.11438 4.82907L6.11438 3.62846H11.7712Z"
+                fill="currentColor"
+              ></path>
+            </svg>
+          </Link>
+        </div>
       </div>
+      <Link
+        aria-label={token.name}
+        className="absolute inset-0 z-0 focus-visible:outline-1 focus-visible:-outline-offset-1 focus-visible:outline-[#FE810B]"
+        to={`/token/${tokenAddress}`}
+      ></Link>
     </article>
   )
 }

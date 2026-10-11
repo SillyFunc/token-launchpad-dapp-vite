@@ -27,6 +27,8 @@ dist-ssr
 .codegraph
 .codex
 .openchamber
+.zcode
+.zcodeignore
 
 # Cloudflare Workers
 .dev.vars

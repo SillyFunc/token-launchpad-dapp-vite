@@ -91,6 +91,11 @@ export function formatDecimalText(
   return text.includes('.') ? text.replace(/0+$/, '').replace(/\.$/, '') : text
 }
 
+export function formatShortAddress(address: string) {
+  if (!address) return '--'
+  return `${address.slice(0, 6)}...${address.slice(-4)}`
+}
+
 export function formatDuration(seconds: bigint) {
   const value = Number(seconds)
   if (!Number.isFinite(value) || value <= 0) return '--'

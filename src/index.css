@@ -188,3 +188,8 @@
         border: 1px solid #FE810B !important;
     }
 }
+
+.ui20-token-avatar-cut {
+    --ui20-token-avatar-cut-size: 0.875rem;
+    clip-path: polygon(var(--ui20-token-avatar-cut-size) 0, 100% 0, 100% calc(100% - var(--ui20-token-avatar-cut-size)), calc(100% - var(--ui20-token-avatar-cut-size)) 100%, 0 100%, 0 var(--ui20-token-avatar-cut-size));
+}
