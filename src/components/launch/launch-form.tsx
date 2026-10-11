@@ -310,7 +310,7 @@ function getInitialValues(
     symbol: initialData?.symbol ?? '',
     description: initialData?.meta || initialData?.zhIntroduction || '',
     feeRecipient: initialData?.feeRecipient || address || '',
-    buyTax: initialData?.buyTax ?? 0,
+    buyTax: initialData?.buyTax ?? 1,
     sellTax: initialData?.sellTax ?? 1,
     antiFarmerDuration: String(initialData?.antiFarmerDuration ?? 30),
     taxAllocation: initialData
