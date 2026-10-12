@@ -66,35 +66,47 @@ export const MePage = () => {
           </div>
           <div className="flex w-full shrink-0 flex-col items-start gap-3">
             <div className="grid w-full grid-cols-[minmax(0,1fr)_minmax(0,1fr)_32px] items-center gap-3">
-              <button
-                type="button"
-                onClick={() => void copy(address)}
-                disabled={!address}
-                className="flex h-8 min-w-0 items-center justify-center gap-2 border border-[#484B51] px-3 text-13 font-medium text-white transition-colors hover:border-[#fe810b] hover:text-[#fe810b] disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                {shortAddress}
-                {copied ? (
-                  <Check className="size-4 shrink-0" />
-                ) : (
-                  <Copy className="size-4 shrink-0" />
-                )}
-              </button>
-              <button
-                type="button"
-                aria-label="编辑资料"
-                className="flex h-8 items-center justify-center gap-2 border border-[#484B51] px-3 text-13 font-medium text-white transition-colors hover:border-[#fe810b] hover:text-[#fe810b] disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                <Pencil className="size-4" />
-                编辑资料
-              </button>
-              <button
-                type="button"
-                aria-label="分享个人主页"
-                title="分享个人主页"
-                className="flex h-8 w-8 items-center justify-center border border-[#484B51] text-white transition-colors hover:border-[#fe810b] hover:text-[#fe810b] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#fe810b]"
-              >
-                <Share2 className="size-3.5" />
-              </button>
+              {address ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => void copy(address)}
+                    disabled={!address}
+                    className="flex h-8 min-w-0 items-center justify-center gap-2 border border-[#484B51] px-3 text-13 font-medium text-white transition-colors hover:border-[#fe810b] hover:text-[#fe810b] disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    {shortAddress}
+                    {copied ? (
+                      <Check className="size-4 shrink-0" />
+                    ) : (
+                      <Copy className="size-4 shrink-0" />
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="编辑资料"
+                    className="flex h-8 items-center justify-center gap-2 border border-[#484B51] px-3 text-13 font-medium text-white transition-colors hover:border-[#fe810b] hover:text-[#fe810b] disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <Pencil className="size-4" />
+                    编辑资料
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="分享个人主页"
+                    title="分享个人主页"
+                    className="flex h-8 w-8 items-center justify-center border border-[#484B51] text-white transition-colors hover:border-[#fe810b] hover:text-[#fe810b] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#fe810b]"
+                  >
+                    <Share2 className="size-3.5" />
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  aria-label="连接钱包"
+                  className="flex h-8 items-center justify-center border border-[#fe810b] bg-[#fe810b] px-3 text-13 font-semibold tracking-[-0.052px] text-[#1A1A1A] transition-colors hover:bg-[#E87000] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E87000] focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                >
+                  连接钱包
+                </button>
+              )}
             </div>
           </div>
         </div>
