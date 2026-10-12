@@ -71,7 +71,7 @@ export const BoardPage = () => {
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-2">
+      <div className="sticky top-16 z-30 flex h-12 items-center justify-between gap-2 bg-black">
         <div className="relative">
           <button
             type="button"
@@ -213,7 +213,7 @@ export const BoardPage = () => {
         }
       >
         {viewMode === 'list' && (
-          <div className="sticky top-14.5 z-20 h-10 grid grid-cols-[minmax(0,1fr)_64px_64px] gap-5 items-center border-y border-y-[#484B51] bg-[#131516] px-2 text-[#A0A3A7] text-[0.625rem]">
+          <div className="sticky top-28 z-20 h-10 grid grid-cols-[minmax(0,1fr)_64px_64px] gap-5 items-center border-y border-y-[#484B51] bg-[#131516] px-2 text-[#A0A3A7] text-[0.625rem]">
             <span className="truncate min-w-0">市值/24H 交易額/稅率</span>
             <span className="text-right">价格</span>
             <button
