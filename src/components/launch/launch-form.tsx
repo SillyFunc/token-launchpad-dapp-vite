@@ -551,6 +551,7 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
 
   return (
     <form
+      autoComplete="off"
       className="relative mx-auto flex w-full flex-col pb-28"
       onSubmit={(event) => {
         event.preventDefault()
