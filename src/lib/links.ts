@@ -1,4 +1,4 @@
-import { bscTestnet } from 'wagmi/chains'
+import { bsc } from 'wagmi/chains'
 
 import { PLATFORM_CHAIN_ID, getDexChainSlug } from '@/lib/web3'
 
@@ -19,7 +19,7 @@ export function getPairChartUrl(pairAddress: string): string {
 
 /** PancakeSwap chain key for the platform chain (testnet vs mainnet). */
 function getPancakeChainKey(): string {
-  return PLATFORM_CHAIN_ID === bscTestnet.id ? 'bscTestnet' : 'bsc'
+  return PLATFORM_CHAIN_ID === bsc.id ? 'bsc' : 'bscTestnet'
 }
 
 /** PancakeSwap swap page pre-filled with the output token. */

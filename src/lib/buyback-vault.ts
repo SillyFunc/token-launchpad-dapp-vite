@@ -28,6 +28,9 @@ const BUYBACK_AMOUNT_UNIT = parseEther('0.001')
 const MAX_BUYBACK_AMOUNT = parseEther('10')
 const MAX_TRIGGER_AMOUNT = parseEther('1000')
 const MIN_INTERVAL_SECONDS = 60n
+/** Mirrors BuybackVault.MIN_INTERVAL_SECONDS: first run must be at least this far ahead. */
+const MIN_FIRST_EXECUTE_LEAD_SECONDS = 60
+
 const MAX_INTERVAL_SECONDS = 31_536_000n
 const INTERVAL_SECONDS: Record<BuybackVaultIntervalUnit, number> = {
   minutes: 60,
@@ -141,6 +144,27 @@ export function draftFromVaultParams(
   }
 }
 
+/**
+ * Whether a time-based trigger can be scheduled. The contract rejects a first
+ * execution that is not at least `MIN_INTERVAL_SECONDS` after the transaction.
+ * `nowSec` is injectable so the rule stays testable.
+ */
+export function isFirstExecuteTimeValid(
+  firstExecuteAt: bigint,
+  nowSec: number = Math.floor(Date.now() / 1000),
+): boolean {
+  return firstExecuteAt >= BigInt(nowSec + MIN_FIRST_EXECUTE_LEAD_SECONDS)
+}
+
+/** Unix seconds for a UTC+8 `datetime-local` string, or undefined if unparseable. */
+export function parseFirstExecuteAt(value: string): bigint | undefined {
+  try {
+    return utc8DatetimeLocalToUnixSeconds(value)
+  } catch {
+    return undefined
+  }
+}
+
 function utc8DatetimeLocalToUnixSeconds(value: string): bigint {
   if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(value)) {
     throw new Error('InvalidFirstExecuteTime')
@@ -200,6 +224,9 @@ export function encodeBuybackConfig(
   const firstExecuteAt = includesTime
     ? utc8DatetimeLocalToUnixSeconds(draft.firstExecuteAt)
     : 0n
+  if (includesTime && !isFirstExecuteTimeValid(firstExecuteAt)) {
+    throw new Error('InvalidFirstExecuteTime')
+  }
 
   let triggerAmount = 0n
   if (includesBalance) {

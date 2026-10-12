@@ -1,7 +1,7 @@
-import { bsc, bscTestnet } from 'wagmi/chains'
+import { bsc } from 'wagmi/chains'
 
-export const PLATFORM_CHAIN = bscTestnet
-export const PLATFORM_CHAIN_ID: number = bscTestnet.id
+export const PLATFORM_CHAIN = bsc
+export const PLATFORM_CHAIN_ID: number = bsc.id
 
 /**
  * Wrapped native token (WBNB) on the platform chain. DEX aggregators report a

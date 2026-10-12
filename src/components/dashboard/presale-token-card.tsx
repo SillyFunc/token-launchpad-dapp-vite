@@ -101,7 +101,7 @@ export const PresaleTokenCard: React.FC<PresaleTokenCardProps> = ({
               type="button"
               variant={isEndAction ? 'outline' : 'default'}
               onClick={() => tokenAddress && onView(tokenAddress)}
-              disabled={stage === 'syncing' || !tokenAddress}
+              disabled={!tokenAddress}
               className={
                 isEndAction
                   ? 'h-9 border-[#484b51] bg-[#131516] font-bold text-white hover:bg-white/10'

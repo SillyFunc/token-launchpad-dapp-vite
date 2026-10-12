@@ -33,6 +33,8 @@ import {
   defaultBuybackVaultDraft,
   draftFromVaultParams,
   encodeBuybackConfig,
+  isFirstExecuteTimeValid,
+  parseFirstExecuteAt,
   type BuybackVaultDraft,
 } from '@/lib/buyback-vault'
 import {
@@ -192,6 +194,10 @@ function validateBuybackVault(value: BuybackVaultDraft): string | undefined {
   if (!needsTime) return undefined
   if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(value.firstExecuteAt)) {
     return m.launch_vault_first_execute_required()
+  }
+  const firstExecuteAt = parseFirstExecuteAt(value.firstExecuteAt)
+  if (firstExecuteAt === undefined || !isFirstExecuteTimeValid(firstExecuteAt)) {
+    return m.launch_vault_first_execute_too_soon()
   }
   return undefined
 }

@@ -6,7 +6,7 @@ import {
   injected,
   webSocket,
 } from 'wagmi'
-import { bscTestnet } from 'wagmi/chains'
+import { bsc } from 'wagmi/chains'
 import {
   MutationCache,
   QueryCache,
@@ -22,7 +22,7 @@ import { toast } from '@/lib/toast'
 import { m } from '@/paraglide/messages.js'
 
 const config = createConfig({
-  chains: [bscTestnet],
+  chains: [bsc],
   connectors: [
     injected(),
     walletConnect({
@@ -31,13 +31,9 @@ const config = createConfig({
     }),
   ],
   transports: {
-    // [bsc.id]: fallback([
-    //   http('https://bsc-rpc.publicnode.com'),
-    //   webSocket('wss://bsc-rpc.publicnode.com'),
-    // ]),
-    [bscTestnet.id]: fallback([
-      http('https://bsc-testnet-rpc.publicnode.com'),
-      webSocket('wss://bsc-testnet-rpc.publicnode.com'),
+    [bsc.id]: fallback([
+      http('https://bsc-rpc.publicnode.com'),
+      webSocket('wss://bsc-rpc.publicnode.com'),
     ]),
   },
 })
