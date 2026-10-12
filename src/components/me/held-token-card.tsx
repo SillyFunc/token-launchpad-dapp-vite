@@ -32,7 +32,7 @@ export const HeldTokenCard: React.FC<HeldTokenCardProps> = ({ token }) => {
           to={tokenPath}
           className="inline-flex min-w-0 max-w-full items-center gap-1.5 text-15 font-medium leading-[1.4] tracking-[-0.4px] text-white outline-none transition-colors hover:text-white"
         >
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#D0FF00] text-10 font-semibold text-black">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#fe810b] text-10 font-semibold text-black">
             {mark}
           </span>
           <span className="flex min-w-0 items-center gap-2">
@@ -96,7 +96,7 @@ export const HeldTokenCard: React.FC<HeldTokenCardProps> = ({ token }) => {
         ) : null}
         <Link
           to={tokenPath}
-          className="flex min-h-10.5 w-full items-center justify-center gap-1 border border-[#84888C] py-3 text-[13px] font-normal uppercase leading-[1.4] tracking-[-0.052px] text-white transition-colors hover:border-[#D0FF00] hover:text-[#D0FF00]"
+          className="flex min-h-10.5 w-full items-center justify-center gap-1 border border-[#84888C] py-3 text-[13px] font-normal uppercase leading-[1.4] tracking-[-0.052px] text-white transition-colors hover:border-[#fe810b] hover:text-[#fe810b]"
         >
           {m.me_asset_buy_more()}
           <ArrowRight className="size-4" />
@@ -176,7 +176,7 @@ const ClaimDividendButton: React.FC<{
       loadingText={m.me_asset_claiming()}
       disabled={claimableBNB === null || claimableBNB === 0n}
       onAction={handleClaim}
-      className="h-auto min-h-10.5 w-full rounded-none border-[#84888C] bg-transparent py-3 text-[13px] font-normal uppercase leading-[1.4] tracking-[-0.052px] text-white hover:border-[#D0FF00] hover:bg-transparent hover:text-[#D0FF00] disabled:cursor-not-allowed disabled:border-[#484B51] disabled:text-[#84888C] disabled:opacity-40 disabled:hover:border-[#484B51] disabled:hover:bg-transparent disabled:hover:text-[#84888C]"
+      className="h-auto min-h-10.5 w-full rounded-none border-[#84888C] bg-transparent py-3 text-[13px] font-normal uppercase leading-[1.4] tracking-[-0.052px] text-white hover:border-[#fe810b] hover:bg-transparent hover:text-[#fe810b] disabled:cursor-not-allowed disabled:border-[#484B51] disabled:text-[#84888C] disabled:opacity-40 disabled:hover:border-[#484B51] disabled:hover:bg-transparent disabled:hover:text-[#84888C]"
     >
       {m.me_asset_claim_dividend()}
     </Web3ActionButton>

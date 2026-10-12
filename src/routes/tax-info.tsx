@@ -177,7 +177,7 @@ export const TaxInfoPage = () => {
                   <a
                     target="_blank"
                     rel="noopener noreferrer nofollow"
-                    className="min-w-0 text-xs leading-[1.35] text-foreground underline decoration-white/70 underline-offset-2 hover:text-[#D0FF00] truncate"
+                    className="min-w-0 text-xs leading-[1.35] text-foreground underline decoration-white/70 underline-offset-2 hover:text-[##fe810b] truncate"
                     href={explorerUrl}
                   >
                     <span>{formatAddress(tokenAddress)}</span>

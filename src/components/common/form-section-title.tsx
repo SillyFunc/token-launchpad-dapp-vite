@@ -56,7 +56,7 @@ export const FormSectionTitle: React.FC<FormSectionTitleProps> = (props) => {
         {optional && (
           <ChevronDown
             className={cn(
-              'size-5 text-foreground transition-transform duration-200 group-focus-visible:text-[#d0ff00]',
+              'size-5 text-foreground transition-transform duration-200 group-focus-visible:text-[##fe810b]',
               open && 'rotate-180',
             )}
           />

@@ -70,7 +70,7 @@ export const MePage = () => {
                 type="button"
                 onClick={() => void copy(address)}
                 disabled={!address}
-                className="flex h-8 min-w-0 items-center justify-center gap-2 border border-[#484B51] px-3 text-13 font-medium text-white transition-colors hover:border-[#D9FF33] hover:text-[#D9FF33] disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex h-8 min-w-0 items-center justify-center gap-2 border border-[#484B51] px-3 text-13 font-medium text-white transition-colors hover:border-[#fe810b] hover:text-[#fe810b] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {shortAddress}
                 {copied ? (
@@ -82,7 +82,7 @@ export const MePage = () => {
               <button
                 type="button"
                 aria-label="编辑资料"
-                className="flex h-8 items-center justify-center gap-2 border border-[#484B51] px-3 text-13 font-medium text-white transition-colors hover:border-[#D9FF33] hover:text-[#D9FF33] disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex h-8 items-center justify-center gap-2 border border-[#484B51] px-3 text-13 font-medium text-white transition-colors hover:border-[#fe810b] hover:text-[#fe810b] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <Pencil className="size-4" />
                 编辑资料
@@ -91,7 +91,7 @@ export const MePage = () => {
                 type="button"
                 aria-label="分享个人主页"
                 title="分享个人主页"
-                className="flex h-8 w-8 items-center justify-center border border-[#484B51] text-white transition-colors hover:border-[#D9FF33] hover:text-[#D9FF33] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D0FF00]"
+                className="flex h-8 w-8 items-center justify-center border border-[#484B51] text-white transition-colors hover:border-[#fe810b] hover:text-[#fe810b] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#fe810b]"
               >
                 <Share2 className="size-3.5" />
               </button>
