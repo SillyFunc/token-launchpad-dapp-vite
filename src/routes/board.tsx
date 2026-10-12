@@ -19,7 +19,7 @@ import {
   readBoardViewMode,
   writeBoardViewMode,
   type BoardViewMode,
-} from '@/lib/home-perfs'
+} from '@/lib/home-prefs'
 import { cn } from '@/lib/utils'
 import { m } from '@/paraglide/messages.js'
 
