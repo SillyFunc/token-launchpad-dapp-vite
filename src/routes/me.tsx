@@ -1,3 +1,4 @@
+import { ConnectKitButton } from 'connectkit'
 import { useConnection, useReadContract } from 'wagmi'
 import { zeroAddress } from 'viem'
 import { Check, Copy, Pencil, Share2, TriangleAlertIcon } from 'lucide-react'
@@ -99,13 +100,18 @@ export const MePage = () => {
                   </button>
                 </>
               ) : (
-                <button
-                  type="button"
-                  aria-label="连接钱包"
-                  className="flex h-8 items-center justify-center border border-[#fe810b] bg-[#fe810b] px-3 text-13 font-semibold tracking-[-0.052px] text-[#1A1A1A] transition-colors hover:bg-[#E87000] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E87000] focus-visible:ring-offset-2 focus-visible:ring-offset-black"
-                >
-                  连接钱包
-                </button>
+                <ConnectKitButton.Custom>
+                  {({ show }) => (
+                    <button
+                      type="button"
+                      onClick={show}
+                      aria-label="连接钱包"
+                      className="flex h-8 items-center justify-center border border-[#fe810b] bg-[#fe810b] px-3 text-13 font-semibold tracking-[-0.052px] text-[#1A1A1A] transition-colors hover:bg-[#E87000] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E87000] focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                    >
+                      连接钱包
+                    </button>
+                  )}
+                </ConnectKitButton.Custom>
               )}
             </div>
           </div>
