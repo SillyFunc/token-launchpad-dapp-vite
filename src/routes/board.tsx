@@ -15,6 +15,11 @@ import {
   formatShortAddress,
 } from '@/lib/format'
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
+import {
+  readBoardViewMode,
+  writeBoardViewMode,
+  type BoardViewMode,
+} from '@/lib/home-perfs'
 import { cn } from '@/lib/utils'
 import { m } from '@/paraglide/messages.js'
 
@@ -34,7 +39,12 @@ function isConfiguredTaxRate(value: number | undefined): boolean {
 export const BoardPage = () => {
   const [activeFilter, setActiveFilter] = useState<string>('hot')
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false)
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
+  const [viewMode, setViewMode] = useState<BoardViewMode>(readBoardViewMode)
+
+  const changeViewMode = (mode: BoardViewMode) => {
+    setViewMode(mode)
+    writeBoardViewMode(mode)
+  }
 
   const { data: tokens, isLoading, isError, refetch } = usePopularTokens()
 
@@ -102,7 +112,7 @@ export const BoardPage = () => {
               type="button"
               aria-label={m.board_view_list()}
               aria-pressed={viewMode === 'list'}
-              onClick={() => setViewMode('list')}
+              onClick={() => changeViewMode('list')}
               className={cn(
                 'grid h-4 w-4 shrink-0 touch-manipulation place-items-center transition-colors',
                 viewMode === 'list' ? 'text-[#FE810B]' : 'text-neutral-500',
@@ -145,7 +155,7 @@ export const BoardPage = () => {
               type="button"
               aria-label={m.board_view_grid()}
               aria-pressed={viewMode === 'grid'}
-              onClick={() => setViewMode('grid')}
+              onClick={() => changeViewMode('grid')}
               className={cn(
                 'grid h-4 w-4 shrink-0 touch-manipulation place-items-center transition-colors',
                 viewMode === 'grid' ? 'text-[#FE810B]' : 'text-neutral-500',
