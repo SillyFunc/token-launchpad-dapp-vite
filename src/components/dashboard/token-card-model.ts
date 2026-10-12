@@ -70,7 +70,11 @@ export function getStage(gate: TokenGateSnapshot): TokenStage {
   if (gate.isLoading) return 'syncing'
   if (!gate.tokenExists) return 'notIssued'
 
-  const claimed = gate.tokensClaimed || (gate.tokenState ?? 0) >= 2
+  // presaleStatus 3 = launched (terminal) per docs/frontend-integration.md §4.1.
+  const claimed =
+    gate.tokensClaimed ||
+    (gate.tokenState ?? 0) >= 2 ||
+    gate.presaleStatus === 3
   if (claimed) return 'live'
   if (gate.presaleStatus === 4) return 'failed'
   if (gate.presaleStatus === 2) return 'waitingLaunch'

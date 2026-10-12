@@ -1,4 +1,3 @@
-import { PencilIcon, RocketIcon } from 'lucide-react'
 import type { Address } from 'viem'
 
 import type { BoardItemResponse } from '@/api/board'
@@ -46,18 +45,16 @@ export const UnissuedTokenCard: React.FC<UnissuedTokenCardProps> = ({
             variant="outline"
             onClick={() => onEdit(token)}
             disabled={isIssuing}
-            className="border-[#484b51] bg-[#131516] font-bold text-white hover:bg-white/10"
+            className="h-9 border-[#484b51] bg-[#131516] font-bold text-white hover:bg-white/10"
           >
-            <PencilIcon aria-hidden="true" />
             <span>{m.dashboard_edit_token()}</span>
           </Button>
           <Web3ActionButton
             onAction={issueToken}
             loading={isIssuing}
             loadingText={m.dashboard_issuing_token()}
-            className="font-bold transition-transform active:translate-y-0.5 disabled:opacity-50"
+            className="h-9 font-bold transition-transform active:translate-y-0.5 disabled:opacity-50"
           >
-            <RocketIcon aria-hidden="true" />
             <span>{m.dashboard_issue_token()}</span>
           </Web3ActionButton>
         </>

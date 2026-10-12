@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { CoinsIcon, RocketIcon } from 'lucide-react'
 import type { Address } from 'viem'
 import { presaleAbi } from '@/contracts'
 
@@ -42,7 +41,6 @@ export const StandaloneTokenCard: React.FC<StandaloneTokenCardProps> = ({
   const { token, gate, tokenAddress: resolvedAddress, stage } = state
 
   const canClaim = stage === 'prelaunch' && Boolean(gate.presaleAddress)
-  const isClaimedDirectly = stage === 'live' && gate.tokensClaimed
 
   return (
     <TokenCardShell
@@ -64,9 +62,8 @@ export const StandaloneTokenCard: React.FC<StandaloneTokenCardProps> = ({
               onClick={() =>
                 resolvedAddress && onPresale(token, resolvedAddress)
               }
-              className="border-transparent bg-linear-to-r from-[#FE810B] via-[#FFA546] to-[#FE810B] font-bold text-white transition-transform active:translate-y-0.5 disabled:opacity-40"
+              className="h-9 border-transparent bg-linear-to-r from-[#FE810B] via-[#FFA546] to-[#FE810B] font-bold text-white transition-transform active:translate-y-0.5 disabled:opacity-40"
             >
-              <RocketIcon aria-hidden="true" />
               <span>{m.dashboard_setup_presale()}</span>
             </Button>
           )}
@@ -75,17 +72,9 @@ export const StandaloneTokenCard: React.FC<StandaloneTokenCardProps> = ({
             <ClaimAllTokensButton presaleAddress={gate.presaleAddress} />
           )}
 
-          {isClaimedDirectly && (
+          {stage === 'live' && (
             <ViewDetailsButton
               tokenAddress={resolvedAddress}
-              onView={onView}
-            />
-          )}
-
-          {stage !== 'prelaunch' && !isClaimedDirectly && (
-            <ViewDetailsButton
-              tokenAddress={resolvedAddress}
-              disabled={stage === 'syncing' || !resolvedAddress}
               onView={onView}
             />
           )}
@@ -105,9 +94,8 @@ const ViewDetailsButton: React.FC<{
     variant="default"
     onClick={() => tokenAddress && onView(tokenAddress)}
     disabled={disabled || !tokenAddress}
-    className="border-transparent bg-[#FE810B] font-bold text-[#1A1A1A] transition-transform hover:bg-[#E87000] active:translate-y-0.5 active:bg-[#D66500] disabled:opacity-40"
+    className="h-9 border-transparent bg-[#FE810B] font-bold text-[#1A1A1A] transition-transform hover:bg-[#E87000] active:translate-y-0.5 active:bg-[#D66500] disabled:opacity-40"
   >
-    <RocketIcon aria-hidden="true" />
     <span>{m.dashboard_view_token()}</span>
   </Button>
 )
@@ -150,9 +138,8 @@ function ClaimAllTokensButton({
         type="button"
         variant="outline"
         onClick={() => setIsConfirmOpen(true)}
-        className="border-[#484b51] bg-[#131516] font-bold text-white hover:bg-white/10"
+        className="h-9 border-[#484b51] bg-[#131516] font-bold text-white hover:bg-white/10"
       >
-        <CoinsIcon aria-hidden="true" />
         <span>{m.dashboard_claim_tokens()}</span>
       </Button>
 
@@ -188,7 +175,6 @@ function ClaimAllTokensButton({
               loadingText={m.dashboard_claiming_tokens()}
               className="font-bold transition-transform active:translate-y-0.5 disabled:opacity-50"
             >
-              <CoinsIcon aria-hidden="true" />
               <span>{m.dashboard_claim_confirm_action()}</span>
             </Web3ActionButton>
           </DialogFooter>

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { CircleStopIcon, CoinsIcon, RocketIcon, TriangleAlertIcon, WalletIcon } from 'lucide-react'
+import { CoinsIcon, TriangleAlertIcon, WalletIcon, RocketIcon } from 'lucide-react'
 import type { Address } from 'viem'
 import { presaleAbi } from '@/contracts'
 
@@ -46,9 +46,7 @@ export const PresaleTokenCard: React.FC<PresaleTokenCardProps> = ({
   const isOpenAction = stage === 'prelaunch' && Boolean(gate.presaleAddress)
   const isEndAction = stage === 'presale'
   const isFailed = stage === 'failed'
-  // Detail entry for every stage that does not own the footer outright. During
-  // an active presale it sits next to "end presale" as a secondary action.
-  const showsViewAction = !isOpenAction && !isFailed
+  const isWaitingLaunch = stage === 'waitingLaunch'
 
   return (
     <TokenCardShell
@@ -91,7 +89,14 @@ export const PresaleTokenCard: React.FC<PresaleTokenCardProps> = ({
             <OpenPresaleButton presaleAddress={gate.presaleAddress} />
           )}
 
-          {showsViewAction && (
+          {isWaitingLaunch && gate.presaleAddress && (
+            <LaunchPresaleButton
+              presaleAddress={gate.presaleAddress}
+              onLaunched={gate.refetch}
+            />
+          )}
+
+          {stage === 'live' && (
             <Button
               type="button"
               variant={isEndAction ? 'outline' : 'default'}
@@ -99,11 +104,10 @@ export const PresaleTokenCard: React.FC<PresaleTokenCardProps> = ({
               disabled={stage === 'syncing' || !tokenAddress}
               className={
                 isEndAction
-                  ? 'border-[#484b51] bg-[#131516] font-bold text-white hover:bg-white/10'
-                  : 'border-transparent bg-[#FE810B] font-bold text-[#1A1A1A] transition-transform hover:bg-[#E87000] active:translate-y-0.5 active:bg-[#D66500] disabled:opacity-40'
+                  ? 'h-9 border-[#484b51] bg-[#131516] font-bold text-white hover:bg-white/10'
+                  : 'h-9 border-transparent bg-[#FE810B] font-bold text-[#1A1A1A] transition-transform hover:bg-[#E87000] active:translate-y-0.5 active:bg-[#D66500] disabled:opacity-40'
               }
             >
-              <RocketIcon aria-hidden="true" />
               <span>{m.dashboard_view_token()}</span>
             </Button>
           )}
@@ -252,9 +256,8 @@ function RelaunchPresaleButton({
       loadingText={m.dashboard_relaunching_presale()}
       disabled={disabled}
       title={disabled ? m.presale_refunds_outstanding() : undefined}
-      className="font-bold transition-transform active:translate-y-0.5 disabled:opacity-40"
+      className="h-9 font-bold transition-transform active:translate-y-0.5 disabled:opacity-40"
     >
-      <RocketIcon aria-hidden="true" />
       <span>{m.dashboard_relaunch_presale()}</span>
     </Web3ActionButton>
   )
@@ -295,10 +298,54 @@ function OpenPresaleButton({
       onAction={handleOpenPresale}
       loading={isOpening}
       loadingText={m.dashboard_opening_presale()}
-      className="font-bold transition-transform active:translate-y-0.5 disabled:opacity-40"
+      className="h-9 font-bold transition-transform active:translate-y-0.5 disabled:opacity-40"
     >
-      <RocketIcon aria-hidden="true" />
       <span>{m.dashboard_open_presale()}</span>
+    </Web3ActionButton>
+  )
+}
+
+function LaunchPresaleButton({
+  presaleAddress,
+  onLaunched,
+}: {
+  presaleAddress: Address
+  onLaunched: () => Promise<void>
+}) {
+  const { execute } = useWriteContractTx()
+  const queryClient = useQueryClient()
+  const [isLaunching, setIsLaunching] = useState(false)
+
+  const handleLaunchPresale = async () => {
+    if (isLaunching) return
+
+    setIsLaunching(true)
+    try {
+      await execute({
+        address: presaleAddress,
+        abi: presaleAbi,
+        functionName: 'launch',
+      })
+      await Promise.all([
+        onLaunched(),
+        queryClient.invalidateQueries({ queryKey: ['readContracts'] }),
+      ])
+      toast.success(m.dashboard_launch_presale_success())
+    } catch (error) {
+      toast.error(m.token_transaction_failed(), getContractErrorMessage(error))
+    } finally {
+      setIsLaunching(false)
+    }
+  }
+
+  return (
+    <Web3ActionButton
+      onAction={handleLaunchPresale}
+      loading={isLaunching}
+      loadingText={m.dashboard_launching_presale()}
+      className="h-9 border-transparent bg-[#FE810B] font-bold text-[#1A1A1A] transition-transform hover:bg-[#E87000] active:translate-y-0.5 active:bg-[#D66500] disabled:opacity-40"
+    >
+      <span>{m.dashboard_launch_presale()}</span>
     </Web3ActionButton>
   )
 }
@@ -342,9 +389,8 @@ function EndPresaleButton({
       loading={isEnding}
       loadingText={m.dashboard_ending_presale()}
       disabled={!presaleAddress}
-      className="font-bold transition-transform active:translate-y-0.5"
+      className="h-9 font-bold transition-transform active:translate-y-0.5"
     >
-      <CircleStopIcon aria-hidden="true" />
       <span>{m.dashboard_end_presale()}</span>
     </Web3ActionButton>
   )
