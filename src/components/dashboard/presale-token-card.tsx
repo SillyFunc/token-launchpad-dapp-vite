@@ -154,6 +154,7 @@ const PresaleDetails: React.FC<{ state: TokenCardState }> = ({ state }) => {
           value={state.presaleProgress}
           detail={`${formatTokenAmount(gate.tokensSubscribed, gate.tokenDecimals)} / ${formatTokenAmount(gate.presaleShare, gate.tokenDecimals)} ${tokenSymbol}`}
           showMarker
+          showPercentage
           showDivider
         />
       )}
@@ -162,7 +163,9 @@ const PresaleDetails: React.FC<{ state: TokenCardState }> = ({ state }) => {
           label={m.dashboard_soft_cap_progress()}
           value={state.softCapProgress}
           detail={`${formatBnbAmount(gate.bnbAccumulated)} / ${formatBnbAmount(gate.softCap)}`}
+          highlight={gate.isSoftCapReached}
           showMarker
+          showPercentage
           showDivider
         />
       )}
@@ -172,6 +175,7 @@ const PresaleDetails: React.FC<{ state: TokenCardState }> = ({ state }) => {
           value={state.hardCapProgress}
           detail={`${formatBnbAmount(gate.bnbAccumulated)} / ${formatBnbAmount(gate.hardCap)}`}
           showMarker
+          showPercentage
           showDivider
         />
       )}
