@@ -6,7 +6,7 @@ import {
   injected,
   webSocket,
 } from 'wagmi'
-import { bsc, bscTestnet } from 'wagmi/chains'
+import { bscTestnet } from 'wagmi/chains'
 import {
   MutationCache,
   QueryCache,
