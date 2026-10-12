@@ -15,15 +15,10 @@ interface SidebarProps {
 const navItems = [
   { label: () => m.nav_home(), path: '/board', requiresWallet: false },
   { label: () => m.nav_launch(), path: '/launch', requiresWallet: false },
-  { label: () => m.nav_dashboard(), path: '/dashboard', requiresWallet: false },
+  { label: () => m.nav_dashboard(), path: '/dashboard', requiresWallet: true },
   {
     label: () => m.nav_subscriptions(),
     path: '/subscription',
-    requiresWallet: true,
-  },
-  {
-    label: () => m.nav_my_profile(),
-    path: '/me',
     requiresWallet: true,
   },
 ]
