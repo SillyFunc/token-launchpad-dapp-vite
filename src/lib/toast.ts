@@ -1,108 +1,100 @@
-import type { ReactNode } from 'react'
-import { Toast as ToastPrimitive } from '@base-ui/react/toast'
-import type {
-  ToastManagerAddOptions,
-  ToastManagerPromiseOptions,
-  ToastManagerUpdateOptions,
-} from '@base-ui/react/toast'
+import {
+  createElement,
+  isValidElement,
+  type ReactElement,
+  type ReactNode,
+} from 'react'
+import hotToast, { type ToastOptions } from 'react-hot-toast'
 
-type AppToastType = 'success' | 'info' | 'warning' | 'error' | 'loading'
-type AppToastOptions = Omit<
-  ToastManagerAddOptions<object>,
-  'type' | 'title' | 'description'
->
-type ToastPromiseState = string | ToastManagerUpdateOptions<object>
+/** Matches react-hot-toast's own `Renderable`: an element, a string, or null. */
+type Renderable = ReactElement | string | null
+type AppToastOptions = Pick<ToastOptions, 'duration' | 'id' | 'position'>
 
-const PROMISE_SUCCESS_TIMEOUT = 4000
-const PROMISE_ERROR_TIMEOUT = 8000
 /**
- * Plain error toasts auto-close after the same duration as plain success
- * toasts (the Base UI provider default of 5000ms).
+ * Stacks a title and an optional description into one node. The two-argument
+ * call form is kept so existing call sites stay unchanged; the node itself is
+ * rendered by react-hot-toast.
  */
-const ERROR_TIMEOUT = 5000
-
-export const toastManager = ToastPrimitive.createToastManager()
-
-function createToastMethod(type: AppToastType) {
-  return (
-    title: ReactNode,
-    description?: ReactNode,
-    options?: AppToastOptions,
-  ) => toastManager.add({ ...options, type, title, description })
+function renderMessage(title: ReactNode, description?: ReactNode): Renderable {
+  if (description == null || description === '') return toRenderable(title)
+  return createElement(
+    'div',
+    { className: 'flex min-w-0 flex-col gap-0.5' },
+    createElement('span', { className: 'text-sm font-medium' }, title),
+    createElement('span', { className: 'text-xs opacity-75' }, description),
+  )
 }
 
-/**
- * Error toasts close on our own timer instead of the store's: Base UI pauses
- * its timers while the window is blurred (e.g. a wallet popup stole focus,
- * which is exactly when contract errors fire), and a stuck pause can leave
- * the toast open forever. `closeAfter` is a plain setTimeout, so it fires
- * regardless of focus/hover state. Pass `timeout: 0` to keep an error sticky.
- */
-function errorToast(
+/** Coerces a loose ReactNode into what react-hot-toast accepts. */
+function toRenderable(node: ReactNode): Renderable {
+  if (node == null || typeof node === 'boolean') return null
+  if (typeof node === 'string') return node
+  if (typeof node === 'number') return String(node)
+  if (isValidElement(node)) return node
+  return createElement('span', null, node)
+}
+
+function success(
   title: ReactNode,
   description?: ReactNode,
   options?: AppToastOptions,
 ) {
-  const id = toastManager.add({
-    ...options,
-    type: 'error',
-    title,
-    description,
-    timeout: 0,
-  })
-  closeAfter(id, options?.timeout ?? ERROR_TIMEOUT)
-  return id
+  return hotToast.success(renderMessage(title, description), options)
 }
 
-function normalizePromiseState(state: ToastPromiseState) {
-  return typeof state === 'string' ? { title: state } : state
-}
-
-function resolvePromiseState<Value>(
-  state: ToastPromiseState | ((value: Value) => ToastPromiseState),
-  value: Value,
+function error(
+  title: ReactNode,
+  description?: ReactNode,
+  options?: AppToastOptions,
 ) {
-  return normalizePromiseState(
-    typeof state === 'function' ? state(value) : state,
-  )
+  return hotToast.error(renderMessage(title, description), options)
 }
 
-function closeAfter(id: string, timeout: number) {
-  if (timeout <= 0) return
-  globalThis.setTimeout(() => toastManager.close(id), timeout)
-}
-
-function promiseToast<Value>(
-  promise: Promise<Value>,
-  options: ToastManagerPromiseOptions<Value, object>,
+/**
+ * react-hot-toast has no warning or info variants. Both use the base toast so
+ * they follow the library defaults.
+ */
+function warning(
+  title: ReactNode,
+  description?: ReactNode,
+  options?: AppToastOptions,
 ) {
-  const loading = normalizePromiseState(options.loading)
-  const id = toastManager.add({ ...loading, type: 'loading', timeout: 0 })
+  return hotToast(renderMessage(title, description), options)
+}
 
-  return promise.then(
-    (value) => {
-      const success = resolvePromiseState(options.success, value)
-      const timeout = success.timeout ?? PROMISE_SUCCESS_TIMEOUT
-      toastManager.update(id, { ...success, type: 'success', timeout: 0 })
-      closeAfter(id, timeout)
-      return value
-    },
-    (error: unknown) => {
-      const failure = resolvePromiseState(options.error, error)
-      const timeout = failure.timeout ?? PROMISE_ERROR_TIMEOUT
-      toastManager.update(id, { ...failure, type: 'error', timeout: 0 })
-      closeAfter(id, timeout)
-      throw error
-    },
-  )
+function info(
+  title: ReactNode,
+  description?: ReactNode,
+  options?: AppToastOptions,
+) {
+  return hotToast(renderMessage(title, description), options)
+}
+
+function loading(
+  title: ReactNode,
+  description?: ReactNode,
+  options?: AppToastOptions,
+) {
+  return hotToast.loading(renderMessage(title, description), options)
+}
+
+type PromiseArgs = Parameters<typeof hotToast.promise>
+
+/**
+ * Passes straight through to react-hot-toast's `promise`, using its official
+ * signature: each message is a string, a JSX element, or a function of the
+ * settled value. Durations use the library defaults.
+ */
+function promise(...args: PromiseArgs) {
+  return hotToast.promise(...args)
 }
 
 export const toast = {
-  success: createToastMethod('success'),
-  info: createToastMethod('info'),
-  warning: createToastMethod('warning'),
-  error: errorToast,
-  loading: createToastMethod('loading'),
-  promise: promiseToast,
-  dismiss: (id?: string) => toastManager.close(id),
+  success,
+  info,
+  warning,
+  error,
+  loading,
+  promise,
+  dismiss: (id?: string) => hotToast.dismiss(id),
 }

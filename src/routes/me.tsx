@@ -18,6 +18,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { getCoordinatorFactory } from '@/contracts'
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 import { useHeldTokens } from '@/hooks/use-held-tokens'
+import { toast } from '@/lib/toast'
 import { formatAddress } from '@/lib/utils'
 import { PLATFORM_CHAIN_ID } from '@/lib/web3'
 import { m } from '@/paraglide/messages.js'
@@ -44,6 +45,7 @@ export const MePage = () => {
   return (
     <div className="h-full py-6 flex flex-col">
       <PageTitle title="我的主页" />
+      <TempToastDemo />
       <div className="relative bg-transparent mt-4">
         <div aria-hidden>
           <span className="pointer-events-none absolute left-0 top-0 z-10 h-4 w-4 border-l-2 border-t-2 border-[#FE810B]"></span>
@@ -163,6 +165,101 @@ export const MePage = () => {
           onRetry={() => void held.refetch()}
         />
       </div>
+    </div>
+  )
+}
+
+// TEMP-TOAST-DEMO: remove after reviewing toast styles.
+const TempToastDemo: React.FC = () => {
+  const buttonClass =
+    'h-8 border border-[#484B51] px-3 text-13 font-medium text-white transition-colors hover:border-[#fe810b] hover:text-[#fe810b]'
+
+  const runLoadingDemo = () => {
+    const id = toast.loading('Loading demo', 'Dismisses in 2.5s.')
+    window.setTimeout(() => toast.dismiss(id), 2500)
+  }
+
+  const runPromiseDemo = (shouldFail: boolean) => {
+    toast
+      .promise(
+        new Promise<string>((resolve, reject) => {
+          window.setTimeout(() => {
+            if (shouldFail) reject(new Error('Simulated failure'))
+            else resolve('ok')
+          }, 1500)
+        }),
+        {
+          loading: 'Promise pending',
+          success: 'Promise resolved',
+          error: (error) =>
+            error instanceof Error ? error.message : 'Unknown error',
+        },
+      )
+      // Demo only: the rejection is intentional, so swallow it here.
+      .catch(() => undefined)
+  }
+
+  return (
+    <div className="flex flex-wrap gap-2 border border-dashed border-[#fe810b] p-3">
+      <button
+        type="button"
+        className={buttonClass}
+        onClick={() => toast.success('Success toast', 'Description text.')}
+      >
+        success
+      </button>
+      <button
+        type="button"
+        className={buttonClass}
+        onClick={() => toast.error('Error toast', 'Description text.')}
+      >
+        error
+      </button>
+      <button
+        type="button"
+        className={buttonClass}
+        onClick={() => toast.warning('Warning toast', 'Description text.')}
+      >
+        warning
+      </button>
+      <button
+        type="button"
+        className={buttonClass}
+        onClick={() => toast.info('Info toast', 'Description text.')}
+      >
+        info
+      </button>
+      <button
+        type="button"
+        className={buttonClass}
+        onClick={() => toast.success('Title only')}
+      >
+        title only
+      </button>
+      <button type="button" className={buttonClass} onClick={runLoadingDemo}>
+        loading
+      </button>
+      <button
+        type="button"
+        className={buttonClass}
+        onClick={() => runPromiseDemo(false)}
+      >
+        promise ok
+      </button>
+      <button
+        type="button"
+        className={buttonClass}
+        onClick={() => runPromiseDemo(true)}
+      >
+        promise fail
+      </button>
+      <button
+        type="button"
+        className={buttonClass}
+        onClick={() => toast.dismiss()}
+      >
+        dismiss all
+      </button>
     </div>
   )
 }

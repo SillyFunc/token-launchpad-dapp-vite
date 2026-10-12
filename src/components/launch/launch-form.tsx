@@ -523,13 +523,16 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
 
         if (isEditMode && editId) {
           await toast.promise(submission, {
-            loading: { title: m.launch_saving() },
-            success: { title: m.launch_update_success() },
-            error: (error: unknown) => ({
-              title: m.request_failed(),
-              description: getErrorMessage(error, m.launch_submit_failed()),
-              priority: 'high',
-            }),
+            loading: m.launch_saving(),
+            success: m.launch_update_success(),
+            error: (error: unknown) => (
+              <span className="flex min-w-0 flex-col gap-0.5">
+                <span className="text-sm font-medium">{m.request_failed()}</span>
+                <span className="text-xs opacity-75">
+                  {getErrorMessage(error, m.launch_submit_failed())}
+                </span>
+              </span>
+            ),
           })
         } else {
           await submission

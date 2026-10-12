@@ -15,7 +15,7 @@ import {
 } from '@tanstack/react-query'
 import { ConnectKitProvider } from 'connectkit'
 import { walletConnect } from 'wagmi/connectors'
-import { Toaster } from '@/components/ui/toast'
+import { Toaster } from 'react-hot-toast'
 import { env } from '@/env/client'
 import { ApiError } from '@/lib/http/error'
 import { toast } from '@/lib/toast'
@@ -58,7 +58,19 @@ export const Web3Provider = ({ children }: { children: React.ReactNode }) => {
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
         <ConnectKitProvider mode="dark" debugMode>
-          <Toaster>{children}</Toaster>
+          {children}
+          <Toaster
+            position="bottom-center"
+            reverseOrder={false}
+            toastOptions={{
+              style: {
+                background: '#131516',
+                color: '#ffffff',
+                border: '1px solid #484B51',
+                borderRadius: 0,
+              },
+            }}
+          />
         </ConnectKitProvider>
       </QueryClientProvider>
     </WagmiProvider>
