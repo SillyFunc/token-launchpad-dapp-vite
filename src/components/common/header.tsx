@@ -1,5 +1,5 @@
 import { Link } from 'react-router'
-import iconHarborUrl from '@/assets/svgs/icon-harbor.svg?url'
+import iconButterflyUrl from '@/assets/svgs/icon-butterfly.svg?url'
 import { MenuIcon, XIcon } from 'lucide-react'
 import { ConnectKitButton } from 'connectkit'
 import type React from 'react'
@@ -47,8 +47,8 @@ export const Header: React.FC<HeaderProps> = ({ isMenuOpen, onToggleMenu }) => {
             aria-hidden
             className="block shrink-0 bg-current [-webkit-mask-position:center] [-webkit-mask-repeat:no-repeat] [-webkit-mask-size:contain] mask-center mask-no-repeat mask-contain size-6"
             style={{
-              WebkitMaskImage: `url("${iconHarborUrl}")`,
-              maskImage: `url("${iconHarborUrl}")`,
+              WebkitMaskImage: `url("${iconButterflyUrl}")`,
+              maskImage: `url("${iconButterflyUrl}")`,
             }}
           ></span>
         </Link>
@@ -96,10 +96,10 @@ export const Header: React.FC<HeaderProps> = ({ isMenuOpen, onToggleMenu }) => {
                 >
                   <span
                     aria-hidden
-                    className="block shrink-0 bg-current [-webkit-mask-position:center] [-webkit-mask-repeat:no-repeat] [-webkit-mask-size:contain] mask-center mask-no-repeat mask-contain size-5"
+                    className="block shrink-0 bg-current [-webkit-mask-position:center] [-webkit-mask-repeat:no-repeat] [-webkit-mask-size:contain] mask-center mask-no-repeat mask-contain size-4.75"
                     style={{
-                      WebkitMaskImage: `url("${iconHarborUrl}")`,
-                      maskImage: `url("${iconHarborUrl}")`,
+                      WebkitMaskImage: `url("${iconButterflyUrl}")`,
+                      maskImage: `url("${iconButterflyUrl}")`,
                     }}
                   ></span>
                 </button>
