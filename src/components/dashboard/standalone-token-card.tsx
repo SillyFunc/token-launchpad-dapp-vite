@@ -105,7 +105,7 @@ const ViewDetailsButton: React.FC<{
     variant="default"
     onClick={() => tokenAddress && onView(tokenAddress)}
     disabled={disabled || !tokenAddress}
-    className="border-transparent bg-linear-to-r from-[#FE810B] via-[#FFA546] to-[#FE810B] font-bold text-white transition-transform active:translate-y-0.5 disabled:opacity-40"
+    className="border-transparent bg-[#FE810B] font-bold text-[#1A1A1A] transition-transform hover:bg-[#E87000] active:translate-y-0.5 active:bg-[#D66500] disabled:opacity-40"
   >
     <RocketIcon aria-hidden="true" />
     <span>{m.dashboard_view_token()}</span>

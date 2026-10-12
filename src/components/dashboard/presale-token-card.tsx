@@ -100,7 +100,7 @@ export const PresaleTokenCard: React.FC<PresaleTokenCardProps> = ({
               className={
                 isEndAction
                   ? 'border-[#484b51] bg-[#131516] font-bold text-white hover:bg-white/10'
-                  : 'border-transparent bg-linear-to-r from-[#FE810B] via-[#FFA546] to-[#FE810B] font-bold text-white transition-transform active:translate-y-0.5 disabled:opacity-40'
+                  : 'border-transparent bg-[#FE810B] font-bold text-[#1A1A1A] transition-transform hover:bg-[#E87000] active:translate-y-0.5 active:bg-[#D66500] disabled:opacity-40'
               }
             >
               <RocketIcon aria-hidden="true" />
