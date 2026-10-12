@@ -136,10 +136,7 @@ function ClaimAllTokensButton({
         .invalidateQueries({ queryKey: ['readContracts'] })
         .catch(() => undefined)
       setIsConfirmOpen(false)
-      toast.success(
-        m.token_transaction_confirmed(),
-        m.dashboard_claim_tokens_success(),
-      )
+      toast.success(m.dashboard_claim_tokens_success())
     } catch (error) {
       toast.error(m.token_transaction_failed(), getContractErrorMessage(error))
     } finally {

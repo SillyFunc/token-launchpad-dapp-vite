@@ -236,10 +236,7 @@ function RelaunchPresaleButton({
       await queryClient
         .invalidateQueries({ queryKey: ['readContracts'] })
         .catch(() => undefined)
-      toast.success(
-        m.token_transaction_confirmed(),
-        m.dashboard_relaunch_presale_success(),
-      )
+      toast.success(m.dashboard_relaunch_presale_success())
       onRelaunched()
     } catch (error) {
       toast.error(m.token_transaction_failed(), getContractErrorMessage(error))
@@ -285,10 +282,7 @@ function OpenPresaleButton({
       await queryClient
         .invalidateQueries({ queryKey: ['readContracts'] })
         .catch(() => undefined)
-      toast.success(
-        m.token_transaction_confirmed(),
-        m.dashboard_open_presale_success(),
-      )
+      toast.success(m.dashboard_open_presale_success())
     } catch (error) {
       toast.error(m.token_transaction_failed(), getContractErrorMessage(error))
     } finally {
@@ -334,10 +328,7 @@ function EndPresaleButton({
         onSettled(),
         queryClient.invalidateQueries({ queryKey: ['readContracts'] }),
       ])
-      toast.success(
-        m.token_transaction_confirmed(),
-        m.dashboard_end_presale_success(),
-      )
+      toast.success(m.dashboard_end_presale_success())
     } catch (error) {
       toast.error(m.token_transaction_failed(), getContractErrorMessage(error))
     } finally {

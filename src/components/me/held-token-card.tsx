@@ -160,7 +160,7 @@ const ClaimDividendButton: React.FC<{
         blockNumber: receipt.blockNumber,
       }).catch(() => 0n)
       applyClaimable(confirmed < claimable ? confirmed : 0n)
-      toast.success(m.token_transaction_confirmed(), m.me_asset_claim_success())
+      toast.success(m.me_asset_claim_success())
     } catch (error) {
       toast.error(m.token_transaction_failed(), getContractErrorMessage(error))
     } finally {

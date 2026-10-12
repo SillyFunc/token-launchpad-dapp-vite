@@ -152,8 +152,7 @@ export function TradeSheet({
         account: address,
       })
       toast.success(
-        m.token_transaction_confirmed(),
-        side === 'buy' ? m.token_trade_buy() : m.token_trade_sell(),
+        side === 'buy' ? m.token_trade_buy_success() : m.token_trade_sell_success(),
       )
       setAmount('')
       await Promise.all([

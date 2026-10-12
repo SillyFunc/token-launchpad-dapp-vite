@@ -100,10 +100,7 @@ export function useIssueToken(
       })
 
       onIssued?.(result.tokenAddress)
-      toast.success(
-        m.dashboard_issue_success(),
-        m.dashboard_issue_success_description(),
-      )
+      toast.success(m.dashboard_issue_success())
 
       try {
         await parseTxHash({

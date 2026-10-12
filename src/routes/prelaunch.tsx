@@ -61,19 +61,6 @@ const LOCK_ERROR_MESSAGES: Partial<Record<CoordinatorErrorCode, () => string>> =
     FACTORY_DISABLED: () => m.prelaunch_error_factory_disabled(),
   }
 
-function showToast(
-  type: 'success' | 'error',
-  description: string,
-  title?: string,
-) {
-  if (type === 'success') {
-    toast.success(title, description)
-    return
-  }
-
-  toast.error(title, description)
-}
-
 function toLockErrorMessage(err: unknown): string {
   if (err instanceof CoordinatorError) {
     return (
@@ -124,7 +111,7 @@ export const PrelaunchPage = () => {
 
   useEffect(() => {
     if (searchError)
-      showToast('error', searchError, m.prelaunch_generate_failed())
+      toast.error(m.prelaunch_generate_failed(), searchError)
   }, [searchError])
 
   const canLock = Boolean(salt && predictedAddress && address) && !isReserving
@@ -133,31 +120,28 @@ export const PrelaunchPage = () => {
     if (!salt || !predictedAddress || !address) return
 
     if (chainId !== PLATFORM_CHAIN_ID) {
-      showToast(
-        'error',
-        m.prelaunch_wrong_network(),
+      toast.error(
         m.prelaunch_wrong_network_title(),
+        m.prelaunch_wrong_network(),
       )
       return
     }
 
     const requiredFeeWei = reservationFeeWei ?? FALLBACK_RESERVATION_FEE_WEI
     if (!balanceData) {
-      showToast(
-        'error',
-        m.prelaunch_balance_loading(),
+      toast.error(
         m.prelaunch_balance_loading_title(),
+        m.prelaunch_balance_loading(),
       )
       return
     }
     if (balanceData.value < requiredFeeWei) {
-      showToast(
-        'error',
+      toast.error(
+        m.prelaunch_insufficient_balance_title(),
         m.prelaunch_insufficient_balance({
           required: formatEther(requiredFeeWei),
           balance: formatEther(balanceData.value),
         }),
-        m.prelaunch_insufficient_balance_title(),
       )
       return
     }
@@ -174,7 +158,7 @@ export const PrelaunchPage = () => {
           contractAddress: predictedAddress,
           error: err,
         })
-        showToast('error', toLockErrorMessage(err), m.prelaunch_sign_failed())
+        toast.error(m.prelaunch_sign_failed(), toLockErrorMessage(err))
         return
       }
 
@@ -186,7 +170,7 @@ export const PrelaunchPage = () => {
           contractAddress: predictedAddress,
           error: err,
         })
-        showToast('error', toLockErrorMessage(err), m.prelaunch_lock_failed())
+        toast.error(m.prelaunch_lock_failed(), toLockErrorMessage(err))
         return
       }
 
@@ -208,21 +192,16 @@ export const PrelaunchPage = () => {
             error: err,
           },
         )
-        showToast(
-          'error',
-          m.prelaunch_save_failed_description(),
+        toast.error(
           m.prelaunch_save_failed_title(),
+          m.prelaunch_save_failed_description(),
         )
         resetSalt()
         void refetch()
         return
       }
 
-      showToast(
-        'success',
-        m.prelaunch_lock_success_description(),
-        m.prelaunch_lock_success_title(),
-      )
+      toast.success(m.prelaunch_lock_success())
       resetSalt()
       const refreshed = await refetch()
       if (refreshed.error) {

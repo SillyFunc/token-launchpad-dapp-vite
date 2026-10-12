@@ -259,7 +259,6 @@ export function TokenPresale({
       await refreshPresale()
       if (action === 'subscribe') setSubscribeAmount('')
       toast.success(
-        m.token_transaction_confirmed(),
         action === 'subscribe'
           ? m.token_subscribe_success()
           : action === 'refund'
