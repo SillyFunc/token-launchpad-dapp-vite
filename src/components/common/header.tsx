@@ -57,7 +57,7 @@ export const Header: React.FC<HeaderProps> = ({ isMenuOpen, onToggleMenu }) => {
         {/* shadow-[0_3px_0_0_#963000] */}
         <Link
           to={{ pathname: '/launch', search: '' }}
-          className="cursor-pointer bg-[#FE810B] px-6 h-9 grid place-items-center text-sm font-semibold transition-all active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFA546]"
+          className="cursor-pointer bg-[#FE810B] text-[#1A1A1A] px-6 h-9 grid place-items-center text-sm font-semibold transition-all active:translate-y-0.5 focus-visible:outline-none hover:bg-[#E87000] focus-visible:ring-2 focus-visible:ring-[#E87000]"
         >
           {m.create_token()}
         </Link>
