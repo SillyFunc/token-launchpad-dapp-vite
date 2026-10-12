@@ -109,10 +109,9 @@ export function TradeSheet({
     quote.minOut !== null &&
     !insufficient
 
-  const accentBgClass =
-    side === 'sell' ? 'bg-[#F7594B]' : 'bg-[#FE810B]'
-  const accentHoverClass =
-    side === 'sell' ? 'hover:bg-[#F7594B]/90' : 'hover:bg-[#FE810B]/90'
+  // Explicit per-side palette: buy uses the primary orange, sell keeps its red. Text is always the dark ink color.
+  const accentBgClass = side === 'sell' ? 'bg-[#F7594B]' : 'bg-[#FE810B]'
+  const accentHoverClass = side === 'sell' ? 'hover:bg-[#F7594B]/90' : 'hover:bg-[#E87000]'
 
   const submitLabel = !tradable
     ? m.token_trade_not_live()

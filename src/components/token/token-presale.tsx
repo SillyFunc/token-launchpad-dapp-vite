@@ -434,7 +434,7 @@ export function TokenPresale({
                 onAction={() => transact('settle')}
                 loading={pendingAction === 'settle'}
                 loadingText={m.token_settling()}
-                className="h-10 w-full bg-[#FFA546] text-sm font-semibold text-black hover:bg-[#ffb866]"
+                className="h-10 w-full text-sm font-semibold"
               >
                 {m.token_settle_presale()}
               </Web3ActionButton>
@@ -526,7 +526,7 @@ export function TokenPresale({
                   parsedAmount <= 0n ||
                   amountError !== null
                 }
-                className="h-11 w-full bg-[#FFA546] text-sm font-semibold text-black hover:bg-[#ffb866]"
+                className="h-11 w-full text-sm font-semibold"
               >
                 {m.token_join_presale()}
               </Web3ActionButton>

@@ -186,7 +186,7 @@ function ClaimAllTokensButton({
               onAction={handleClaim}
               loading={isClaiming || isPending}
               loadingText={m.dashboard_claiming_tokens()}
-              className="border-transparent bg-linear-to-r from-[#FE810B] via-[#FFA546] to-[#FE810B] font-bold text-white transition-transform active:translate-y-0.5 disabled:opacity-50"
+              className="font-bold transition-transform active:translate-y-0.5 disabled:opacity-50"
             >
               <CoinsIcon aria-hidden="true" />
               <span>{m.dashboard_claim_confirm_action()}</span>

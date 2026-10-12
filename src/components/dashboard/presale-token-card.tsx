@@ -252,7 +252,7 @@ function RelaunchPresaleButton({
       loadingText={m.dashboard_relaunching_presale()}
       disabled={disabled}
       title={disabled ? m.presale_refunds_outstanding() : undefined}
-      className="border-transparent bg-linear-to-r from-[#FE810B] via-[#FFA546] to-[#FE810B] font-bold text-white transition-transform active:translate-y-0.5 disabled:opacity-40"
+      className="font-bold transition-transform active:translate-y-0.5 disabled:opacity-40"
     >
       <RocketIcon aria-hidden="true" />
       <span>{m.dashboard_relaunch_presale()}</span>
@@ -295,7 +295,7 @@ function OpenPresaleButton({
       onAction={handleOpenPresale}
       loading={isOpening}
       loadingText={m.dashboard_opening_presale()}
-      className="border-transparent bg-linear-to-r from-[#FE810B] via-[#FFA546] to-[#FE810B] font-bold text-white transition-transform active:translate-y-0.5 disabled:opacity-40"
+      className="font-bold transition-transform active:translate-y-0.5 disabled:opacity-40"
     >
       <RocketIcon aria-hidden="true" />
       <span>{m.dashboard_open_presale()}</span>
@@ -342,7 +342,7 @@ function EndPresaleButton({
       loading={isEnding}
       loadingText={m.dashboard_ending_presale()}
       disabled={!presaleAddress}
-      className="border-transparent bg-linear-to-r from-[#FE810B] via-[#FFA546] to-[#FE810B] font-bold text-white transition-transform active:translate-y-0.5"
+      className="font-bold transition-transform active:translate-y-0.5"
     >
       <CircleStopIcon aria-hidden="true" />
       <span>{m.dashboard_end_presale()}</span>

@@ -1000,7 +1000,8 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
               disabled={!canSubmit}
               loading={isSubmitting && !isEditMode}
               loadingText={m.launch_saving()}
-              className="flex h-10.5 text-foreground w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-[#FE810B] text-base font-bold [clip-path:polygon(10px_0,100%_0,100%_calc(100%-10px),calc(100%-10px)_100%,0_100%,0_10px)] transition-[transform,opacity] active:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFA546]"
+              shape="chamfer"
+              className="flex h-10.5 w-full cursor-pointer items-center justify-center gap-2 rounded-lg text-base font-bold transition-[transform,opacity] active:translate-y-0.5 disabled:cursor-not-allowed disabled:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFA546]"
             >
               <span>
                 {isEditMode ? m.launch_save_action() : m.launch_create_action()}

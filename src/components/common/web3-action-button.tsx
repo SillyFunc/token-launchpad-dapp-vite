@@ -9,12 +9,22 @@ import { cn } from '@/lib/utils'
 import { PLATFORM_CHAIN_ID } from '@/lib/web3'
 import { m } from '@/paraglide/messages.js'
 
+/** Shared primary-action palette. Callers should not pass color classes. */
+const PRIMARY_CLASS =
+  'bg-[#FE810B] text-[#1A1A1A] hover:bg-[#E87000] active:bg-[#D66500] disabled:opacity-40'
+
+/** Diagonal corner cut used by the form submit buttons. */
+const CHAMFER_CLASS =
+  '[clip-path:polygon(10px_0,100%_0,100%_calc(100%-10px),calc(100%-10px)_100%,0_100%,0_10px)]'
+
 export interface Web3ActionButtonProps
   extends Omit<React.ComponentProps<typeof Button>, 'onClick'> {
   onAction?: (event: MouseEvent<HTMLButtonElement>) => Promise<void> | void
   loading?: boolean
   loadingText?: React.ReactNode
   requireChain?: boolean
+  /** `chamfer` adds the diagonal corner cut used on form submit buttons. */
+  shape?: 'default' | 'chamfer'
 }
 
 export function Web3ActionButton({
@@ -22,6 +32,7 @@ export function Web3ActionButton({
   loading = false,
   loadingText,
   requireChain = true,
+  shape = 'default',
   disabled,
   children,
   className,
@@ -30,6 +41,7 @@ export function Web3ActionButton({
   type = 'button',
   ...rest
 }: Web3ActionButtonProps) {
+  const shapeClass = shape === 'chamfer' ? CHAMFER_CLASS : undefined
   const { address, isConnected, chainId } = useConnection()
   const { setOpen } = useModal()
   const { mutateAsync: switchChainAsync, isPending: isSwitchingPending } =
@@ -44,7 +56,7 @@ export function Web3ActionButton({
         variant={variant}
         size={size}
         disabled={disabled}
-        className={cn('font-bold', className)}
+        className={cn(PRIMARY_CLASS, 'font-bold', shapeClass, className)}
         onClick={(event) => {
           event.preventDefault()
           setOpen(true)
@@ -107,7 +119,7 @@ export function Web3ActionButton({
       variant={variant}
       size={size}
       disabled={disabled || loading}
-      className={className}
+      className={cn(PRIMARY_CLASS, shapeClass, className)}
       onClick={(event) => void handleClick(event)}
       {...rest}
     >

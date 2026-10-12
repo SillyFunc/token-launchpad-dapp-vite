@@ -171,12 +171,12 @@ const ClaimDividendButton: React.FC<{
   return (
     <Web3ActionButton
       type="button"
-      variant="outline"
+      
       loading={isClaiming}
       loadingText={m.me_asset_claiming()}
       disabled={claimableBNB === null || claimableBNB === 0n}
       onAction={handleClaim}
-      className="h-auto min-h-10.5 w-full rounded-none border-[#84888C] bg-transparent py-3 text-[13px] font-normal uppercase leading-[1.4] tracking-[-0.052px] text-white hover:border-[#fe810b] hover:bg-transparent hover:text-[#fe810b] disabled:cursor-not-allowed disabled:border-[#484B51] disabled:text-[#84888C] disabled:opacity-40 disabled:hover:border-[#484B51] disabled:hover:bg-transparent disabled:hover:text-[#84888C]"
+      className="h-auto min-h-10.5 w-full rounded-none py-3 text-[13px] font-normal uppercase leading-[1.4] tracking-[-0.052px]"
     >
       {m.me_asset_claim_dividend()}
     </Web3ActionButton>

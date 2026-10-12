@@ -55,7 +55,7 @@ export const UnissuedTokenCard: React.FC<UnissuedTokenCardProps> = ({
             onAction={issueToken}
             loading={isIssuing}
             loadingText={m.dashboard_issuing_token()}
-            className="border-transparent bg-linear-to-r from-[#FE810B] via-[#FFA546] to-[#FE810B] font-bold text-white transition-transform active:translate-y-0.5 disabled:opacity-50"
+            className="font-bold transition-transform active:translate-y-0.5 disabled:opacity-50"
           >
             <RocketIcon aria-hidden="true" />
             <span>{m.dashboard_issue_token()}</span>
