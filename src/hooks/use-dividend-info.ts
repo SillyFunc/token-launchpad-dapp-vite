@@ -15,6 +15,8 @@ export interface DividendInfo {
   minimumShareBalance: bigint | undefined
   /** Dividends the connected wallet can withdraw now (WBNB wei). */
   withdrawable: bigint | undefined
+  /** Dividends the connected wallet has already withdrawn (WBNB wei). */
+  withdrawn: bigint | undefined
 }
 
 /**
@@ -66,13 +68,22 @@ export function useDividendInfo(
       } as ContractFunctionParameters,
     ]
     if (account) {
-      contracts.push({
-        address: dividendAddress,
-        abi: dividendAbi,
-        functionName: 'withdrawableDividendOf',
-        args: [account],
-        chainId: PLATFORM_CHAIN_ID,
-      } as ContractFunctionParameters)
+      contracts.push(
+        {
+          address: dividendAddress,
+          abi: dividendAbi,
+          functionName: 'withdrawableDividendOf',
+          args: [account],
+          chainId: PLATFORM_CHAIN_ID,
+        } as ContractFunctionParameters,
+        {
+          address: dividendAddress,
+          abi: dividendAbi,
+          functionName: 'withdrawnDividends',
+          args: [account],
+          chainId: PLATFORM_CHAIN_ID,
+        } as ContractFunctionParameters,
+      )
     }
     return contracts
   }, [dividendAddress, account])
@@ -88,18 +99,15 @@ export function useDividendInfo(
 
   const info = useMemo<DividendInfo | null>(() => {
     if (!dividendAddress) return null
-    const minimum = infoQuery.data?.[0]
-    const withdrawable = account ? infoQuery.data?.[1] : undefined
+    const readBigInt = (slot: { status?: string; result?: unknown } | undefined) =>
+      slot?.status === 'success' && typeof slot.result === 'bigint'
+        ? slot.result
+        : undefined
+    const data = infoQuery.data
     return {
-      minimumShareBalance:
-        minimum?.status === 'success' && typeof minimum.result === 'bigint'
-          ? minimum.result
-          : undefined,
-      withdrawable:
-        withdrawable?.status === 'success' &&
-        typeof withdrawable.result === 'bigint'
-          ? withdrawable.result
-          : undefined,
+      minimumShareBalance: readBigInt(data?.[0]),
+      withdrawable: account ? readBigInt(data?.[1]) : undefined,
+      withdrawn: account ? readBigInt(data?.[2]) : undefined,
     }
   }, [dividendAddress, account, infoQuery.data])
 
