@@ -388,8 +388,12 @@ export const TokenPage = () => {
             <TokenPresale gate={gate} symbol={token?.symbol || '--'} />
           </section>
         )}
-        {displayedTab === 'CHART' && (
-          <section className="mx-3 mt-3 flex min-h-0 flex-1 flex-col overflow-hidden">
+        {/* Mounted once launched and hidden when inactive: remounting reloads the chart embed on each tab switch. */}
+        {isLaunched && (
+          <section
+            hidden={displayedTab !== 'CHART'}
+            className="mx-3 mt-3 flex min-h-0 flex-1 flex-col overflow-hidden"
+          >
             <TokenChart
               tokenAddress={gate.tokenAddress}
               pairAddress={gate.pairAddress}
