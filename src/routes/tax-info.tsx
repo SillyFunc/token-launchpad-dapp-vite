@@ -34,7 +34,7 @@ const RECEIVING_WALLET = '0x7b5F94d3d5eD780A595dA7083a30dB007A78de76'
 const WBNB_ADDRESS = '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c'
 
 const SWITCH_CLASS =
-  'rounded-none! px-0! border-[#484B51] bg-[#18191B] data-checked:border-[#5B31FF] data-checked:bg-[#5B31FF] data-unchecked:bg-[#18191B] focus-visible:ring-1 focus-visible:ring-[#5B31FF] focus-visible:ring-offset-0 [&>span]:h-[14px] [&>span]:w-[14px] [&>span]:rounded-[3px] [&>span]:shadow-none [&>span[data-checked]]:translate-x-[14px] [&>span[data-checked]]:bg-white [&>span[data-unchecked]]:translate-x-0 [&>span[data-unchecked]]:bg-white'
+  '!h-6 !w-[38px] rounded-none! border-[#484B51] bg-[#18191B] p-[4px] data-checked:border-[#5B31FF] data-checked:bg-[#5B31FF] data-unchecked:bg-[#18191B] focus-visible:ring-1 focus-visible:ring-[#5B31FF] focus-visible:ring-offset-0 [&>[data-slot=switch-thumb]]:!h-[14px] [&>[data-slot=switch-thumb]]:!w-[14px] [&>[data-slot=switch-thumb]]:rounded-none [&>span]:shadow-none [&>span[data-checked]]:!translate-x-[14px] [&>span[data-checked]]:bg-white [&>span[data-unchecked]]:!translate-x-0 [&>span[data-unchecked]]:bg-white'
 
 export const TaxInfoPage = () => {
   const { address: routeAddress = '' } = useParams<{ address: string }>()
