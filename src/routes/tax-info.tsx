@@ -18,8 +18,6 @@ import { useTokenGate } from '@/hooks/use-token-gate'
 import { formatDecimal } from '@/lib/format'
 import { formatAddress } from '@/lib/utils'
 import { getExplorerAddressUrl } from '@/lib/web3'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Switch } from '@/components/ui/switch'
 
 export const TaxInfoPage = () => {
   const { address: routeAddress = '' } = useParams<{ address: string }>()
@@ -50,7 +48,7 @@ export const TaxInfoPage = () => {
   const copied = Boolean(tokenAddress) && copiedText === tokenAddress
 
   return (
-    <>
+    <div className='pb-3'>
       <div className="flex min-w-0 items-center gap-1 text-[0.6875rem] text-xs text-[#A0A3A7] mt-2.5">
         <Link className="transition-colors hover:text-foreground" to="/board">
           代币
@@ -548,6 +546,6 @@ export const TaxInfoPage = () => {
           </div>
         </div>
       </div>
-    </>
+    </div>
   )
 }
