@@ -126,6 +126,8 @@ export const TokenPage = () => {
   }
   const taxAllocation = TAX_CHANNELS.map((channel) => ({
     ...channel,
+    // Header-only override; the shared TAX_CHANNELS color also drives the launch form.
+    color: channel.key === 'burn' ? '#F7594B' : channel.color,
     percent: (allocationBps[channel.key] ?? 0) / 100,
   })).filter((channel) => channel.percent > 0)
 
