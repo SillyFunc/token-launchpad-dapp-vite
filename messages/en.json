@@ -438,6 +438,7 @@
   "token_transaction_failed_description": "The transaction could not be completed. Please try again.",
   "token_transaction_rejected": "The transaction was rejected in your wallet.",
   "token_subscribe_success": "Your presale allocation has been reserved.",
+  "token_subscribe_record_failed": "Failed to sync subscription record",
   "token_refund_success": "Your contribution has been returned to your wallet.",
   "token_settle_success": "The presale has been settled.",
   "token_invalid_amount": "Invalid amount",

@@ -438,6 +438,7 @@
   "token_transaction_failed_description": "交易未能完成，請稍後再試。",
   "token_transaction_rejected": "你已在錢包中拒絕這筆交易。",
   "token_subscribe_success": "你的預售代幣份額已保留。",
+  "token_subscribe_record_failed": "認購記錄同步失敗",
   "token_refund_success": "認購款已退回你的錢包。",
   "token_settle_success": "預售已完成結算。",
   "token_invalid_amount": "金額無效",

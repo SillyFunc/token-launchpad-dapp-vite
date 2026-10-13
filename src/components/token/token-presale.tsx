@@ -2,13 +2,16 @@ import { useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   useBalance,
+  useConfig,
   useConnection,
   useReadContracts,
 } from 'wagmi'
 import { AlertTriangle, Clock, Loader2 } from 'lucide-react'
 import { formatEther, parseEther, zeroAddress } from 'viem'
 import { presaleAbi } from '@/contracts'
+import { presaleAfter, presaleBefore } from '@/api/subscription'
 import { useWriteContractTx } from '@/hooks/use-contract-tx'
+import { requestAuthSignature, type AuthSignature } from '@/lib/auth'
 
 import type { TokenGateResult } from '@/hooks/use-token-gate'
 import { PresaleProgress } from '@/components/common/presale-progress'
@@ -94,6 +97,7 @@ export function TokenPresale({
 }) {
   const queryClient = useQueryClient()
   const { address: userAddress } = useConnection()
+  const config = useConfig()
   const { execute } = useWriteContractTx()
   const [subscribeAmount, setSubscribeAmount] = useState('')
   const [nowSeconds, setNowSeconds] = useState(() =>
@@ -231,18 +235,21 @@ export function TokenPresale({
   const transact = async (
     action: 'subscribe' | 'refund' | 'settle',
     value?: bigint,
+    auth?: AuthSignature,
   ) => {
     if (!gate.presaleAddress) return
     setPendingAction(action)
 
+    let txHash: `0x${string}` | undefined
     try {
       if (action === 'subscribe') {
-        await execute({
+        const result = await execute({
           address: gate.presaleAddress,
           abi: presaleAbi,
           functionName: 'subscribe',
           value: value ?? 0n,
         })
+        txHash = result.hash
       } else if (action === 'refund') {
         await execute({
           address: gate.presaleAddress,
@@ -256,22 +263,72 @@ export function TokenPresale({
           functionName: 'endPresale',
         })
       }
-      await refreshPresale()
-      if (action === 'subscribe') setSubscribeAmount('')
-      toast.success(
-        action === 'subscribe'
-          ? m.token_subscribe_success()
-          : action === 'refund'
-            ? m.token_refund_success()
-            : m.token_settle_success(),
-      )
     } catch (error) {
       toast.error(
         m.token_transaction_failed(),
         getContractErrorMessage(error),
       )
+      setPendingAction(null)
+      return
+    }
+
+    // The on-chain subscribe has already succeeded here, so backend errors are
+    // reported separately and never shown as a transaction failure.
+    let recordSynced = true
+    if (action === 'subscribe' && txHash && value !== undefined && auth) {
+      recordSynced = await syncSubscriptionRecord(txHash, value, auth)
+    }
+
+    try {
+      await refreshPresale()
+      if (action === 'subscribe') setSubscribeAmount('')
+      if (recordSynced) {
+        toast.success(
+          action === 'subscribe'
+            ? m.token_subscribe_success()
+            : action === 'refund'
+              ? m.token_refund_success()
+              : m.token_settle_success(),
+        )
+      }
     } finally {
       setPendingAction(null)
+    }
+  }
+
+  /**
+   * Records a successful subscribe with the backend in order:
+   * presaleBefore (returns id) -> presaleAfter (attaches tx hash + signature).
+   * Returns false and shows the backend error message if either step fails.
+   */
+  const syncSubscriptionRecord = async (
+    txHash: `0x${string}`,
+    payAmountWei: bigint,
+    auth: AuthSignature,
+  ): Promise<boolean> => {
+    if (!userAddress || !gate.presaleAddress) return false
+    try {
+      const id = await presaleBefore({
+        address: userAddress,
+        presaleAddress: gate.presaleAddress,
+        payAmount: formatEther(payAmountWei),
+      })
+      await presaleAfter({
+        id,
+        address: userAddress,
+        message: auth.message,
+        signature: auth.signature,
+        txHash,
+      })
+      return true
+    } catch (error) {
+      toast.error(
+        m.token_subscribe_record_failed(),
+        error instanceof Error && error.message
+          ? error.message
+          : m.request_failed(),
+      )
+      return false
     }
   }
 
@@ -304,7 +361,25 @@ export function TokenPresale({
       )
       return
     }
-    await transact('subscribe', parsedAmount)
+    if (!userAddress) return
+
+    // Sign before the on-chain subscribe so a rejected signature never leaves a
+    // paid-but-unrecorded subscription behind.
+    setPendingAction('subscribe')
+    let auth: Awaited<ReturnType<typeof requestAuthSignature>>
+    try {
+      auth = await requestAuthSignature(config, userAddress)
+    } catch (error) {
+      toast.error(
+        m.token_subscribe_record_failed(),
+        error instanceof Error && error.message
+          ? error.message
+          : m.request_failed(),
+      )
+      setPendingAction(null)
+      return
+    }
+    await transact('subscribe', parsedAmount, auth)
   }
 
   if (gate.isLoading) {
