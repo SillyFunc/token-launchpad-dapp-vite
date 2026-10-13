@@ -219,7 +219,7 @@
   "dashboard_vault_interval": "最短執行間隔",
   "dashboard_vault_interval_minutes": "{count} 分鐘",
   "dashboard_vault_interval_hours": "{count} 小時",
-  "dashboard_vault_buyback_amount": "每次執行金額",
+  "dashboard_vault_buyback_amount": "每次回購上限",
   "dashboard_vault_runtime": "金庫運行數據",
   "dashboard_vault_total_burned": "累計回購銷毀（代幣）",
   "dashboard_vault_total_lp_burned": "累計回購銷毀（LP）",

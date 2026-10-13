@@ -219,7 +219,7 @@
   "dashboard_vault_interval": "Minimum interval",
   "dashboard_vault_interval_minutes": "{count} minutes",
   "dashboard_vault_interval_hours": "{count} hours",
-  "dashboard_vault_buyback_amount": "Amount per execution",
+  "dashboard_vault_buyback_amount": "Max buyback per execution",
   "dashboard_vault_runtime": "Vault activity",
   "dashboard_vault_total_burned": "Tokens bought back & burned",
   "dashboard_vault_total_lp_burned": "LP bought back & burned",
