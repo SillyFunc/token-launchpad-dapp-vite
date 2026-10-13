@@ -385,6 +385,7 @@
   "token_volume_24h": "24h Vol",
   "token_market_cap": "Market cap",
   "token_holders": "Holders",
+  "token_tax_channel_creator_short": "Funds",
   "token_buy_sell_tax": "Taxes",
   "token_content_tabs": "Token details",
   "token_tab_presale": "Presale",

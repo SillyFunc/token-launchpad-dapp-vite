@@ -314,13 +314,21 @@ export const TokenPage = () => {
 
         {taxAllocation.length > 0 && (
           <div className="mt-4 flex items-center gap-1.5 min-w-0 overflow-x-auto overflow-y-hidden [-ms-overflow-style:none] scrollbar-none [&::-webkit-scrollbar]:hidden">
+            {token?.buybackVaultEnabled === 1 && (
+              <span className="flex h-4 shrink-0 items-center border px-1 text-10 font-semibold uppercase leading-[1.4] tracking-normal border-[#FFDF8C] bg-[#FFDF8C] text-[#070808]">
+                VAULT
+              </span>
+            )}
             {taxAllocation.map((channel) => (
               <span
                 key={channel.key}
-                className="flex h-4 shrink-0 items-center border px-1 text-[10px] font-semibold uppercase leading-[1.4] tracking-normal"
+                className="flex h-4 shrink-0 items-center border px-1 text-10 font-semibold uppercase leading-[1.4] tracking-normal"
                 style={{ borderColor: channel.color, color: channel.color }}
               >
-                {channel.label} {formatDecimal(channel.percent)}%
+                {channel.key === 'creator'
+                  ? m.token_tax_channel_creator_short()
+                  : channel.label}{' '}
+                {formatDecimal(channel.percent)}%
               </span>
             ))}
           </div>
