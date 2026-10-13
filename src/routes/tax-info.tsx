@@ -53,8 +53,8 @@ export const TaxInfoPage = () => {
   const { copy, copiedText } = useCopyToClipboard()
   const copied = Boolean(tokenAddress) && copiedText === tokenAddress
 
-  // Each tax channel card starts collapsed.
-  const [treasuryOpen, setTreasuryOpen] = useState(false)
+  // The first channel starts expanded; the rest start collapsed.
+  const [treasuryOpen, setTreasuryOpen] = useState(true)
   const [dividendOpen, setDividendOpen] = useState(false)
   const [liquidityOpen, setLiquidityOpen] = useState(false)
   const [burnOpen, setBurnOpen] = useState(false)
