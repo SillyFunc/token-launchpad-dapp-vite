@@ -3,13 +3,23 @@ import { Link, useParams } from 'react-router'
 import { isAddress, type Address } from 'viem'
 
 import { getTokenByContractAddress } from '@/api/token'
-import { Check } from 'lucide-react'
+import {
+  Check,
+  ChevronUp,
+  ExternalLink,
+  Flame,
+  Gift,
+  Landmark,
+  Waves,
+} from 'lucide-react'
 
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 import { useTokenGate } from '@/hooks/use-token-gate'
 import { formatDecimal } from '@/lib/format'
 import { formatAddress } from '@/lib/utils'
 import { getExplorerAddressUrl } from '@/lib/web3'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Switch } from '@/components/ui/switch'
 
 export const TaxInfoPage = () => {
   const { address: routeAddress = '' } = useParams<{ address: string }>()
@@ -190,25 +200,28 @@ export const TaxInfoPage = () => {
                     onClick={() => void copy(tokenAddress)}
                   >
                     {copied ? (
-                      <Check className="size-3.5 text-[#2BC235]" aria-hidden="true" />
+                      <Check
+                        className="size-3.5 text-[#2BC235]"
+                        aria-hidden="true"
+                      />
                     ) : (
-                    <span
-                      className="relative inline-block size-3.5"
-                      aria-hidden="true"
-                    >
-                      <svg
-                        viewBox="0 0 14.834 14.834"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        preserveAspectRatio="none"
-                        className="absolute inset-[12.92%_12.91%_12.91%_12.92%]"
+                      <span
+                        className="relative inline-block size-3.5"
+                        aria-hidden="true"
                       >
-                        <path
-                          d="M10.7503 3.33333C10.9492 3.33333 11.1403 3.41241 11.2809 3.55306C11.4216 3.69371 11.5007 3.88475 11.5007 4.08366V14.0837C11.5007 14.4979 11.1645 14.834 10.7503 14.834H0.750326C0.336112 14.834 1.51715e-08 14.4979 0 14.0837V4.08366C4.41037e-06 3.66945 0.336115 3.33333 0.750326 3.33333H10.7503ZM1.50065 13.3333H10V4.83398H1.50065V13.3333ZM14.0837 0C14.2826 8.3105e-08 14.4736 0.0790748 14.6143 0.219727C14.7549 0.360379 14.834 0.551414 14.834 0.750326V10.7503H13.3333V1.50065H4.08366V0H14.0837Z"
-                          fill="currentColor"
-                        ></path>
-                      </svg>
-                    </span>
+                        <svg
+                          viewBox="0 0 14.834 14.834"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                          preserveAspectRatio="none"
+                          className="absolute inset-[12.92%_12.91%_12.91%_12.92%]"
+                        >
+                          <path
+                            d="M10.7503 3.33333C10.9492 3.33333 11.1403 3.41241 11.2809 3.55306C11.4216 3.69371 11.5007 3.88475 11.5007 4.08366V14.0837C11.5007 14.4979 11.1645 14.834 10.7503 14.834H0.750326C0.336112 14.834 1.51715e-08 14.4979 0 14.0837V4.08366C4.41037e-06 3.66945 0.336115 3.33333 0.750326 3.33333H10.7503ZM1.50065 13.3333H10V4.83398H1.50065V13.3333ZM14.0837 0C14.2826 8.3105e-08 14.4736 0.0790748 14.6143 0.219727C14.7549 0.360379 14.834 0.551414 14.834 0.750326V10.7503H13.3333V1.50065H4.08366V0H14.0837Z"
+                            fill="currentColor"
+                          ></path>
+                        </svg>
+                      </span>
                     )}
                   </button>
                   <span
@@ -235,6 +248,302 @@ export const TaxInfoPage = () => {
             </div>
             <div className="flex min-h-9 items-center justify-center border-l border-[#484B51] px-2 py-1.5 text-center text-[0.6875rem] leading-[1.35] text-[#F7594B]">
               賣出稅率: {sellTax === null ? '--' : `${formatDecimal(sellTax)}%`}
+            </div>
+          </div>
+
+          <div className="text-card-foreground border border-[#484B51] bg-transparent shadow-none p-2.5">
+            <div className="flex min-h-5 cursor-pointer items-center justify-between gap-35">
+              <div className="flex min-w-0 items-center gap-1">
+                <Landmark className="size-3.5 shrink-0 text-[#7C5AFF]" />
+                <span className="min-w-0 truncate text-13 font-medium leading-[1.3] text-[#7C5AFF]">
+                  稅收金庫 / 資金接收方
+                </span>
+              </div>
+              <div className="flex shrink-0 items-center gap-1">
+                <span className="text-13 font-medium leading-[1.3] text-[#7C5AFF]">
+                  50%
+                </span>
+                <ChevronUp className="size-3.5 shrink-0 text-[#7C5AFF]" />
+              </div>
+            </div>
+            <div className="space-y-2.5 mt-2.5">
+              <div className="grid overflow-hidden border border-[#484B51] [&>*+*]:border-[#484B51] grid-cols-2 [&>*+*]:border-l [&>*+*]:border-t-0">
+                <div className="flex min-h-11 min-w-0 flex-col items-start justify-center gap-0.5 px-2.5 py-1.5">
+                  <p className="min-w-0 text-10 leading-[1.3] text-[#A0A3A7]">
+                    資金接收錢包
+                  </p>
+                  <div className="min-w-0 text-xs font-medium leading-[1.3] text-white">
+                    <a
+                      target="_blank"
+                      rel="noopener noreferrer nofollow"
+                      className="break-all transition-colors hover:text-[#7C5AFF]"
+                      href="https://bscscan.com/address/0x7b5F94d3d5eD780A595dA7083a30dB007A78de76"
+                    >
+                      0x7b5F...de76
+                    </a>
+                  </div>
+                </div>
+                <div className="flex min-h-11 min-w-0 flex-col items-start justify-center gap-0.5 px-2.5 py-1.5">
+                  <p className="min-w-0 text-10 leading-[1.3] text-[#A0A3A7]">
+                    發送給資金接收方的報價
+                  </p>
+                  <div className="min-w-0 text-xs font-medium leading-[1.3] text-white">
+                    28.200372 BNB
+                  </div>
+                </div>
+              </div>
+              <p className="text-11 leading-[1.4] text-white">
+                創建者收益會先累積；累積到約 $4 後會自動發送到配置的接收錢包。
+              </p>
+              <div className="border-t border-[#303236] pt-2.5 space-y-3">
+                <h3 className="text-base font-medium leading-[1.4] text-white">
+                  資金接收方信息
+                </h3>
+                <p className="text-xs leading-[1.4] text-[#A0A3A7]">
+                  交易税将发送至下方收款钱包。你可以查看其链上活动，了解这些资金的使用情况。
+                </p>
+                <div className="flex min-h-14.5 min-w-0 flex-col justify-center border border-[#484B51] p-2">
+                  <p className="mb-1 text-11 leading-[1.35] text-[#A0A3A7]">
+                    接收地址
+                  </p>
+                  <div
+                    className="flex min-w-0 items-center gap-3"
+                    data-testid="vault-address-row"
+                  >
+                    <a
+                      target="_blank"
+                      rel="noopener noreferrer nofollow"
+                      className="block min-w-0 flex-1 break-all font-mono text-xs leading-[1.35] text-white hover:text-[#D0FF00]"
+                      href="https://bscscan.com/address/0x7b5F94d3d5eD780A595dA7083a30dB007A78de76"
+                    >
+                      <span>0x7b5F94d3d5eD780A595dA7083a30dB007A78de76</span>
+                    </a>
+                    <button
+                      type="button"
+                      className="inline-flex h-4 w-4 shrink-0 items-center justify-center text-[#A0A3A7] transition-colors hover:text-white focus-visible:text-white focus-visible:outline-none"
+                      title="複製地址"
+                      aria-label="複製地址"
+                    >
+                      <span
+                        className="relative inline-block h-4 w-4"
+                        aria-hidden="true"
+                      >
+                        <svg
+                          viewBox="0 0 14.834 14.834"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                          preserveAspectRatio="none"
+                          className="absolute inset-[12.92%_12.91%_12.91%_12.92%]"
+                        >
+                          <path
+                            d="M10.7503 3.33333C10.9492 3.33333 11.1403 3.41241 11.2809 3.55306C11.4216 3.69371 11.5007 3.88475 11.5007 4.08366V14.0837C11.5007 14.4979 11.1645 14.834 10.7503 14.834H0.750326C0.336112 14.834 1.51715e-08 14.4979 0 14.0837V4.08366C4.41037e-06 3.66945 0.336115 3.33333 0.750326 3.33333H10.7503ZM1.50065 13.3333H10V4.83398H1.50065V13.3333ZM14.0837 0C14.2826 8.3105e-08 14.4736 0.0790748 14.6143 0.219727C14.7549 0.360379 14.834 0.551414 14.834 0.750326V10.7503H13.3333V1.50065H4.08366V0H14.0837Z"
+                            fill="currentColor"
+                          ></path>
+                        </svg>
+                      </span>
+                    </button>
+                    <a
+                      target="_blank"
+                      rel="noopener noreferrer nofollow"
+                      className="inline-flex h-4 w-4 shrink-0 items-center justify-center text-[#A0A3A7] transition-colors hover:text-white focus-visible:text-white focus-visible:outline-none"
+                      aria-label="接收地址："
+                      href="https://bscscan.com/address/0x7b5F94d3d5eD780A595dA7083a30dB007A78de76"
+                    >
+                      <ExternalLink className="size-4" />
+                    </a>
+                  </div>
+                </div>
+                <div className="flex min-h-13 min-w-0 items-center justify-between gap-3 border border-[#484B51] p-2">
+                  <span className="text-sm leading-[1.4] text-[#A0A3A7]">
+                    總稅收
+                  </span>
+                  <span className="text-sm font-medium leading-[1.4] text-white">
+                    28.200372 BNB
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-card-foreground border border-[#484B51] bg-transparent shadow-none p-2.5">
+            <div className="flex min-h-5 cursor-pointer items-center justify-between gap-35">
+              <div className="flex min-w-0 items-center gap-1">
+                <Gift className="size-3.5 shrink-0 text-[#D0FF00]" />
+                <span className="min-w-0 truncate text-13 font-medium leading-[1.3] text-[#D0FF00]">
+                  分红
+                </span>
+              </div>
+              <div className="flex shrink-0 items-center gap-1">
+                <span className="text-13 font-medium leading-[1.3] text-[#D0FF00]">
+                  10%
+                </span>
+                <ChevronUp className="size-3.5 shrink-0 text-[#D0FF00]" />
+              </div>
+            </div>
+            <div className="space-y-2.5 mt-2.5">
+              <div className="grid overflow-hidden border border-[#484B51] [&>*+*]:border-[#484B51] grid-cols-2 [&>*+*]:border-l [&>*+*]:border-t-0">
+                <div className="flex min-h-11 min-w-0 flex-col items-start justify-center gap-0.5 px-2.5 py-1.5">
+                  <p className="min-w-0 text-10 leading-[1.3] text-[#A0A3A7]">
+                    已分配總分紅
+                  </p>
+                  <div className="min-w-0 text-xs font-medium leading-[1.3] text-white">
+                    5.640074 WBNB
+                  </div>
+                </div>
+                <div className="flex min-h-11 min-w-0 flex-col items-start justify-center gap-0.5 px-2.5 py-1.5">
+                  <p className="min-w-0 text-10 leading-[1.3] text-[#A0A3A7]">
+                    分紅代幣
+                  </p>
+                  <div className="min-w-0 text-xs font-medium leading-[1.3] text-white">
+                    <span className="flex min-w-0 flex-wrap items-center gap-1.5">
+                      <span>BNB</span>
+                      <span className="break-all font-mono text-10 font-normal text-[#A0A3A7]">
+                        0xbb4C...095c
+                      </span>
+                      <button
+                        type="button"
+                        className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[#84888C] transition-colors hover:text-[#D0FF00] focus-visible:text-[#D0FF00] focus-visible:outline-none"
+                        title="複製分紅代幣地址"
+                        aria-label="複製分紅代幣地址"
+                      >
+                        <span
+                          className="relative inline-block h-3.5 w-3.5"
+                          aria-hidden="true"
+                        >
+                          <svg
+                            viewBox="0 0 14.834 14.834"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                            preserveAspectRatio="none"
+                            className="absolute inset-[12.92%_12.91%_12.91%_12.92%]"
+                          >
+                            <path
+                              d="M10.7503 3.33333C10.9492 3.33333 11.1403 3.41241 11.2809 3.55306C11.4216 3.69371 11.5007 3.88475 11.5007 4.08366V14.0837C11.5007 14.4979 11.1645 14.834 10.7503 14.834H0.750326C0.336112 14.834 1.51715e-08 14.4979 0 14.0837V4.08366C4.41037e-06 3.66945 0.336115 3.33333 0.750326 3.33333H10.7503ZM1.50065 13.3333H10V4.83398H1.50065V13.3333ZM14.0837 0C14.2826 8.3105e-08 14.4736 0.0790748 14.6143 0.219727C14.7549 0.360379 14.834 0.551414 14.834 0.750326V10.7503H13.3333V1.50065H4.08366V0H14.0837Z"
+                              fill="currentColor"
+                            ></path>
+                          </svg>
+                        </span>
+                      </button>
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex min-h-6 min-w-0 items-center justify-between gap-3">
+                <label
+                  className="peer-disabled:cursor-not-allowed peer-disabled:opacity-70 min-w-0 text-xs font-medium leading-normal text-white"
+                  htmlFor="claim-for-another"
+                >
+                  為其他用戶領取
+                </label>
+                <div>这里放Switch</div>
+              </div>
+              <p className="text-11 leading-[1.4] text-[#84888C]">
+                分紅將分配給持有超過 100000 代幣的錢包。超過約 $4
+                的餘額會自動發送給您，您也可以隨時在此手動領取分紅——即使是低至
+                $0.001 的金額。
+                <br />
+                <span className="block h-1" aria-hidden="true"></span>
+                您將默認收到 WBNB，並可以在領取時選擇解包為原生代幣。
+              </p>
+              <div className="space-y-2.5">
+                <div
+                  className="grid overflow-hidden border border-[#484B51] [&amp;&gt;*+*]:border-[#484B51] grid-cols-2 [&amp;&gt;*+*]:border-l [&amp;&gt;*+*]:border-t-0"
+                  data-testid="tax-info-metric-grid"
+                >
+                  <div className="flex min-h-11 min-w-0 flex-col items-start justify-center gap-0.5 px-2.5 py-1.5">
+                    <p className="min-w-0 text-10 leading-[1.3] text-[#A0A3A7]">
+                      已領取
+                    </p>
+                    <div className="min-w-0 text-xs font-medium leading-[1.3] text-white">
+                      0 WBNB
+                    </div>
+                  </div>
+                  <div className="flex min-h-11 min-w-0 flex-col items-start justify-center gap-0.5 px-2.5 py-1.5">
+                    <p className="min-w-0 text-10 leading-[1.3] text-[#A0A3A7]">
+                      未領取
+                    </p>
+                    <div className="min-w-0 text-xs font-medium leading-[1.3] text-white">
+                      0 WBNB
+                    </div>
+                  </div>
+                </div>
+                <div className="flex min-h-6 min-w-0 items-center justify-between gap-3">
+                  <label
+                    className="peer-disabled:cursor-not-allowed peer-disabled:opacity-70 min-w-0 text-xs font-medium leading-normal text-white"
+                    htmlFor="unwrap-weth"
+                  >
+                    解包為 BNB
+                  </label>
+                  <div>这里放Switch</div>
+                </div>
+                <button
+                  disabled
+                  className="inline-flex items-center justify-center whitespace-nowrap ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none h-8 w-full bg-[#D0FF00] px-3 py-1.5 text-11 font-medium uppercase text-[#070808] hover:bg-[#E2FF4F] disabled:bg-[#536600] disabled:text-[#070808] disabled:opacity-100"
+                >
+                  領取為 WBNB
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-card-foreground border border-[#484B51] bg-transparent shadow-none p-2.5">
+            <div className="flex min-h-5 cursor-pointer items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-1">
+                <Waves className="size-3.5 shrink-0 text-[#16D9D9]" />
+                <span className="min-w-0 truncate text-13 font-medium leading-[1.3] text-[#16D9D9]">
+                  流動性
+                </span>
+              </div>
+              <div className="flex shrink-0 items-center gap-1 text-[#16D9D9]">
+                <span className="text-13 font-medium leading-[1.3]">30 %</span>
+                <ChevronUp className="size-3.5 shrink-0" />
+              </div>
+            </div>
+            <div className="grid overflow-hidden border border-[#484B51] [&>*+*]:border-[#484B51] grid-cols-2 [&>*+*]:border-l [&>*+*]:border-t-0 mt-2.5">
+              <div className="flex min-h-11 min-w-0 flex-col items-start justify-center gap-0.5 px-2.5 py-1.5">
+                <p className="min-w-0 text-10 leading-[1.3] text-[#A0A3A7]">
+                  添加到流動性的報價
+                </p>
+                <div className="min-w-0 text-xs font-medium leading-[1.3] text-white">
+                  2.759175 WBNB
+                </div>
+              </div>
+              <div className="flex min-h-11 min-w-0 flex-col items-start justify-center gap-0.5 px-2.5 py-1.5">
+                <p className="min-w-0 text-10 leading-[1.3] text-[#A0A3A7]">
+                  添加到流動性的代幣
+                </p>
+                <div className="min-w-0 text-xs font-medium leading-[1.3] text-white">
+                  1823654.74 GR
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-card-foreground border border-[#484B51] bg-transparent shadow-none p-2.5">
+            <div className="flex min-h-5 cursor-pointer items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-1">
+                <Flame className="size-3.5 shrink-0 text-[#F7594B]" />
+                <span className="min-w-0 truncate text-13 font-medium leading-[1.3] text-[#F7594B]">
+                  代幣銷毀
+                </span>
+              </div>
+              <div className="flex shrink-0 items-center gap-1 text-[#F7594B]">
+                <span className="text-13 font-medium leading-[1.3]">30 %</span>
+                <ChevronUp className="size-3.5 shrink-0" />
+              </div>
+            </div>
+            <div className="flex min-h-10 min-w-0 items-center justify-between gap-2 border border-[#484B51] px-2.5 py-1.5 mt-2.5">
+              <span className="min-w-0 text-11 leading-[1.3] text-[#A0A3A7]">
+                已銷毀代幣
+              </span>
+              <div className="flex min-w-0 flex-wrap items-center justify-end gap-1.5 text-11 leading-[1.3]">
+                <span className="font-medium text-white">11292562.67 GR</span>
+                <span
+                  className="h-3.25 w-px bg-[#484B51]"
+                  aria-hidden="true"
+                ></span>
+                <span className="text-[#A0A3A7]">1.1292% 佔最大供應量</span>
+              </div>
             </div>
           </div>
         </div>
