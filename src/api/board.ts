@@ -113,6 +113,21 @@ export type BoardItemResponse = {
   intervalSeconds?: number
   triggerAmount?: string
   buybackAmount?: string
+  /** Primary DEX pair snapshot; null or missing when the token has no market. */
+  pair?: BoardDexPair | null
+}
+
+/** The DEX pair fields the board reads. Numbers may arrive as strings. */
+export interface BoardDexPair {
+  priceUsd?: string | number | null
+  /** Price in the quote token; a BNB price only when quoteToken is WBNB. */
+  priceNative?: string | number | null
+  quoteToken?: { address?: string | null } | null
+  marketCap?: number | null
+  fdv?: number | null
+  volume?: { h24?: number | null } | null
+  priceChange?: { h24?: number | null } | null
+  liquidity?: { usd?: number | null } | null
 }
 
 export function listBoard(params: BoardListParams, signal?: AbortSignal) {

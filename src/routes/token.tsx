@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { isAddress, type Address } from 'viem'
@@ -14,13 +14,15 @@ import { TokenPresale } from '@/components/token/token-presale'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 import { useTokenGate } from '@/hooks/use-token-gate'
-import { hasPoolLiquidity, useTokenPrice } from '@/hooks/use-token-price'
+import { hasPoolLiquidity } from '@/hooks/use-token-price'
 import {
   formatCompactNumber,
   formatDecimal,
+  formatDecimalText,
   formatPercent,
   formatTokenAmount,
 } from '@/lib/format'
+import { readBoardMarket } from '@/lib/board-pair'
 import { getPancakeSwapUrl } from '@/lib/links'
 import { formatAddress } from '@/lib/utils'
 import { getExplorerAddressUrl } from '@/lib/web3'
@@ -58,14 +60,14 @@ export const TokenPage = () => {
     refetchInterval: 15_000,
     watchPair: true,
   })
-  const { priceBNB, marketCapBNB, changePercent } = useTokenPrice({
-    tokenAddress: gate.tokenAddress,
-    pairAddress: gate.pairAddress,
-    presalePrice: gate.presalePrice,
-    totalSupply: gate.totalSupply,
-    tokenDecimals: gate.tokenDecimals,
-    managedPairReads: gate.pairReads,
-  })
+  // Market figures come from the token API's DEX pair snapshot.
+  const market = useMemo(() => readBoardMarket(token?.pair), [token?.pair])
+  const changePercent = market?.changePercent ?? null
+  const marketCapUsd = market?.marketCap ?? null
+  const volume24hUsd = market?.volume24h ?? null
+  const priceUsd = market?.priceUsd ?? null
+  const liquidityUsd = market?.liquidityUsd ?? null
+  const fdvUsd = market?.fdv ?? null
 
   const isLaunched = (gate.tokenState ?? 0) >= 2 || gate.presaleStatus === 3
   const isTradable =
@@ -98,19 +100,19 @@ export const TokenPage = () => {
   const tokenSymbol = token?.symbol ? `$${token.symbol}` : '--'
   const explorerUrl = getExplorerAddressUrl(tokenAddress)
   const externalUrl = token?.website || explorerUrl
-  const priceText =
-    priceBNB === null ? '--' : `${formatDecimal(priceBNB)} BNB`
+  const priceUsdText =
+    priceUsd === null ? null : `$${formatDecimalText(priceUsd, 5)}`
   const changeText =
     changePercent === null ? '--' : formatPercent(changePercent)
   const supplyText =
     gate.totalSupply > 0n
       ? formatTokenAmount(gate.totalSupply, gate.tokenDecimals)
       : '--'
-  const displayedMarketCap = isLaunched ? marketCapBNB : null
+  const displayedMarketCap = isLaunched ? marketCapUsd : null
   const marketCapText =
     displayedMarketCap === null
       ? '--'
-      : `${formatCompactNumber(displayedMarketCap)} BNB`
+      : `$${formatCompactNumber(displayedMarketCap)}`
   const buyTax =
     token?.buyTax ??
     (gate.buyTaxBps === undefined ? null : gate.buyTaxBps / 100)
@@ -188,7 +190,7 @@ export const TokenPage = () => {
           </div>
           <div className="flex shrink-0 flex-col text-right">
             <span className="text-base font-semibold text-foreground">
-              {priceText}
+              {priceUsdText ?? '--'}
             </span>
             <span
               className={
@@ -343,7 +345,11 @@ export const TokenPage = () => {
           </div>
           <div className="flex flex-col gap-0.5 px-1">
             <span className="text-[#84888C]">{m.token_volume_24h()}</span>
-            <span className="text-foreground">--</span>
+            <span className="text-foreground">
+              {volume24hUsd === null
+                ? '--'
+                : `$${formatCompactNumber(volume24hUsd)}`}
+            </span>
           </div>
           <div className="flex flex-col gap-0.5 px-1">
             <span className="text-[#84888C]">{m.token_market_cap()}</span>
@@ -416,7 +422,10 @@ export const TokenPage = () => {
               token={token}
               totalSupply={gate.totalSupply}
               tokenDecimals={gate.tokenDecimals}
-              marketCapBNB={displayedMarketCap}
+              marketCapUsd={displayedMarketCap}
+              volume24hUsd={volume24hUsd}
+              liquidityUsd={liquidityUsd}
+              fdvUsd={fdvUsd}
               creatorAddress={gate.creatorAddress}
             />
           </section>

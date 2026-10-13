@@ -74,13 +74,19 @@ export function TokenInfo({
   token,
   totalSupply,
   tokenDecimals,
-  marketCapBNB,
+  marketCapUsd,
+  volume24hUsd,
+  liquidityUsd,
+  fdvUsd,
   creatorAddress,
 }: {
   token?: TokenDetail
   totalSupply: bigint
   tokenDecimals: number
-  marketCapBNB: number | null
+  marketCapUsd: number | null
+  volume24hUsd: number | null
+  liquidityUsd: number | null
+  fdvUsd: number | null
   creatorAddress?: string
 }) {
   const { copy, copiedText } = useCopyToClipboard()
@@ -92,9 +98,12 @@ export function TokenInfo({
   const supplyText =
     totalSupply > 0n ? formatTokenAmount(totalSupply, tokenDecimals) : '--'
   const marketCapText =
-    marketCapBNB === null
-      ? '--'
-      : `${formatCompactNumber(marketCapBNB)} BNB`
+    marketCapUsd === null ? '--' : `$${formatCompactNumber(marketCapUsd)}`
+  const volumeText =
+    volume24hUsd === null ? '--' : `$${formatCompactNumber(volume24hUsd)}`
+  const liquidityText =
+    liquidityUsd === null ? '--' : `$${formatCompactNumber(liquidityUsd)}`
+  const fdvText = fdvUsd === null ? '--' : `$${formatCompactNumber(fdvUsd)}`
   const mediaLinks = [
     { label: m.token_website(), href: token?.website },
     { label: 'Telegram', href: token?.telegram },
@@ -113,11 +122,11 @@ export function TokenInfo({
 
       <InfoSectionTitle title={m.token_details()}>
         <div className="flex flex-col gap-1.5">
-          <InfoRow label={m.token_liquidity()}>--</InfoRow>
+          <InfoRow label={m.token_liquidity()}>{liquidityText}</InfoRow>
           <InfoRow label={m.token_market_cap()}>{marketCapText}</InfoRow>
           <InfoRow label={m.token_holders()}>--</InfoRow>
-          <InfoRow label={m.token_volume_24h()}>--</InfoRow>
-          <InfoRow label={m.token_fdv()}>--</InfoRow>
+          <InfoRow label={m.token_volume_24h()}>{volumeText}</InfoRow>
+          <InfoRow label={m.token_fdv()}>{fdvText}</InfoRow>
           <InfoRow label={m.token_circulating_supply()}>{supplyText}</InfoRow>
           <InfoRow label={m.token_max_supply()}>{supplyText}</InfoRow>
           <InfoRow label={m.token_created_at()}>{formatCreatedAt(token?.createTime)}</InfoRow>

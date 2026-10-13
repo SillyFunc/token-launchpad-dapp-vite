@@ -1,3 +1,4 @@
+import type { BoardDexPair } from '@/api/board'
 import { get, postForm, postMultipart } from '@/lib/http/client'
 
 export interface TokenDetail {
@@ -45,6 +46,8 @@ export interface TokenDetail {
   intervalSeconds?: number
   triggerAmount?: string
   buybackAmount?: string
+  /** Primary DEX pair snapshot; null or missing when the token has no market. */
+  pair?: BoardDexPair | null
 }
 
 export interface SaveTokenParams {

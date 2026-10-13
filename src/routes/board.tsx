@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { Check, Flame, ChevronDown, Coins } from 'lucide-react'
 
@@ -8,6 +8,7 @@ import boardBanner from '@/assets/images/board-banner.png'
 import type { BoardItemResponse } from '@/api/board'
 import { usePopularTokens } from '@/hooks/use-board'
 import { useBoardPricing } from '@/hooks/use-board-pricing'
+import { readBoardMarket } from '@/lib/board-pair'
 import {
   formatCompactNumber,
   formatDecimalText,
@@ -48,10 +49,25 @@ export const BoardPage = () => {
 
   const { data: tokens, isLoading, isError, refetch } = usePopularTokens()
 
-  const tokenList = Array.isArray(tokens?.content) ? tokens.content : []
+  const tokenList = useMemo(
+    () => (Array.isArray(tokens?.content) ? tokens.content : []),
+    [tokens],
+  )
 
-  // Page-wide pricing comes from 3 batched multicalls; TokenRow stays presentational.
-  const pricingMap = useBoardPricing(tokenList)
+  // Only the list view's "presale" badge needs on-chain stage, and it shows only
+  // for tokens with a tax rate. Other tokens skip the multicall entirely.
+  const stageTokens = useMemo(
+    () =>
+      viewMode === 'list'
+        ? tokenList.filter(
+            (token) =>
+              isConfiguredTaxRate(token.buyTax) ||
+              isConfiguredTaxRate(token.sellTax),
+          )
+        : [],
+    [tokenList, viewMode],
+  )
+  const pricingMap = useBoardPricing(stageTokens)
 
   const activeFilterLabel =
     FILTER_OPTIONS.find((option) => option.value === activeFilter)?.label() ??
@@ -276,11 +292,7 @@ export const BoardPage = () => {
             tokenList.map((token) => {
               const key = String(token.coinContractAddress || '').toLowerCase()
               return viewMode === 'grid' ? (
-                <BoardGridCard
-                  key={token.id}
-                  token={token}
-                  pricing={pricingMap[key]}
-                />
+                <BoardGridCard key={token.id} token={token} />
               ) : (
                 <BoardListRow
                   key={token.id}
@@ -296,17 +308,12 @@ export const BoardPage = () => {
   )
 }
 
-function BoardGridCard({
-  token,
-  pricing,
-}: {
-  token: BoardItemResponse
-  pricing: Pricing
-}) {
+function BoardGridCard({ token }: { token: BoardItemResponse }) {
   const tokenAddress = token.coinContractAddress || ''
 
-  const marketCap = pricing?.liquidityUsd ?? null
-  const change24h = pricing?.changePercent ?? null
+  const market = useMemo(() => readBoardMarket(token.pair), [token.pair])
+  const marketCap = market?.marketCap ?? null
+  const change24h = market?.changePercent ?? null
   const isPositive = change24h !== null && change24h >= 0
 
   const { copy, copiedText } = useCopyToClipboard()
@@ -495,10 +502,11 @@ function BoardListRow({
   const stage = pricing?.stage ?? 'not_launched'
   const isPresale = stage === 'presale'
 
-  const marketCap = pricing?.liquidityUsd ?? null
-  const volume24h = pricing?.volume24h ?? null
-  const priceUsd = pricing?.priceUsd ?? null
-  const change24h = pricing?.changePercent ?? null
+  const market = useMemo(() => readBoardMarket(token.pair), [token.pair])
+  const marketCap = market?.marketCap ?? null
+  const volume24h = market?.volume24h ?? null
+  const priceUsd = market?.priceUsd ?? null
+  const change24h = market?.changePercent ?? null
 
   const hasTax =
     isConfiguredTaxRate(token.buyTax) || isConfiguredTaxRate(token.sellTax)
