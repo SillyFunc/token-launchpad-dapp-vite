@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router'
 import { isAddress, type Address } from 'viem'
+import { useConnection } from 'wagmi'
 
 import { getTokenByContractAddress } from '@/api/token'
 import {
@@ -20,10 +21,21 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible'
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
+import { useDividendInfo } from '@/hooks/use-dividend-info'
+import { useTaxChannelYields } from '@/hooks/use-tax-channel-yields'
 import { useTokenGate } from '@/hooks/use-token-gate'
-import { formatDecimal } from '@/lib/format'
+import {
+  formatBnbAmount,
+  formatDecimal,
+  formatTokenAmount,
+} from '@/lib/format'
 import { formatAddress } from '@/lib/utils'
 import { getExplorerAddressUrl } from '@/lib/web3'
+
+/** Tax recipient wallet shown in the treasury card (still a placeholder value). */
+const RECEIVING_WALLET = '0x7b5F94d3d5eD780A595dA7083a30dB007A78de76'
+/** Wrapped BNB, the dividend token. Matches WRAPPED_NATIVE_ADDRESS in lib/web3. */
+const WBNB_ADDRESS = '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c'
 
 export const TaxInfoPage = () => {
   const { address: routeAddress = '' } = useParams<{ address: string }>()
@@ -38,6 +50,42 @@ export const TaxInfoPage = () => {
     staleTime: 30_000,
   })
   const gate = useTokenGate(tokenAddress)
+  const taxYields = useTaxChannelYields(tokenAddress ? [tokenAddress] : [])
+  const taxYield = tokenAddress
+    ? taxYields.byAddress[tokenAddress.toLowerCase()]
+    : undefined
+  const { address: connectedAddress } = useConnection()
+  const { info: dividendInfo } = useDividendInfo(tokenAddress, connectedAddress)
+
+  // Channel shares from the token config; a channel renders only when configured.
+  const marketBps = token?.marketBps ?? 0
+  const dividendBps = token?.dividendBps ?? 0
+  const lpBps = token?.lpBps ?? 0
+  const burnBps = token?.deflationBps ?? 0
+  const hasVault = token?.buybackVaultEnabled === 1
+  const showTreasury = marketBps > 0 || hasVault
+  const showDividend = dividendBps > 0
+  const showLiquidity = lpBps > 0
+  const showBurn = burnBps > 0
+
+  const tokenDecimals = gate.tokenDecimals
+  const tokenUnit = token?.symbol ?? ''
+  const tokenAmountText = (amount: bigint) =>
+    tokenUnit
+      ? `${formatTokenAmount(amount, tokenDecimals)} ${tokenUnit}`
+      : formatTokenAmount(amount, tokenDecimals)
+  const minimumShareText =
+    dividendInfo?.minimumShareBalance === undefined
+      ? '--'
+      : tokenAmountText(dividendInfo.minimumShareBalance)
+  const bnbText = (amount: bigint | undefined) =>
+    amount === undefined ? '--' : formatBnbAmount(amount)
+  const percentOfSupply = (amount: bigint | undefined) => {
+    if (amount === undefined || gate.totalSupply <= 0n) return '--'
+    const bps = Number((amount * 10_000n) / gate.totalSupply)
+    return `${formatDecimal(bps / 100)}%`
+  }
+  const bpsPercent = (bps: number) => `${formatDecimal(bps / 100)}%`
 
   const tokenName = token?.name || '--'
   const tokenSymbol = token?.symbol ? `$${token.symbol}` : '--'
@@ -261,6 +309,7 @@ export const TaxInfoPage = () => {
             </div>
           </div>
 
+          {showTreasury && (
           <Collapsible
             open={treasuryOpen}
             onOpenChange={setTreasuryOpen}
@@ -279,7 +328,7 @@ export const TaxInfoPage = () => {
               </div>
               <div className="flex shrink-0 items-center gap-1">
                 <span className="text-13 font-medium leading-[1.3] text-[#7C5AFF]">
-                  50%
+                  {bpsPercent(marketBps)}
                 </span>
                 <ChevronDown
                   className={`size-3.5 shrink-0 text-[#7C5AFF] transition-transform ${treasuryOpen ? 'rotate-180' : ''}`}
@@ -308,7 +357,7 @@ export const TaxInfoPage = () => {
                     發送給資金接收方的報價
                   </p>
                   <div className="min-w-0 text-xs font-medium leading-[1.3] text-white">
-                    28.200372 BNB
+                    --
                   </div>
                 </div>
               </div>
@@ -343,7 +392,14 @@ export const TaxInfoPage = () => {
                       className="inline-flex h-4 w-4 shrink-0 items-center justify-center text-[#A0A3A7] transition-colors hover:text-white focus-visible:text-white focus-visible:outline-none"
                       title="複製地址"
                       aria-label="複製地址"
+                      onClick={() => void copy(RECEIVING_WALLET)}
                     >
+                      {copiedText === RECEIVING_WALLET ? (
+                        <Check
+                          className="size-4 text-[#2BC235]"
+                          aria-hidden="true"
+                        />
+                      ) : (
                       <span
                         className="relative inline-block h-4 w-4"
                         aria-hidden="true"
@@ -361,6 +417,7 @@ export const TaxInfoPage = () => {
                           ></path>
                         </svg>
                       </span>
+                      )}
                     </button>
                     <a
                       target="_blank"
@@ -378,13 +435,21 @@ export const TaxInfoPage = () => {
                     總稅收
                   </span>
                   <span className="text-sm font-medium leading-[1.4] text-white">
-                    28.200372 BNB
+                    {taxYield
+                      ? bnbText(
+                          taxYield.marketingBNB +
+                            taxYield.dividendBNB +
+                            taxYield.liquidityBNB,
+                        )
+                      : '--'}
                   </span>
                 </div>
               </div>
             </CollapsibleContent>
           </Collapsible>
+          )}
 
+          {showDividend && (
           <Collapsible
             open={dividendOpen}
             onOpenChange={setDividendOpen}
@@ -403,7 +468,7 @@ export const TaxInfoPage = () => {
               </div>
               <div className="flex shrink-0 items-center gap-1">
                 <span className="text-13 font-medium leading-[1.3] text-[#D0FF00]">
-                  10%
+                  {bpsPercent(dividendBps)}
                 </span>
                 <ChevronDown
                   className={`size-3.5 shrink-0 text-[#D0FF00] transition-transform ${dividendOpen ? 'rotate-180' : ''}`}
@@ -417,7 +482,7 @@ export const TaxInfoPage = () => {
                     已分配總分紅
                   </p>
                   <div className="min-w-0 text-xs font-medium leading-[1.3] text-white">
-                    5.640074 WBNB
+                    {bnbText(taxYield?.dividendBNB)}
                   </div>
                 </div>
                 <div className="flex min-h-11 min-w-0 flex-col items-start justify-center gap-0.5 px-2.5 py-1.5">
@@ -435,7 +500,14 @@ export const TaxInfoPage = () => {
                         className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[#84888C] transition-colors hover:text-[#D0FF00] focus-visible:text-[#D0FF00] focus-visible:outline-none"
                         title="複製分紅代幣地址"
                         aria-label="複製分紅代幣地址"
+                        onClick={() => void copy(WBNB_ADDRESS)}
                       >
+                        {copiedText === WBNB_ADDRESS ? (
+                          <Check
+                            className="size-3.5 text-[#2BC235]"
+                            aria-hidden="true"
+                          />
+                        ) : (
                         <span
                           className="relative inline-block h-3.5 w-3.5"
                           aria-hidden="true"
@@ -453,6 +525,7 @@ export const TaxInfoPage = () => {
                             ></path>
                           </svg>
                         </span>
+                        )}
                       </button>
                     </span>
                   </div>
@@ -468,7 +541,7 @@ export const TaxInfoPage = () => {
                 <div>这里放Switch</div>
               </div>
               <p className="text-11 leading-[1.4] text-[#84888C]">
-                分紅將分配給持有超過 100000 代幣的錢包。超過約 $4
+                分紅將分配給持有超過 {minimumShareText} 的錢包。超過約 $4
                 的餘額會自動發送給您，您也可以隨時在此手動領取分紅——即使是低至
                 $0.001 的金額。
                 <br />
@@ -485,7 +558,7 @@ export const TaxInfoPage = () => {
                       已領取
                     </p>
                     <div className="min-w-0 text-xs font-medium leading-[1.3] text-white">
-                      0 WBNB
+                      --
                     </div>
                   </div>
                   <div className="flex min-h-11 min-w-0 flex-col items-start justify-center gap-0.5 px-2.5 py-1.5">
@@ -493,7 +566,9 @@ export const TaxInfoPage = () => {
                       未領取
                     </p>
                     <div className="min-w-0 text-xs font-medium leading-[1.3] text-white">
-                      0 WBNB
+                      {dividendInfo?.withdrawable === undefined
+                        ? '--'
+                        : bnbText(dividendInfo.withdrawable)}
                     </div>
                   </div>
                 </div>
@@ -515,7 +590,9 @@ export const TaxInfoPage = () => {
               </div>
             </CollapsibleContent>
           </Collapsible>
+          )}
 
+          {showLiquidity && (
           <Collapsible
             open={liquidityOpen}
             onOpenChange={setLiquidityOpen}
@@ -533,7 +610,9 @@ export const TaxInfoPage = () => {
                 </span>
               </div>
               <div className="flex shrink-0 items-center gap-1 text-[#16D9D9]">
-                <span className="text-13 font-medium leading-[1.3]">30 %</span>
+                <span className="text-13 font-medium leading-[1.3]">
+                  {bpsPercent(lpBps)}
+                </span>
                 <ChevronDown
                   className={`size-3.5 shrink-0 transition-transform ${liquidityOpen ? 'rotate-180' : ''}`}
                 />
@@ -545,7 +624,7 @@ export const TaxInfoPage = () => {
                   添加到流動性的報價
                 </p>
                 <div className="min-w-0 text-xs font-medium leading-[1.3] text-white">
-                  2.759175 WBNB
+                  {bnbText(taxYield?.liquidityBNB)}
                 </div>
               </div>
               <div className="flex min-h-11 min-w-0 flex-col items-start justify-center gap-0.5 px-2.5 py-1.5">
@@ -553,12 +632,14 @@ export const TaxInfoPage = () => {
                   添加到流動性的代幣
                 </p>
                 <div className="min-w-0 text-xs font-medium leading-[1.3] text-white">
-                  1823654.74 GR
+                  {taxYield ? tokenAmountText(taxYield.liquidityTokens) : '--'}
                 </div>
               </div>
             </CollapsibleContent>
           </Collapsible>
+          )}
 
+          {showBurn && (
           <Collapsible
             open={burnOpen}
             onOpenChange={setBurnOpen}
@@ -576,7 +657,9 @@ export const TaxInfoPage = () => {
                 </span>
               </div>
               <div className="flex shrink-0 items-center gap-1 text-[#F7594B]">
-                <span className="text-13 font-medium leading-[1.3]">30 %</span>
+                <span className="text-13 font-medium leading-[1.3]">
+                  {bpsPercent(burnBps)}
+                </span>
                 <ChevronDown
                   className={`size-3.5 shrink-0 transition-transform ${burnOpen ? 'rotate-180' : ''}`}
                 />
@@ -587,15 +670,20 @@ export const TaxInfoPage = () => {
                 已銷毀代幣
               </span>
               <div className="flex min-w-0 flex-wrap items-center justify-end gap-1.5 text-11 leading-[1.3]">
-                <span className="font-medium text-white">11292562.67 GR</span>
+                <span className="font-medium text-white">
+                  {taxYield ? tokenAmountText(taxYield.burnedTokens) : '--'}
+                </span>
                 <span
                   className="h-3.25 w-px bg-[#484B51]"
                   aria-hidden="true"
                 ></span>
-                <span className="text-[#A0A3A7]">1.1292% 佔最大供應量</span>
+                <span className="text-[#A0A3A7]">
+                  {percentOfSupply(taxYield?.burnedTokens)} 佔最大供應量
+                </span>
               </div>
             </CollapsibleContent>
           </Collapsible>
+          )}
         </div>
       </div>
     </div>
