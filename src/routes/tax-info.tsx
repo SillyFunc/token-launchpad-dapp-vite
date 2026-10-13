@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router'
 import { isAddress, type Address } from 'viem'
@@ -5,7 +6,7 @@ import { isAddress, type Address } from 'viem'
 import { getTokenByContractAddress } from '@/api/token'
 import {
   Check,
-  ChevronUp,
+  ChevronDown,
   ExternalLink,
   Flame,
   Gift,
@@ -13,6 +14,11 @@ import {
   Waves,
 } from 'lucide-react'
 
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible'
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 import { useTokenGate } from '@/hooks/use-token-gate'
 import { formatDecimal } from '@/lib/format'
@@ -46,6 +52,12 @@ export const TaxInfoPage = () => {
 
   const { copy, copiedText } = useCopyToClipboard()
   const copied = Boolean(tokenAddress) && copiedText === tokenAddress
+
+  // Each tax channel card starts collapsed.
+  const [treasuryOpen, setTreasuryOpen] = useState(false)
+  const [dividendOpen, setDividendOpen] = useState(false)
+  const [liquidityOpen, setLiquidityOpen] = useState(false)
+  const [burnOpen, setBurnOpen] = useState(false)
 
   return (
     <div className='pb-3'>
@@ -249,8 +261,16 @@ export const TaxInfoPage = () => {
             </div>
           </div>
 
-          <div className="text-card-foreground border border-[#484B51] bg-transparent shadow-none p-2.5">
-            <div className="flex min-h-5 cursor-pointer items-center justify-between gap-35">
+          <Collapsible
+            open={treasuryOpen}
+            onOpenChange={setTreasuryOpen}
+            className="text-card-foreground border border-[#484B51] bg-transparent shadow-none p-2.5"
+          >
+            <CollapsibleTrigger
+              render={<div />}
+              nativeButton={false}
+              className="flex min-h-5 cursor-pointer items-center justify-between gap-35"
+            >
               <div className="flex min-w-0 items-center gap-1">
                 <Landmark className="size-3.5 shrink-0 text-[#7C5AFF]" />
                 <span className="min-w-0 truncate text-13 font-medium leading-[1.3] text-[#7C5AFF]">
@@ -261,10 +281,12 @@ export const TaxInfoPage = () => {
                 <span className="text-13 font-medium leading-[1.3] text-[#7C5AFF]">
                   50%
                 </span>
-                <ChevronUp className="size-3.5 shrink-0 text-[#7C5AFF]" />
+                <ChevronDown
+                  className={`size-3.5 shrink-0 text-[#7C5AFF] transition-transform ${treasuryOpen ? 'rotate-180' : ''}`}
+                />
               </div>
-            </div>
-            <div className="space-y-2.5 mt-2.5">
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-2.5 mt-2.5">
               <div className="grid overflow-hidden border border-[#484B51] [&>*+*]:border-[#484B51] grid-cols-2 [&>*+*]:border-l [&>*+*]:border-t-0">
                 <div className="flex min-h-11 min-w-0 flex-col items-start justify-center gap-0.5 px-2.5 py-1.5">
                   <p className="min-w-0 text-10 leading-[1.3] text-[#A0A3A7]">
@@ -360,11 +382,19 @@ export const TaxInfoPage = () => {
                   </span>
                 </div>
               </div>
-            </div>
-          </div>
+            </CollapsibleContent>
+          </Collapsible>
 
-          <div className="text-card-foreground border border-[#484B51] bg-transparent shadow-none p-2.5">
-            <div className="flex min-h-5 cursor-pointer items-center justify-between gap-35">
+          <Collapsible
+            open={dividendOpen}
+            onOpenChange={setDividendOpen}
+            className="text-card-foreground border border-[#484B51] bg-transparent shadow-none p-2.5"
+          >
+            <CollapsibleTrigger
+              render={<div />}
+              nativeButton={false}
+              className="flex min-h-5 cursor-pointer items-center justify-between gap-35"
+            >
               <div className="flex min-w-0 items-center gap-1">
                 <Gift className="size-3.5 shrink-0 text-[#D0FF00]" />
                 <span className="min-w-0 truncate text-13 font-medium leading-[1.3] text-[#D0FF00]">
@@ -375,10 +405,12 @@ export const TaxInfoPage = () => {
                 <span className="text-13 font-medium leading-[1.3] text-[#D0FF00]">
                   10%
                 </span>
-                <ChevronUp className="size-3.5 shrink-0 text-[#D0FF00]" />
+                <ChevronDown
+                  className={`size-3.5 shrink-0 text-[#D0FF00] transition-transform ${dividendOpen ? 'rotate-180' : ''}`}
+                />
               </div>
-            </div>
-            <div className="space-y-2.5 mt-2.5">
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-2.5 mt-2.5">
               <div className="grid overflow-hidden border border-[#484B51] [&>*+*]:border-[#484B51] grid-cols-2 [&>*+*]:border-l [&>*+*]:border-t-0">
                 <div className="flex min-h-11 min-w-0 flex-col items-start justify-center gap-0.5 px-2.5 py-1.5">
                   <p className="min-w-0 text-10 leading-[1.3] text-[#A0A3A7]">
@@ -481,11 +513,19 @@ export const TaxInfoPage = () => {
                   領取為 WBNB
                 </button>
               </div>
-            </div>
-          </div>
+            </CollapsibleContent>
+          </Collapsible>
 
-          <div className="text-card-foreground border border-[#484B51] bg-transparent shadow-none p-2.5">
-            <div className="flex min-h-5 cursor-pointer items-center justify-between gap-3">
+          <Collapsible
+            open={liquidityOpen}
+            onOpenChange={setLiquidityOpen}
+            className="text-card-foreground border border-[#484B51] bg-transparent shadow-none p-2.5"
+          >
+            <CollapsibleTrigger
+              render={<div />}
+              nativeButton={false}
+              className="flex min-h-5 cursor-pointer items-center justify-between gap-3"
+            >
               <div className="flex min-w-0 items-center gap-1">
                 <Waves className="size-3.5 shrink-0 text-[#16D9D9]" />
                 <span className="min-w-0 truncate text-13 font-medium leading-[1.3] text-[#16D9D9]">
@@ -494,10 +534,12 @@ export const TaxInfoPage = () => {
               </div>
               <div className="flex shrink-0 items-center gap-1 text-[#16D9D9]">
                 <span className="text-13 font-medium leading-[1.3]">30 %</span>
-                <ChevronUp className="size-3.5 shrink-0" />
+                <ChevronDown
+                  className={`size-3.5 shrink-0 transition-transform ${liquidityOpen ? 'rotate-180' : ''}`}
+                />
               </div>
-            </div>
-            <div className="grid overflow-hidden border border-[#484B51] [&>*+*]:border-[#484B51] grid-cols-2 [&>*+*]:border-l [&>*+*]:border-t-0 mt-2.5">
+            </CollapsibleTrigger>
+            <CollapsibleContent className="grid overflow-hidden border border-[#484B51] [&>*+*]:border-[#484B51] grid-cols-2 [&>*+*]:border-l [&>*+*]:border-t-0 mt-2.5">
               <div className="flex min-h-11 min-w-0 flex-col items-start justify-center gap-0.5 px-2.5 py-1.5">
                 <p className="min-w-0 text-10 leading-[1.3] text-[#A0A3A7]">
                   添加到流動性的報價
@@ -514,11 +556,19 @@ export const TaxInfoPage = () => {
                   1823654.74 GR
                 </div>
               </div>
-            </div>
-          </div>
+            </CollapsibleContent>
+          </Collapsible>
 
-          <div className="text-card-foreground border border-[#484B51] bg-transparent shadow-none p-2.5">
-            <div className="flex min-h-5 cursor-pointer items-center justify-between gap-3">
+          <Collapsible
+            open={burnOpen}
+            onOpenChange={setBurnOpen}
+            className="text-card-foreground border border-[#484B51] bg-transparent shadow-none p-2.5"
+          >
+            <CollapsibleTrigger
+              render={<div />}
+              nativeButton={false}
+              className="flex min-h-5 cursor-pointer items-center justify-between gap-3"
+            >
               <div className="flex min-w-0 items-center gap-1">
                 <Flame className="size-3.5 shrink-0 text-[#F7594B]" />
                 <span className="min-w-0 truncate text-13 font-medium leading-[1.3] text-[#F7594B]">
@@ -527,10 +577,12 @@ export const TaxInfoPage = () => {
               </div>
               <div className="flex shrink-0 items-center gap-1 text-[#F7594B]">
                 <span className="text-13 font-medium leading-[1.3]">30 %</span>
-                <ChevronUp className="size-3.5 shrink-0" />
+                <ChevronDown
+                  className={`size-3.5 shrink-0 transition-transform ${burnOpen ? 'rotate-180' : ''}`}
+                />
               </div>
-            </div>
-            <div className="flex min-h-10 min-w-0 items-center justify-between gap-2 border border-[#484B51] px-2.5 py-1.5 mt-2.5">
+            </CollapsibleTrigger>
+            <CollapsibleContent className="flex min-h-10 min-w-0 items-center justify-between gap-2 border border-[#484B51] px-2.5 py-1.5 mt-2.5">
               <span className="min-w-0 text-11 leading-[1.3] text-[#A0A3A7]">
                 已銷毀代幣
               </span>
@@ -542,8 +594,8 @@ export const TaxInfoPage = () => {
                 ></span>
                 <span className="text-[#A0A3A7]">1.1292% 佔最大供應量</span>
               </div>
-            </div>
-          </div>
+            </CollapsibleContent>
+          </Collapsible>
         </div>
       </div>
     </div>
