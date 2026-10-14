@@ -91,6 +91,26 @@ export function formatDecimalText(
   return text.includes('.') ? text.replace(/0+$/, '').replace(/\.$/, '') : text
 }
 
+/**
+ * Splits a very small price into its leading zeros and significant digits, so the
+ * UI can render the zero count as a subscript (e.g. $0.0₆7933). Returns null for
+ * prices that read fine in plain decimal form.
+ */
+export function splitSubscriptPrice(
+  value: string | number | null | undefined,
+  significantDigits = 4,
+): { zeros: number; digits: string } | null {
+  const n = Number(value)
+  if (!Number.isFinite(n) || n <= 0 || n >= 0.0001) return null
+  // Fixed-point digits after the decimal point, with no exponent notation.
+  const fixed = n.toFixed(20).replace(/0+$/, '')
+  const [, fraction = ''] = fixed.split('.')
+  const zeros = fraction.length - fraction.replace(/^0+/, '').length
+  const digits = fraction.slice(zeros, zeros + significantDigits)
+  if (digits === '') return null
+  return { zeros, digits }
+}
+
 export function formatShortAddress(address: string) {
   if (!address) return '--'
   return `${address.slice(0, 6)}...${address.slice(-4)}`

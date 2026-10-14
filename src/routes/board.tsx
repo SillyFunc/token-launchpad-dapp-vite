@@ -9,9 +9,9 @@ import type { BoardItemResponse } from '@/api/board'
 import { usePopularTokens } from '@/hooks/use-board'
 import { useBoardPricing } from '@/hooks/use-board-pricing'
 import { readBoardMarket } from '@/lib/board-pair'
+import { PriceText } from '@/components/common/price-text'
 import {
   formatCompactNumber,
-  formatDecimalText,
   formatPercent,
   formatShortAddress,
 } from '@/lib/format'
@@ -572,8 +572,8 @@ function BoardListRow({
           </div>
         </div>
       </div>
-      <div className="min-w-0 truncate text-right font-medium tracking-normal text-foreground text-xs">
-        {priceUsd !== null ? `$${formatDecimalText(priceUsd, 5)}` : '--'}
+      <div className="min-w-0 whitespace-nowrap text-right font-medium tracking-normal text-foreground text-xs">
+        <PriceText value={priceUsd} />
       </div>
       <div className="text-right">
         {change24h === null ? (

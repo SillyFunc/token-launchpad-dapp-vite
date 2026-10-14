@@ -6,6 +6,7 @@ import { Check, Coins, Copy, ExternalLink } from 'lucide-react'
 
 import pancakeIcon from '@/assets/svgs/pancake.svg'
 import { getTokenByContractAddress } from '@/api/token'
+import { PriceText } from '@/components/common/price-text'
 import { TokenChart } from '@/components/token/token-chart'
 import { TokenInfo } from '@/components/token/token-info'
 import { TradeSheet } from '@/components/token/trade-sheet'
@@ -18,7 +19,6 @@ import { hasPoolLiquidity } from '@/hooks/use-token-price'
 import {
   formatCompactNumber,
   formatDecimal,
-  formatDecimalText,
   formatPercent,
   formatTokenAmount,
 } from '@/lib/format'
@@ -100,8 +100,6 @@ export const TokenPage = () => {
   const tokenSymbol = token?.symbol ? `$${token.symbol}` : '--'
   const explorerUrl = getExplorerAddressUrl(tokenAddress)
   const externalUrl = token?.website || explorerUrl
-  const priceUsdText =
-    priceUsd === null ? null : `$${formatDecimalText(priceUsd, 5)}`
   const changeText =
     changePercent === null ? '--' : formatPercent(changePercent)
   const supplyText =
@@ -189,8 +187,8 @@ export const TokenPage = () => {
             </div>
           </div>
           <div className="flex shrink-0 flex-col text-right">
-            <span className="text-base font-semibold text-foreground">
-              {priceUsdText ?? '--'}
+            <span className="whitespace-nowrap text-base font-semibold text-foreground">
+              <PriceText value={priceUsd} />
             </span>
             <span
               className={
