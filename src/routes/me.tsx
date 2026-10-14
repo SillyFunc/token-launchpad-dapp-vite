@@ -1,4 +1,5 @@
 import { ConnectKitButton } from 'connectkit'
+import { useMemo } from 'react'
 import { useConnection, useReadContract } from 'wagmi'
 import { zeroAddress } from 'viem'
 import { Check, Copy, Pencil, Share2, TriangleAlertIcon } from 'lucide-react'
@@ -18,6 +19,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { getCoordinatorFactory } from '@/contracts'
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 import { useHeldTokens } from '@/hooks/use-held-tokens'
+import { walletAvatarDataUri } from '@/lib/avatar'
 import { formatAddress } from '@/lib/utils'
 import { PLATFORM_CHAIN_ID } from '@/lib/web3'
 import { m } from '@/paraglide/messages.js'
@@ -36,6 +38,7 @@ export const MePage = () => {
   })
   const held = useHeldTokens(address)
   const shortAddress = formatAddress(address)
+  const avatarSrc = useMemo(() => walletAvatarDataUri(address), [address])
   const createdTokenCount =
     address && createdCount !== undefined ? createdCount.toString() : '--'
   const heldTokenCount =
@@ -53,7 +56,15 @@ export const MePage = () => {
         </div>
         <div className="flex flex-col gap-4 border border-[#484B51] bg-[#070808] p-3">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="relative h-16 w-16 shrink-0 overflow-hidden border border-[#484B51] bg-black"></div>
+            <div className="relative h-16 w-16 shrink-0 overflow-hidden border border-[#484B51] bg-black">
+              {avatarSrc && (
+                <img
+                  src={avatarSrc}
+                  alt=""
+                  className="absolute inset-0 size-full object-cover"
+                />
+              )}
+            </div>
             <div className="min-w-0">
               <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <span className="truncate text-15 font-medium leading-[1.4] text-white">
