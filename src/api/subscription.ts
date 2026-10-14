@@ -43,9 +43,9 @@ export interface PresaleBeforeParams {
   payAmount: string
 }
 
-/** Step 1 after a successful subscribe: returns the record id used by step 2. */
+/** Step 1 after a successful subscribe: returns `{ id }` for step 2. */
 export function presaleBefore(params: PresaleBeforeParams, signal?: AbortSignal) {
-  return postForm<number>('deposit/buyTokenRecord/presaleBefore', params, signal)
+  return postForm<{ id: number }>('deposit/buyTokenRecord/presaleBefore', params, signal)
 }
 
 export interface PresaleAfterParams {

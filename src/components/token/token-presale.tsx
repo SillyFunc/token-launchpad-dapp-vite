@@ -308,7 +308,7 @@ export function TokenPresale({
   ): Promise<boolean> => {
     if (!userAddress || !gate.presaleAddress) return false
     try {
-      const id = await presaleBefore({
+      const { id } = await presaleBefore({
         address: userAddress,
         presaleAddress: gate.presaleAddress,
         payAmount: formatEther(payAmountWei),
