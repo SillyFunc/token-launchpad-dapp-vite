@@ -111,5 +111,9 @@ export function useDividendInfo(
     }
   }, [dividendAddress, account, infoQuery.data])
 
-  return { info, isLoading: dividendQuery.isLoading || infoQuery.isLoading }
+  return {
+    info,
+    dividendAddress,
+    isLoading: dividendQuery.isLoading || infoQuery.isLoading,
+  }
 }

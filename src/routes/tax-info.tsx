@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router'
 import { isAddress, type Address } from 'viem'
-import { useConnection } from 'wagmi'
+import { useConfig, useConnection } from 'wagmi'
+import { readContract } from 'wagmi/actions'
 
 import { getTokenByContractAddress } from '@/api/token'
 import {
@@ -20,21 +21,88 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible'
-import { Switch } from '@/components/ui/switch'
+import { Web3ActionButton } from '@/components/common/web3-action-button'
+import { dividendAbi } from '@/contracts'
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 import { useDividendInfo } from '@/hooks/use-dividend-info'
+import { useQuoteToken } from '@/hooks/use-quote-token'
 import { useTaxChannelYields } from '@/hooks/use-tax-channel-yields'
 import { useTokenGate } from '@/hooks/use-token-gate'
+import { useWriteContractTx } from '@/hooks/use-contract-tx'
+import { getContractErrorMessage } from '@/lib/contract-error'
 import { formatBnbAmount, formatDecimal, formatTokenAmount } from '@/lib/format'
+import { toast } from '@/lib/toast'
 import { formatAddress } from '@/lib/utils'
-import { getExplorerAddressUrl } from '@/lib/web3'
+import { PLATFORM_CHAIN_ID, WRAPPED_NATIVE_ADDRESS, getExplorerAddressUrl } from '@/lib/web3'
+import { m } from '@/paraglide/messages.js'
 
 const RECEIVING_WALLET = '0x7b5F94d3d5eD780A595dA7083a30dB007A78de76'
 
 const WBNB_ADDRESS = '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c'
 
-const SWITCH_CLASS =
-  '!h-6 !w-[38px] rounded-none! border-[#484B51] bg-[#18191B] p-[4px] data-checked:border-[#5B31FF] data-checked:bg-[#5B31FF] data-unchecked:bg-[#18191B] focus-visible:ring-1 focus-visible:ring-[#5B31FF] focus-visible:ring-offset-0 [&>[data-slot=switch-thumb]]:!h-[14px] [&>[data-slot=switch-thumb]]:!w-[14px] [&>[data-slot=switch-thumb]]:rounded-none [&>span]:shadow-none [&>span[data-checked]]:!translate-x-[14px] [&>span[data-checked]]:bg-white [&>span[data-unchecked]]:!translate-x-0 [&>span[data-unchecked]]:bg-white'
+// const SWITCH_CLASS =
+// '!h-6 !w-[38px] rounded-none! border-[#484B51] bg-[#18191B] p-[4px] data-checked:border-[#5B31FF] data-checked:bg-[#5B31FF] data-unchecked:bg-[#18191B] focus-visible:ring-1 focus-visible:ring-[#5B31FF] focus-visible:ring-offset-0 [&>[data-slot=switch-thumb]]:!h-[14px] [&>[data-slot=switch-thumb]]:!w-[14px] [&>[data-slot=switch-thumb]]:rounded-none [&>span]:shadow-none [&>span[data-checked]]:!translate-x-[14px] [&>span[data-checked]]:bg-white [&>span[data-unchecked]]:!translate-x-0 [&>span[data-unchecked]]:bg-white'
+
+/**
+ * Claims the connected wallet's dividends as native BNB (`withdrawDividends()` unwraps
+ * WBNB). Disabled when no wallet is connected or nothing is claimable.
+ */
+const ClaimDividendButton: React.FC<{
+  dividendAddress: Address | undefined
+  account: Address | undefined
+  claimable: bigint | undefined
+}> = ({ dividendAddress, account, claimable }) => {
+  const config = useConfig()
+  const queryClient = useQueryClient()
+  const { execute } = useWriteContractTx()
+  const [isClaiming, setIsClaiming] = useState(false)
+
+  const disabled =
+    !dividendAddress || !account || claimable === undefined || claimable === 0n
+
+  const handleClaim = async () => {
+    if (!account || !dividendAddress || isClaiming) return
+    setIsClaiming(true)
+    try {
+      // Re-read the live amount so a stale figure never reaches the chain.
+      const live = await readContract(config, {
+        address: dividendAddress,
+        abi: dividendAbi,
+        chainId: PLATFORM_CHAIN_ID,
+        functionName: 'withdrawableDividendOf',
+        args: [account],
+      })
+      if (live === 0n) {
+        toast.error(m.me_asset_claim_empty())
+        return
+      }
+      await execute({
+        address: dividendAddress,
+        abi: dividendAbi,
+        functionName: 'withdrawDividends',
+      })
+      await queryClient.invalidateQueries({ queryKey: ['readContracts'] })
+      toast.success(m.me_asset_claim_success())
+    } catch (error) {
+      toast.error(m.token_transaction_failed(), getContractErrorMessage(error))
+    } finally {
+      setIsClaiming(false)
+    }
+  }
+
+  return (
+    <Web3ActionButton
+      type="button"
+      loading={isClaiming}
+      loadingText={m.me_asset_claiming()}
+      disabled={disabled}
+      onAction={handleClaim}
+      className="inline-flex items-center justify-center whitespace-nowrap ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none h-8 w-full bg-[#D0FF00] px-3 py-1.5 text-11 font-medium uppercase text-[#070808] hover:bg-[#E2FF4F] disabled:bg-[#536600] disabled:text-[#070808] disabled:opacity-100"
+    >
+      {m.me_asset_claim_dividend()}
+    </Web3ActionButton>
+  )
+}
 
 export const TaxInfoPage = () => {
   const { address: routeAddress = '' } = useParams<{ address: string }>()
@@ -53,8 +121,18 @@ export const TaxInfoPage = () => {
   const taxYield = tokenAddress
     ? taxYields.byAddress[tokenAddress.toLowerCase()]
     : undefined
+  const { quoteToken } = useQuoteToken(tokenAddress)
+  // The market channel's yield is in the quote token; show it as BNB only when the
+  // quote token is WBNB, otherwise the figure would be mislabeled.
+  const marketingInBnb =
+    quoteToken?.toLowerCase() === WRAPPED_NATIVE_ADDRESS.toLowerCase()
+      ? taxYield?.marketingBNB
+      : undefined
   const { address: connectedAddress } = useConnection()
-  const { info: dividendInfo } = useDividendInfo(tokenAddress, connectedAddress)
+  const { info: dividendInfo, dividendAddress } = useDividendInfo(
+    tokenAddress,
+    connectedAddress,
+  )
 
   const marketBps = token?.marketBps ?? 0
   const dividendBps = token?.dividendBps ?? 0
@@ -104,8 +182,8 @@ export const TaxInfoPage = () => {
   const [liquidityOpen, setLiquidityOpen] = useState(false)
   const [burnOpen, setBurnOpen] = useState(false)
 
-  const [claimForAnother, setClaimForAnother] = useState(false)
-  const [unwrapWbnb, setUnwrapWbnb] = useState(false)
+  // const [claimForAnother, setClaimForAnother] = useState(false)
+  // const [unwrapWbnb, setUnwrapWbnb] = useState(false)
 
   return (
     <div className="pb-3">
@@ -357,7 +435,7 @@ export const TaxInfoPage = () => {
                       發送給資金接收方的報價
                     </p>
                     <div className="min-w-0 text-xs font-medium leading-[1.3] text-white">
-                      --
+                      {bnbText(marketingInBnb)}
                     </div>
                   </div>
                 </div>
@@ -531,6 +609,7 @@ export const TaxInfoPage = () => {
                     </div>
                   </div>
                 </div>
+                {/* "为其他用户领取" switch, disabled for now:
                 <div className="flex min-h-6 min-w-0 items-center justify-between gap-3">
                   <label
                     className="peer-disabled:cursor-not-allowed peer-disabled:opacity-70 min-w-0 text-xs font-medium leading-normal text-white"
@@ -545,6 +624,7 @@ export const TaxInfoPage = () => {
                     className={SWITCH_CLASS}
                   />
                 </div>
+                */}
                 <p className="text-11 leading-[1.4] text-[#84888C]">
                   分紅將分配給持有超過 {minimumShareText} 的錢包。超過約 $4
                   的餘額會自動發送給您，您也可以隨時在此手動領取分紅——即使是低至
@@ -579,6 +659,7 @@ export const TaxInfoPage = () => {
                       </div>
                     </div>
                   </div>
+                  {/* "解包为 BNB" switch, disabled for now (claims are native BNB):
                   <div className="flex min-h-6 min-w-0 items-center justify-between gap-3">
                     <label
                       className="peer-disabled:cursor-not-allowed peer-disabled:opacity-70 min-w-0 text-xs font-medium leading-normal text-white"
@@ -593,12 +674,12 @@ export const TaxInfoPage = () => {
                       className={SWITCH_CLASS}
                     />
                   </div>
-                  <button
-                    disabled
-                    className="inline-flex items-center justify-center whitespace-nowrap ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none h-8 w-full bg-[#D0FF00] px-3 py-1.5 text-11 font-medium uppercase text-[#070808] hover:bg-[#E2FF4F] disabled:bg-[#536600] disabled:text-[#070808] disabled:opacity-100"
-                  >
-                    領取為 WBNB
-                  </button>
+                  */}
+                  <ClaimDividendButton
+                    dividendAddress={dividendAddress}
+                    account={connectedAddress}
+                    claimable={dividendInfo?.withdrawable}
+                  />
                 </div>
               </CollapsibleContent>
             </Collapsible>
