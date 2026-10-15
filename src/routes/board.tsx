@@ -54,8 +54,6 @@ export const BoardPage = () => {
     [tokens],
   )
 
-  // Only the list view's "presale" badge needs on-chain stage, and it shows only
-  // for tokens with a tax rate. Other tokens skip the multicall entirely.
   const stageTokens = useMemo(
     () =>
       viewMode === 'list'
@@ -210,14 +208,6 @@ export const BoardPage = () => {
               </svg>
             </button>
           </div>
-
-          {/* <button
-            type="button"
-            aria-label={m.board_more_filters()}
-            className="flex size-7 items-center justify-center rounded border border-white/10 bg-black text-white transition-colors hover:bg-white/5"
-          >
-            <SlidersHorizontal className="size-3.5" />
-          </button> */}
         </div>
       </div>
 
@@ -391,12 +381,12 @@ function BoardGridCard({ token }: { token: BoardItemResponse }) {
             className="pointer-events-auto relative z-2 grid h-5 w-5 shrink-0 place-items-center text-[#A0A3A7] transition-colors hover:text-white"
           >
             {copied ? (
-              <Check
-                className="size-4 text-[#2BC235]"
-                aria-hidden="true"
-              />
+              <Check className="size-4 text-[#2BC235]" aria-hidden="true" />
             ) : (
-              <span className="relative inline-block h-4 w-4" aria-hidden="true">
+              <span
+                className="relative inline-block h-4 w-4"
+                aria-hidden="true"
+              >
                 <svg
                   viewBox="0 0 14.834 14.834"
                   fill="none"
