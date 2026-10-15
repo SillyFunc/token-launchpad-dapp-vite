@@ -1,6 +1,6 @@
 import { Link } from 'react-router'
 import iconRocketUrl from '@/assets/svgs/icon-rocket.svg?url'
-import { MenuIcon, User, Wallet, XIcon } from 'lucide-react'
+import { MenuIcon, User, XIcon } from 'lucide-react'
 import { ConnectKitButton } from 'connectkit'
 import type React from 'react'
 import { useState } from 'react'
@@ -102,7 +102,7 @@ export const Header: React.FC<HeaderProps> = ({ isMenuOpen, onToggleMenu }) => {
                       maskImage: `url("${iconRocketUrl}")`,
                     }}
                   ></span> */}
-                  <User className='size-4.5' />
+                  <User className="size-4.5" />
                 </button>
               )
             }
