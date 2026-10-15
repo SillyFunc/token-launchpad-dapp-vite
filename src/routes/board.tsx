@@ -4,7 +4,6 @@ import { Check, Flame, ChevronDown, Coins } from 'lucide-react'
 
 import SortIcon from '@/assets/svgs/sort-default.svg'
 import BnbIcon from '@/assets/bnb-icon.svg'
-import boardBanner from '@/assets/images/board-banner.png'
 import type { BoardItemResponse } from '@/api/board'
 import { usePopularTokens } from '@/hooks/use-board'
 import { useBoardPricing } from '@/hooks/use-board-pricing'
@@ -24,6 +23,7 @@ import {
 import { cn } from '@/lib/utils'
 import { m } from '@/paraglide/messages.js'
 import { Spinner } from '@/components/ui/spinner'
+import { Banner } from '@/components/board/banner'
 
 const FILTER_OPTIONS = [
   { value: 'hot', label: () => m.board_filter_hot() },
@@ -74,17 +74,7 @@ export const BoardPage = () => {
 
   return (
     <div className="relative mx-auto flex w-full flex-col pb-24 pt-3 text-white space-y-3">
-      <div className="relative w-full overflow-hidden border border-white/10 bg-black">
-        <img
-          src={boardBanner}
-          alt="Banner"
-          className="h-32 w-full object-cover"
-        />
-        <div className="absolute inset-x-0 bottom-2.5 flex items-center justify-center gap-1.5 pointer-events-none">
-          <div className="h-1.5 w-4 rounded-full bg-[#F8EA25]" />
-          <div className="size-1.5 rounded-full bg-[#333333]" />
-        </div>
-      </div>
+      <Banner />
 
       <div className="sticky top-16 z-30 flex h-12 items-center justify-between gap-2 bg-black">
         <div className="relative">
