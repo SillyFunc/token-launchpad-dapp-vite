@@ -23,6 +23,7 @@ import {
 } from '@/lib/home-prefs'
 import { cn } from '@/lib/utils'
 import { m } from '@/paraglide/messages.js'
+import { Spinner } from '@/components/ui/spinner'
 
 const FILTER_OPTIONS = [
   { value: 'hot', label: () => m.board_filter_hot() },
@@ -279,18 +280,31 @@ export const BoardPage = () => {
               <span>{m.board_empty()}</span>
             </div>
           ) : (
-            tokenList.map((token) => {
-              const key = String(token.coinContractAddress || '').toLowerCase()
-              return viewMode === 'grid' ? (
-                <BoardGridCard key={token.id} token={token} />
-              ) : (
-                <BoardListRow
-                  key={token.id}
-                  token={token}
-                  pricing={pricingMap[key]}
-                />
-              )
-            })
+            <>
+              {tokenList.map((token) => {
+                const key = String(
+                  token.coinContractAddress || '',
+                ).toLowerCase()
+                return viewMode === 'grid' ? (
+                  <BoardGridCard key={token.id} token={token} />
+                ) : (
+                  <BoardListRow
+                    key={token.id}
+                    token={token}
+                    pricing={pricingMap[key]}
+                  />
+                )
+              })}
+              <button
+                type="button"
+                className="flex h-10 w-full items-center justify-center gap-1 text-xs font-normal uppercase leading-[1.4] text-white transition-colors hover:text-[#e87000] active:text-[#D66500]"
+              >
+                <span>查看更多</span>
+                <ChevronDown className="size-3.5 -rotate-90" />
+                <span>加载中</span>
+                <Spinner className="size-3.5" />
+              </button>
+            </>
           )}
         </div>
       </div>
