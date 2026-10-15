@@ -526,6 +526,7 @@
   "board_tax_details": "Tax details",
   "board_load_more": "Load more",
   "board_loading_more": "Loading",
+  "board_banner_slide": "Banner slide {index}",
   "me_assets_loading": "Loading holdings…",
   "me_assets_error": "Couldn't load holdings",
   "me_assets_empty": "This wallet doesn't hold any platform tokens",
