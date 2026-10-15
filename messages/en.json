@@ -524,6 +524,8 @@
   "board_card_ca": "CA",
   "board_card_change_24h": "24h",
   "board_tax_details": "Tax details",
+  "board_load_more": "Load more",
+  "board_loading_more": "Loading",
   "me_assets_loading": "Loading holdings…",
   "me_assets_error": "Couldn't load holdings",
   "me_assets_empty": "This wallet doesn't hold any platform tokens",

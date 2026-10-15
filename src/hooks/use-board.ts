@@ -1,5 +1,5 @@
 import { listBoard, type BoardListParams } from '@/api/board'
-import { useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 
 export const boardKeys = {
   all: ['board'] as const,
@@ -20,11 +20,22 @@ export const useBoardList = (
   })
 }
 
+const POPULAR_PAGE_SIZE = 10
+
 export const usePopularTokens = () => {
-  const params: BoardListParams = { pageNo: 1, pageSize: 10, model: 1 }
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: boardKeys.popular(),
-    queryFn: ({ signal }) => listBoard(params, signal),
+    queryFn: ({ pageParam, signal }) =>
+      listBoard(
+        { pageNo: pageParam, pageSize: POPULAR_PAGE_SIZE, model: 1 },
+        signal,
+      ),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) => {
+      const reachedEnd =
+        lastPage.last || lastPage.content.length < POPULAR_PAGE_SIZE
+      return reachedEnd ? undefined : allPages.length + 1
+    },
     staleTime: 30_000,
   })
 }

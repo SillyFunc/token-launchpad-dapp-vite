@@ -48,11 +48,22 @@ export const BoardPage = () => {
     writeBoardViewMode(mode)
   }
 
-  const { data: tokens, isLoading, isError, refetch } = usePopularTokens()
+  const {
+    data,
+    isLoading,
+    isError,
+    refetch,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = usePopularTokens()
 
   const tokenList = useMemo(
-    () => (Array.isArray(tokens?.content) ? tokens.content : []),
-    [tokens],
+    () =>
+      data?.pages.flatMap((page) =>
+        Array.isArray(page?.content) ? page.content : [],
+      ) ?? [],
+    [data],
   )
 
   const stageTokens = useMemo(
@@ -285,15 +296,26 @@ export const BoardPage = () => {
                   />
                 )
               })}
-              <button
-                type="button"
-                className="flex h-10 w-full items-center justify-center gap-1 text-xs font-normal uppercase leading-[1.4] text-white transition-colors hover:text-[#e87000] active:text-[#D66500]"
-              >
-                <span>查看更多</span>
-                <ChevronDown className="size-3.5 -rotate-90" />
-                <span>加载中</span>
-                <Spinner className="size-3.5" />
-              </button>
+              {hasNextPage && (
+                <button
+                  type="button"
+                  onClick={() => void fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                  className="flex h-10 w-full items-center justify-center gap-1 text-xs font-normal uppercase leading-[1.4] text-white transition-colors hover:text-[#e87000] active:text-[#D66500] disabled:pointer-events-none"
+                >
+                  {isFetchingNextPage ? (
+                    <>
+                      <span>{m.board_loading_more()}</span>
+                      <Spinner className="size-3.5" />
+                    </>
+                  ) : (
+                    <>
+                      <span>{m.board_load_more()}</span>
+                      <ChevronDown className="size-3.5 -rotate-90" />
+                    </>
+                  )}
+                </button>
+              )}
             </>
           )}
         </div>

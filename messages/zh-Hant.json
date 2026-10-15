@@ -524,6 +524,8 @@
   "board_card_ca": "CA",
   "board_card_change_24h": "24h",
   "board_tax_details": "稅收詳情",
+  "board_load_more": "查看更多",
+  "board_loading_more": "載入中",
   "me_assets_loading": "正在讀取持有的代幣……",
   "me_assets_error": "無法讀取持有的代幣",
   "me_assets_empty": "此錢包尚未持有本平台代幣",
