@@ -1,5 +1,5 @@
 import { Link } from 'react-router'
-import iconRocketUrl from '@/assets/svgs/icon-rocket.svg?url'
+import iconCloverUrl from '@/assets/svgs/icon-clover.svg?url'
 import { MenuIcon, User, XIcon } from 'lucide-react'
 import { ConnectKitButton } from 'connectkit'
 import type React from 'react'
@@ -47,8 +47,8 @@ export const Header: React.FC<HeaderProps> = ({ isMenuOpen, onToggleMenu }) => {
             aria-hidden
             className="block shrink-0 bg-current [-webkit-mask-position:center] [-webkit-mask-repeat:no-repeat] [-webkit-mask-size:contain] mask-center mask-no-repeat mask-contain size-6"
             style={{
-              WebkitMaskImage: `url("${iconRocketUrl}")`,
-              maskImage: `url("${iconRocketUrl}")`,
+              WebkitMaskImage: `url("${iconCloverUrl}")`,
+              maskImage: `url("${iconCloverUrl}")`,
             }}
           ></span>
         </Link>
