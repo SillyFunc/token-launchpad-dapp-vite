@@ -1,7 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
-import { formatEther } from 'viem'
 import {
   Check,
   Coins,
@@ -13,19 +12,10 @@ import {
 import { getTokenByContractAddress } from '@/api/token'
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 import { usePresaleList, type PresaleListItem } from '@/hooks/use-presale-list'
+import { CornerBracket } from '@/components/common/corner-bracket'
 import { PageTitle } from '@/components/common/page-title'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
 import {
   Empty,
   EmptyContent,
@@ -34,47 +24,11 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty'
-import { Progress } from '@/components/ui/progress'
 import { Spinner } from '@/components/ui/spinner'
-import { formatBnbAmount, formatDateTime, formatDecimal } from '@/lib/format'
+import { formatBnbAmount } from '@/lib/format'
 import { tokenAmountToBnb } from '@/lib/presale-price'
 import { cn, formatAddress } from '@/lib/utils'
 import { m } from '@/paraglide/messages.js'
-
-export interface PresaleDetailProps {
-  label: string
-  value: string
-}
-
-const PresaleDetail: React.FC<PresaleDetailProps> = ({ label, value }) => {
-  return (
-    <div className="min-w-0">
-      <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className="mt-1 truncate text-sm text-foreground" title={value}>
-        {value}
-      </dd>
-    </div>
-  )
-}
-
-export interface CornerBracketProps {
-  className?: string
-}
-
-/** The thin "[" used around the CA on the token page; mirror it with `-scale-x-100`. */
-const CornerBracket: React.FC<CornerBracketProps> = ({ className }) => {
-  return (
-    <svg
-      viewBox="0 0 4.5 14"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-      className={cn('h-3 shrink-0 text-[#A0A3A7]', className)}
-    >
-      <path d="M4.25 0.5H0.5V13.5H4.25" stroke="currentColor" strokeWidth="1" />
-    </svg>
-  )
-}
 
 export interface ExpandableDescriptionProps {
   text: string
@@ -134,7 +88,11 @@ const ExpandableDescription: React.FC<ExpandableDescriptionProps> = ({
   )
 }
 
-const NewPresaleCard: React.FC<PresaleCardProps> = ({ item }) => {
+export interface PresaleCardProps {
+  item: PresaleListItem
+}
+
+const PresaleCard: React.FC<PresaleCardProps> = ({ item }) => {
   // Logo and description come from the backend token detail, like on the
   // token page. Same key and lowercase address, so opening the token reuses
   // this cache entry.
@@ -239,90 +197,14 @@ const NewPresaleCard: React.FC<PresaleCardProps> = ({ item }) => {
         </span>
       </div>
       </div>
-      <button type="button" className="bg-linear-to-r from-[#FE810B] via-[#FFA546] to-[#FE810B] shadow-[0_3px_0_0_#963000] text-base text-[#1a1a1a] h-9 font-semibold mt-4 active:translate-y-0.5 transition-all focus-visible:outline-none">
-        我要认购
-      </button>
+      {/* A link, not a button: it navigates, so it should support open-in-new-tab. */}
+      <Link
+        to={`/presale-detail/${item.tokenAddress}`}
+        className="flex items-center justify-center bg-[#fe810b] hover:bg-[#e87000] text-base text-[#1a1a1a] h-9 font-semibold mt-4 transition-all active:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E87000]"
+      >
+        {m.presale_list_subscribe()}
+      </Link>
     </div>
-  )
-}
-
-export interface PresaleCardProps {
-  item: PresaleListItem
-}
-
-const PresaleCard: React.FC<PresaleCardProps> = ({ item }) => {
-  const hasHardcap = item.hardcap > 0n
-  const progress = hasHardcap
-    ? Math.min(100, Number((item.raised * 10_000n) / item.hardcap) / 100)
-    : null
-  const raisedText = hasHardcap
-    ? `${formatBnbAmount(item.raised)} / ${formatBnbAmount(item.hardcap)}`
-    : formatBnbAmount(item.raised)
-
-  return (
-    <Card size="sm" className="h-full">
-      <CardHeader>
-        <CardTitle className="text-base">{item.name}</CardTitle>
-        <CardDescription>{item.symbol}</CardDescription>
-        <CardAction>
-          <Badge variant="outline">
-            {item.stage === 'upcoming'
-              ? m.presale_list_status_upcoming()
-              : m.presale_list_status_open()}
-          </Badge>
-        </CardAction>
-      </CardHeader>
-
-      <CardContent className="flex flex-col gap-4">
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between gap-3 text-xs">
-            <span className="text-muted-foreground">
-              {m.presale_list_raised()}
-            </span>
-            <span className="tabular-nums text-foreground">{raisedText}</span>
-          </div>
-          {progress !== null ? <Progress value={progress} /> : null}
-        </div>
-
-        <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
-          <PresaleDetail
-            label={m.presale_price()}
-            value={`${formatDecimal(formatEther(item.presalePrice))} ${m.presale_price_unit()}`}
-          />
-          <PresaleDetail
-            label={m.presale_softcap()}
-            value={formatBnbAmount(item.softCap)}
-          />
-          <PresaleDetail
-            label={m.presale_list_starts()}
-            value={
-              item.startTime > 0n
-                ? formatDateTime(item.startTime)
-                : m.presale_list_start_now()
-            }
-          />
-          <PresaleDetail
-            label={m.presale_list_ends()}
-            value={formatDateTime(item.endTime)}
-          />
-        </dl>
-      </CardContent>
-
-      <CardFooter className="justify-between gap-3 bg-muted/30">
-        <span
-          className="min-w-0 truncate text-xs text-muted-foreground"
-          title={item.creator}
-        >
-          {m.presale_list_creator()} {formatAddress(item.creator)}
-        </span>
-        <Link
-          to={`/token/${item.tokenAddress}`}
-          className="shrink-0 text-xs text-foreground underline-offset-4 hover:underline"
-        >
-          {m.presale_list_view_token()}
-        </Link>
-      </CardFooter>
-    </Card>
   )
 }
 
@@ -387,7 +269,7 @@ export const PresaleListPage = () => {
       <ul className="grid grid-cols-1 gap-3">
         {presales.map((item) => (
           <li key={item.tokenAddress}>
-            <NewPresaleCard item={item} />
+            <PresaleCard item={item} />
           </li>
         ))}
       </ul>
