@@ -1,6 +1,6 @@
 import { Link } from 'react-router'
 import iconCloverUrl from '@/assets/svgs/icon-clover.svg?url'
-import { MenuIcon, User, XIcon } from 'lucide-react'
+import { MenuIcon, XIcon } from 'lucide-react'
 import { ConnectKitButton } from 'connectkit'
 import type React from 'react'
 import { useState } from 'react'
@@ -94,15 +94,14 @@ export const Header: React.FC<HeaderProps> = ({ isMenuOpen, onToggleMenu }) => {
                   aria-label={m.wallet_menu_open()}
                   onClick={() => setIsWalletMenuOpen(true)}
                 >
-                  {/* <span
+                  <span
                     aria-hidden
                     className="block shrink-0 bg-current [-webkit-mask-position:center] [-webkit-mask-repeat:no-repeat] [-webkit-mask-size:contain] mask-center mask-no-repeat mask-contain size-4.75"
                     style={{
-                      WebkitMaskImage: `url("${iconRocketUrl}")`,
-                      maskImage: `url("${iconRocketUrl}")`,
+                      WebkitMaskImage: `url("${iconCloverUrl}")`,
+                      maskImage: `url("${iconCloverUrl}")`,
                     }}
-                  ></span> */}
-                  <User className="size-4.5" />
+                  ></span>
                 </button>
               )
             }
