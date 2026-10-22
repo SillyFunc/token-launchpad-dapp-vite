@@ -14,6 +14,11 @@ interface SidebarProps {
 
 const navItems = [
   { label: () => m.nav_home(), path: '/board', requiresWallet: false },
+  {
+    label: () => m.nav_presales(),
+    path: '/presale-list',
+    requiresWallet: false,
+  },
   { label: () => m.nav_launch(), path: '/launch', requiresWallet: false },
   { label: () => m.nav_dashboard(), path: '/dashboard', requiresWallet: true },
   {

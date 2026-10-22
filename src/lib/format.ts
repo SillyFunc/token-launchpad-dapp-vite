@@ -116,6 +116,13 @@ export function formatShortAddress(address: string) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`
 }
 
+export function formatDateTime(seconds: bigint) {
+  return new Date(Number(seconds) * 1000).toLocaleString(locale(), {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  })
+}
+
 export function formatDuration(seconds: bigint) {
   const value = Number(seconds)
   if (!Number.isFinite(value) || value <= 0) return '--'
