@@ -102,12 +102,19 @@ export function useTokenGate(
   const [seenPair, setSeenPair] = useState<Address>()
   const [keptStatic, setKeptStatic] = useState<readonly ReadResult[]>()
   const [keptLive, setKeptLive] = useState<readonly ReadResult[]>()
+  // Presale terms are only "static" within one status: they are editable in
+  // the config phase, `endTime` is written by openPresale, and a relaunch
+  // starts a new round. Bumping the version on every status change re-reads
+  // them, so a page left open never shows a previous status's terms.
+  const [termsStatus, setTermsStatus] = useState<number>()
+  const [termsVersion, setTermsVersion] = useState(0)
   if (trackedKey !== tokenKey) {
     setTrackedKey(tokenKey)
     setSeenPresale(undefined)
     setSeenPair(undefined)
     setKeptStatic(undefined)
     setKeptLive(undefined)
+    setTermsStatus(undefined)
   }
 
   const presaleAddress = seenPresale ?? backendPresale
@@ -167,6 +174,7 @@ export function useTokenGate(
 
   const staticQuery = useReadContracts({
     contracts: staticContracts,
+    scopeKey: `presale-terms-${termsVersion}`,
     query: {
       enabled: Boolean(tokenAddress),
       staleTime: Infinity,
@@ -208,6 +216,12 @@ export function useTokenGate(
   const launchStatus = presaleAddress
     ? (liveData?.[TOKEN_LIVE_COUNT]?.result as readonly unknown[] | undefined)
     : undefined
+  const presaleStatus =
+    launchStatus?.[1] === undefined ? undefined : Number(launchStatus[1])
+  if (presaleStatus !== undefined && presaleStatus !== termsStatus) {
+    setTermsStatus(presaleStatus)
+    if (termsStatus !== undefined) setTermsVersion((version) => version + 1)
+  }
   const pairIndex = TOKEN_LIVE_COUNT + (presaleAddress ? PRESALE_LIVE_COUNT : 0)
   const staticPresaleIndex = 5
   const startTimeValue =
@@ -242,8 +256,7 @@ export function useTokenGate(
     sellTaxBps: poolState ? Number(poolState[2]) : undefined,
     pairAddress: resolvedPair,
     presaleEnabled: (launchStatus?.[0] as boolean | undefined) ?? false,
-    presaleStatus:
-      launchStatus?.[1] === undefined ? undefined : Number(launchStatus[1]),
+    presaleStatus,
     bnbAccumulated,
     tokensSubscribed,
     tokensClaimed: (launchStatus?.[5] as boolean | undefined) ?? false,
@@ -490,7 +503,7 @@ function emptyGate(refetch: () => Promise<void>): TokenGateResult {
 
 /**
  * Reads every dashboard card's gate in four page-level multicalls instead of
- * one query per card. Mirrors `useBoardPricing`'s phased batching:
+ * one query per card, split into phases:
  *
  * - token static / presale static: read once (`staleTime: Infinity`)
  * - token live / presale live: polled every 30s

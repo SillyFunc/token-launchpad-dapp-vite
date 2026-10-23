@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router'
 import BackArrow from '@/assets/svgs/back-arrow.svg'
+import { m } from '@/paraglide/messages.js'
 
 export interface PageTitleProps {
   title: string
@@ -25,7 +26,7 @@ export const PageTitle: React.FC<PageTitleProps> = ({
     <div className="flex items-center gap-3">
       <button
         type="button"
-        aria-label="返回"
+        aria-label={m.back()}
         onClick={handleBack}
         className="flex size-6 shrink-0 items-center justify-center rounded-xs hover:opacity-80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#FE810B]"
       >

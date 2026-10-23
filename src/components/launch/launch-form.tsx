@@ -610,7 +610,7 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
         </div>
 
         <div className="flex flex-col space-y-10 p-3">
-          <CollapsibleFormSection title="预留 CA">
+          <CollapsibleFormSection title={m.launch_reserved_ca_section()}>
             <form.Field name="reservedAddress">
               {(field) => (
                 <ReservedAddressSelect
@@ -882,7 +882,7 @@ export function LaunchForm({ initialData, editId }: LaunchFormProps) {
                         sanitizeAntiFarmerInput(event.target.value),
                       )
                     }
-                    rightAdornment="天"
+                    rightAdornment={m.launch_days_unit()}
                   />
                   <FieldInfo field={field} />
                 </div>

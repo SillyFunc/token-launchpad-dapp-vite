@@ -1,6 +1,7 @@
 import { Slider } from '../ui/slider'
 import { FormSectionTitle } from '../common/form-section-title'
 import { TAX_CHANNELS, type TaxChannelKey } from '@/lib/tax-channels'
+import { m } from '@/paraglide/messages.js'
 
 const UNALLOCATED_ARC_COLOR = 'rgb(31, 32, 35)'
 
@@ -109,7 +110,10 @@ export const TaxAllocation: React.FC<TaxAllocationProps> = ({
 
   return (
     <div className="flex flex-col gap-6">
-      <FormSectionTitle title="税收分配" required></FormSectionTitle>
+      <FormSectionTitle
+        title={m.tax_allocation_title()}
+        required
+      ></FormSectionTitle>
       <div className="flex flex-col">
       <div className='class="mt-9 min-w-0 border border-[#84888c] bg-transparent p-4 text-xs"'>
         <div className="flex items-center gap-2 bg-[rgba(247,89,75,0.1)] p-3 text-[#f7594b]">
@@ -132,7 +136,7 @@ export const TaxAllocation: React.FC<TaxAllocationProps> = ({
               fill="currentColor"
             ></path>
           </svg>
-          <span className="text-xs">總分配必須為 100%</span>
+          <span className="text-xs">{m.tax_allocation_must_total()}</span>
         </div>
         <div className="mt-8 grid min-w-0 gap-5">
           <div className="flex min-w-0 flex-col items-center gap-3 overflow-hidden">
@@ -155,8 +159,8 @@ export const TaxAllocation: React.FC<TaxAllocationProps> = ({
                       className="size-2 shrink-0 rounded-full"
                       style={{ backgroundColor: channel.color }}
                     ></span>
-                    <span className="min-w-0 truncate" title={channel.label}>
-                      {channel.label}
+                    <span className="min-w-0 truncate" title={channel.label()}>
+                      {channel.label()}
                     </span>
                   </span>
                   <span className="shrink-0 text-white">
@@ -170,8 +174,11 @@ export const TaxAllocation: React.FC<TaxAllocationProps> = ({
                     className="size-2 shrink-0 rounded-full"
                     style={{ backgroundColor: 'rgb(128, 128, 128)' }}
                   ></span>
-                  <span className="min-w-0 truncate" title="未分配">
-                    未分配
+                  <span
+                    className="min-w-0 truncate"
+                    title={m.tax_allocation_unallocated()}
+                  >
+                    {m.tax_allocation_unallocated()}
                   </span>
                 </span>
                 <span className="shrink-0 text-[#f7594b]">{unallocated}%</span>
@@ -182,10 +189,15 @@ export const TaxAllocation: React.FC<TaxAllocationProps> = ({
             <div className="flex items-center gap-3">
               <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-6 gap-y-1 border border-[#a0a3a7] bg-[#1f2023] px-3 py-2.5 text-xs font-normal text-foreground">
                 <span className="whitespace-nowrap">
-                  <span className="text-[#a0a3a7]">總計:</span> {total}%
+                  <span className="text-[#a0a3a7]">
+                    {m.tax_allocation_total_label()}
+                  </span>{' '}
+                  {total}%
                 </span>
                 <span className="whitespace-nowrap">
-                  <span className="text-[#a0a3a7]">未分配:</span>{' '}
+                  <span className="text-[#a0a3a7]">
+                    {m.tax_allocation_unallocated_label()}
+                  </span>{' '}
                   <span className="text-[#f7594b]">{unallocated}%</span>
                 </span>
               </div>
@@ -194,7 +206,7 @@ export const TaxAllocation: React.FC<TaxAllocationProps> = ({
                 onClick={handleReset}
                 className="shrink-0 border border-[#a0a3a7] px-3 py-2.5 text-xs text-foreground disabled:cursor-not-allowed disabled:opacity-50 [@media(hover:hover)]:hover:border-[#fe810b] [@media(hover:hover)]:hover:text-[#fe810b]"
               >
-                重置
+                {m.tax_allocation_reset()}
               </button>
             </div>
             <div className="mt-5.5 min-w-0 space-y-5">
@@ -203,13 +215,11 @@ export const TaxAllocation: React.FC<TaxAllocationProps> = ({
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex min-w-0 flex-col">
                       <label className="peer-disabled:cursor-not-allowed peer-disabled:opacity-70 min-w-0 truncate text-sm font-normal text-foreground">
-                        {channel.label}
+                        {channel.label()}
                       </label>
-                      {channel.sublabel ? (
-                        <span className="min-w-0 truncate text-xs font-light text-[#84888c]">
-                          {channel.sublabel}
-                        </span>
-                      ) : null}
+                      <span className="min-w-0 truncate text-xs font-light text-[#84888c]">
+                        {channel.sublabel()}
+                      </span>
                     </div>
                     <input
                       inputMode="numeric"
@@ -232,7 +242,7 @@ export const TaxAllocation: React.FC<TaxAllocationProps> = ({
                   ) : null}
                   {channel.key === 'dividend' ? (
                     <p className="text-xs text-[#84888c]">
-                      分紅稅收將分配給符合條件的代幣持有者。
+                      {m.tax_allocation_dividend_hint()}
                     </p>
                   ) : null}
                 </div>
@@ -245,8 +255,10 @@ export const TaxAllocation: React.FC<TaxAllocationProps> = ({
                 className="peer-disabled:cursor-not-allowed peer-disabled:opacity-70 mb-2 block text-sm text-foreground"
                 htmlFor="minDividendBalance"
               >
-                分紅資格最低持倉
-                <span className="text-[#84888c]">（代幣）</span>
+                {m.tax_allocation_min_share()}
+                <span className="text-[#84888c]">
+                  {m.tax_allocation_min_share_unit()}
+                </span>
               </label>
               <input
                 className="box-border h-10.5 w-full appearance-none border border-[#84888c] bg-transparent px-3 text-sm text-white placeholder:text-[#84888c] focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#FE810B] disabled:cursor-not-allowed disabled:opacity-50"
@@ -263,7 +275,9 @@ export const TaxAllocation: React.FC<TaxAllocationProps> = ({
                 }
               ></input>
               <FieldError message={errors?.minDividendBalance} />
-              <p className="mt-2 text-xs text-[#a0a3a7]">最少：0 個代幣</p>
+              <p className="mt-2 text-xs text-[#a0a3a7]">
+                {m.tax_allocation_min_share_hint()}
+              </p>
             </div>
           </div>
         </div>

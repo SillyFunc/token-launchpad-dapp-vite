@@ -6,6 +6,7 @@ import { presaleAbi } from '@/contracts'
 
 import type { BoardItemResponse } from '@/api/board'
 import { PresaleProgress } from '@/components/common/presale-progress'
+import { PriceText } from '@/components/common/price-text'
 import { Web3ActionButton } from '@/components/common/web3-action-button'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -129,7 +130,7 @@ const PresaleDetails: React.FC<{ state: TokenCardState }> = ({ state }) => {
         <DetailRow
           icon={RocketIcon}
           label={m.dashboard_presale_price()}
-          value={state.presalePrice}
+          value={<PriceText value={state.presalePrice} unit="BNB" />}
           mono
         />
         <DetailRow

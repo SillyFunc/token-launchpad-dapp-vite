@@ -101,14 +101,14 @@ export function splitSubscriptPrice(
   significantDigits = 4,
 ): { zeros: number; digits: string } | null {
   const n = Number(value)
-  if (!Number.isFinite(n) || n <= 0 || n >= 0.0001) return null
-  // Fixed-point digits after the decimal point, with no exponent notation.
-  const fixed = n.toFixed(20).replace(/0+$/, '')
-  const [, fraction = ''] = fixed.split('.')
-  const zeros = fraction.length - fraction.replace(/^0+/, '').length
-  const digits = fraction.slice(zeros, zeros + significantDigits)
-  if (digits === '') return null
-  return { zeros, digits }
+  if (!Number.isFinite(n) || n <= 0) return null
+  // toExponential rounds to the requested digits at any magnitude, so the
+  // shown digits are rounded rather than truncated (6.999999e-6 -> 0.0₅7), and
+  // a carry can shorten the zero run (9.99996e-6 -> 0.0₄1).
+  const [mantissa, exponent] = n.toExponential(significantDigits - 1).split('e')
+  const zeros = -Number(exponent) - 1
+  if (zeros < 4) return null
+  return { zeros, digits: mantissa.replace('.', '').replace(/0+$/, '') }
 }
 
 export function formatShortAddress(address: string) {

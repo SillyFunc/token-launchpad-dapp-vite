@@ -33,7 +33,7 @@ export const WalletMenu: React.FC<WalletMenuProps> = ({
         <div className="flex justify-end">
           <button
             type="button"
-            aria-label="关闭"
+            aria-label={m.common_close()}
             onClick={close}
             className="grid h-8 w-8 shrink-0 place-items-center bg-[#FE810B] text-[#070808] transition-opacity hover:opacity-90 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-[#FE810B]"
           >

@@ -11,7 +11,6 @@ import { TokenChart } from '@/components/token/token-chart'
 import { TokenInfo } from '@/components/token/token-info'
 import { TradeSheet } from '@/components/token/trade-sheet'
 import { TokenLayout } from '@/layouts/token-layout'
-import { TokenPresale } from '@/components/token/token-presale'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 import { useTokenGate } from '@/hooks/use-token-gate'
@@ -29,15 +28,24 @@ import { getExplorerAddressUrl } from '@/lib/web3'
 import { TAX_CHANNELS, type TaxChannelKey } from '@/lib/tax-channels'
 import { m } from '@/paraglide/messages.js'
 
-type TabType = 'PRESALE' | 'CHART' | 'INFO'
+type TabType = 'CHART' | 'INFO'
+
+// Presale state lives on the presale detail page; this page only shows the
+// token's chart and info.
+const TABS: Array<{ value: TabType; label: () => string }> = [
+  { value: 'CHART', label: m.token_tab_chart },
+  { value: 'INFO', label: m.token_tab_info },
+]
 
 const tabCommonClass = 'relative pb-1 cursor-pointer transition-colors'
 const tabLineClass =
   'absolute bottom-0 left-1/2 w-3 h-0.5 -translate-x-1/2 bg-foreground'
+const actionButtonClass =
+  'flex h-10.25 w-full items-center justify-center border border-white bg-white font-jetbrains text-base font-semibold leading-[1.4] text-[#070808] disabled:cursor-not-allowed disabled:opacity-40'
 
 export const TokenPage = () => {
   const { address: routeAddress = '' } = useParams<{ address: string }>()
-  const [activeTab, setActiveTab] = useState<TabType>('PRESALE')
+  const [activeTab, setActiveTab] = useState<TabType>('CHART')
   const { copy, copiedText } = useCopyToClipboard()
   const [isTradeOpen, setIsTradeOpen] = useState(false)
 
@@ -69,27 +77,16 @@ export const TokenPage = () => {
   const liquidityUsd = market?.liquidityUsd ?? null
   const fdvUsd = market?.fdv ?? null
 
-  const isLaunched = (gate.tokenState ?? 0) >= 2 || gate.presaleStatus === 3
-  const isTradable =
-    (gate.tokenState ?? 0) >= 2 && hasPoolLiquidity(gate.pairReads)
-  const hasPresale = gate.presaleConfigured || gate.presaleEnabled
-  const showTrade = !hasPresale || isLaunched
-  const visibleTabs: Array<{ value: TabType; label: string }> = gate.isLoading
-    ? [{ value: 'INFO', label: m.token_tab_info() }]
-    : isLaunched
-      ? [
-          { value: 'CHART', label: m.token_tab_chart() },
-          { value: 'INFO', label: m.token_tab_info() },
-        ]
-      : hasPresale
-        ? [
-            { value: 'PRESALE', label: m.token_tab_presale() },
-            { value: 'INFO', label: m.token_tab_info() },
-          ]
-        : [{ value: 'INFO', label: m.token_tab_info() }]
-  const displayedTab = visibleTabs.some((tab) => tab.value === activeTab)
-    ? activeTab
-    : visibleTabs[0].value
+  // Token state >= 2 means launched; before that there is no chart to show.
+  const isLaunched = (gate.tokenState ?? 0) >= 2
+  const isTradable = isLaunched && hasPoolLiquidity(gate.pairReads)
+  // An unlaunched presale token links to its presale detail page instead of trading.
+  const showSubscribe =
+    !isLaunched && (gate.presaleConfigured || gate.presaleEnabled)
+  const visibleTabs = isLaunched
+    ? TABS
+    : TABS.filter((tab) => tab.value !== 'CHART')
+  const displayedTab = isLaunched ? activeTab : 'INFO'
 
   const tokenName = !tokenAddress
     ? m.token_invalid_address_title()
@@ -106,11 +103,8 @@ export const TokenPage = () => {
     gate.totalSupply > 0n
       ? formatTokenAmount(gate.totalSupply, gate.tokenDecimals)
       : '--'
-  const displayedMarketCap = isLaunched ? marketCapUsd : null
   const marketCapText =
-    displayedMarketCap === null
-      ? '--'
-      : `$${formatCompactNumber(displayedMarketCap)}`
+    marketCapUsd === null ? '--' : `$${formatCompactNumber(marketCapUsd)}`
   const buyTax =
     token?.buyTax ??
     (gate.buyTaxBps === undefined ? null : gate.buyTaxBps / 100)
@@ -133,7 +127,7 @@ export const TokenPage = () => {
 
   const taxDetailsContent = (
     <>
-      <span className="text-xs">税收详情</span>
+      <span className="text-xs">{m.board_tax_details()}</span>
       <svg
         viewBox="0 0 16 16"
         fill="none"
@@ -329,7 +323,7 @@ export const TokenPage = () => {
               >
                 {channel.key === 'creator'
                   ? m.token_tax_channel_creator_short()
-                  : channel.label}{' '}
+                  : channel.label()}{' '}
                 {formatDecimal(channel.percent)}%
               </span>
             ))}
@@ -386,7 +380,7 @@ export const TokenPage = () => {
                 className={`${tabCommonClass} ${isActive ? 'text-foreground' : 'text-[#A0A3A7]'}`}
                 onClick={() => setActiveTab(tab)}
               >
-                {label}
+                {label()}
                 {isActive && (
                   <span aria-hidden="true" className={tabLineClass} />
                 )}
@@ -396,54 +390,58 @@ export const TokenPage = () => {
         </div>
       </div>
 
-      <>
-        {displayedTab === 'PRESALE' && (
-          <section className="p-3 flex-1">
-            <TokenPresale gate={gate} symbol={token?.symbol || '--'} />
-          </section>
-        )}
-        {/* Mounted once launched and hidden when inactive: remounting reloads the chart embed on each tab switch. */}
-        {isLaunched && (
-          <section
-            hidden={displayedTab !== 'CHART'}
-            className="mx-3 mt-3 flex min-h-0 flex-1 flex-col overflow-hidden"
-          >
-            <TokenChart
-              tokenAddress={gate.tokenAddress}
-              pairAddress={gate.pairAddress}
-            />
-          </section>
-        )}
-        {displayedTab === 'INFO' && (
-          <section className="px-3 pt-6 flex-1">
-            <TokenInfo
-              token={token}
-              totalSupply={gate.totalSupply}
-              tokenDecimals={gate.tokenDecimals}
-              marketCapUsd={displayedMarketCap}
-              volume24hUsd={volume24hUsd}
-              liquidityUsd={liquidityUsd}
-              fdvUsd={fdvUsd}
-              creatorAddress={gate.creatorAddress}
-            />
-          </section>
-        )}
-      </>
+      {/* Mounted once launched and hidden when inactive: remounting reloads the chart embed on each tab switch. */}
+      {isLaunched && (
+        <section
+          hidden={displayedTab !== 'CHART'}
+          className="mx-3 mt-3 flex min-h-0 flex-1 flex-col overflow-hidden"
+        >
+          <TokenChart
+            tokenAddress={gate.tokenAddress}
+            pairAddress={gate.pairAddress}
+          />
+        </section>
+      )}
+      {displayedTab === 'INFO' && (
+        <section className="px-3 pt-6 flex-1">
+          <TokenInfo
+            token={token}
+            totalSupply={gate.totalSupply}
+            tokenDecimals={gate.tokenDecimals}
+            marketCapUsd={marketCapUsd}
+            volume24hUsd={volume24hUsd}
+            liquidityUsd={liquidityUsd}
+            fdvUsd={fdvUsd}
+            creatorAddress={gate.creatorAddress}
+          />
+        </section>
+      )}
 
-      {showTrade && (
+      {isLaunched && (
         <div className="z-30 bg-[#070808] px-3 pt-1 relative shrink-0">
           <button
             type="button"
             onClick={() => setIsTradeOpen(true)}
             disabled={!isTradable}
-            className="flex h-10.25 w-full items-center justify-center border border-white bg-white font-jetbrains text-base font-semibold leading-[1.4] text-[#070808] disabled:cursor-not-allowed disabled:opacity-40"
+            className={actionButtonClass}
           >
             <span>{m.token_trade()}</span>
           </button>
         </div>
       )}
 
-      {showTrade && (
+      {showSubscribe && (
+        <div className="z-30 bg-[#070808] px-3 pt-1 relative shrink-0">
+          <Link
+            to={`/presale-detail/${tokenAddress}`}
+            className={actionButtonClass}
+          >
+            <span>{m.presale_list_subscribe()}</span>
+          </Link>
+        </div>
+      )}
+
+      {isLaunched && (
         <TradeSheet
           open={isTradeOpen}
           onOpenChange={setIsTradeOpen}
@@ -452,6 +450,7 @@ export const TokenPage = () => {
           tradable={isTradable}
         />
       )}
+
     </TokenLayout>
   )
 }

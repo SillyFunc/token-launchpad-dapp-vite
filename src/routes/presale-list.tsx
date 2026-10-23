@@ -15,6 +15,7 @@ import { usePresaleList, type PresaleListItem } from '@/hooks/use-presale-list'
 import { CornerBracket } from '@/components/common/corner-bracket'
 import { PageTitle } from '@/components/common/page-title'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Empty,
@@ -25,10 +26,25 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty'
 import { Spinner } from '@/components/ui/spinner'
-import { formatBnbAmount } from '@/lib/format'
+import { formatBnbAmount, formatTokenAmount } from '@/lib/format'
 import { tokenAmountToBnb } from '@/lib/presale-price'
-import { cn, formatAddress } from '@/lib/utils'
+import { cn, formatAddress, getPresaleProgress } from '@/lib/utils'
 import { m } from '@/paraglide/messages.js'
+
+/** Same outline palette as the dashboard stage badges. */
+const STAGE_BADGES: Record<
+  PresaleListItem['stage'],
+  { label: () => string; className: string }
+> = {
+  open: {
+    label: () => m.presale_list_status_open(),
+    className: 'border-emerald-500/40 text-emerald-300',
+  },
+  upcoming: {
+    label: () => m.presale_list_status_upcoming(),
+    className: 'border-amber-500/40 text-amber-300',
+  },
+}
 
 export interface ExpandableDescriptionProps {
   text: string
@@ -88,6 +104,60 @@ const ExpandableDescription: React.FC<ExpandableDescriptionProps> = ({
   )
 }
 
+export interface SubscriptionProgressProps {
+  /** Percent of the presale token cap already subscribed, 0-100. */
+  value: number
+}
+
+const SubscriptionProgress: React.FC<SubscriptionProgressProps> = ({
+  value,
+}) => {
+  const labelId = useId()
+
+  return (
+    <div className="mt-4 flex flex-col gap-2.5">
+      <span id={labelId} className="text-sm font-bold leading-[1.4] text-white">
+        {m.presale_list_subscription_progress()}
+      </span>
+      <div className="flex items-center gap-4">
+        {/* Skewed bar; mx-1 keeps the slanted ends inside the card. */}
+        <div
+          role="progressbar"
+          aria-labelledby={labelId}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={value}
+          className="mx-1 h-2 min-w-0 flex-1 -skew-x-25 bg-[#2B2D30]"
+        >
+          {value > 0 && (
+            <div
+              className="h-full border-2 border-[#1E8BF0] bg-linear-to-r from-[#FE810B] via-[#FFA546] to-[#FE810B]"
+              style={{ width: `${value}%` }}
+            />
+          )}
+        </div>
+        <span className="shrink-0 text-base leading-none tabular-nums text-[#FE810B]">
+          {value.toFixed(2)}%
+        </span>
+      </div>
+    </div>
+  )
+}
+
+export interface PresaleInfoRowProps {
+  label: string
+  value: string
+}
+
+const PresaleInfoRow: React.FC<PresaleInfoRowProps> = ({ label, value }) => (
+  <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-4 text-xs font-normal leading-[1.4]">
+    <span className="text-[#A0A3A7]">{label}</span>
+    <span className="min-w-0 truncate text-right" title={value}>
+      {value}
+    </span>
+  </div>
+)
+
 export interface PresaleCardProps {
   item: PresaleListItem
 }
@@ -119,6 +189,12 @@ const PresaleCard: React.FC<PresaleCardProps> = ({ item }) => {
       ? formatBnbAmount(
           tokenAmountToBnb(item.maxBuyPerWallet, item.presalePrice),
         )
+      : '--'
+  // launch() puts all raised BNB and the whole pool share into the BNB pair, so
+  // this is the liquidity the pool would open with right now.
+  const bnbPairText =
+    item.poolShare > 0n
+      ? `${formatBnbAmount(item.raised)} / ${formatTokenAmount(item.poolShare)} ${item.symbol}`
       : '--'
 
   return (
@@ -176,26 +252,36 @@ const PresaleCard: React.FC<PresaleCardProps> = ({ item }) => {
           </div>
           {description ? <ExpandableDescription text={description} /> : null}
         </div>
+        <Badge
+          variant="outline"
+          className={cn('shrink-0', STAGE_BADGES[item.stage].className)}
+        >
+          {STAGE_BADGES[item.stage].label()}
+        </Badge>
       </div>
-      <div className='flex flex-col gap-1.5 mt-1.5'>
-        <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,160px)] items-center gap-4 text-xs font-normal leading-[1.4]">
-        <span className="min-w-0 truncate text-[#A0A3A7]">硬顶</span>
-        <span className="min-w-0 overflo-hidden truncate text-right">
-          {formatBnbAmount(item.hardcap)}
-        </span>
-      </div>
-      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,160px)] items-center gap-4 text-xs font-normal leading-[1.4]">
-        <span className="min-w-0 truncate text-[#A0A3A7]">软顶</span>
-        <span className="min-w-0 overflo-hidden truncate text-right">
-          {formatBnbAmount(item.softCap)}
-        </span>
-      </div>
-      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,160px)] items-center gap-4 text-xs font-normal leading-[1.4]">
-        <span className="min-w-0 truncate text-[#A0A3A7]">购买上限</span>
-        <span className="min-w-0 overflo-hidden truncate text-right">
-          {walletLimitText}
-        </span>
-      </div>
+      <SubscriptionProgress
+        value={getPresaleProgress(item.subscribedTokens, item.maxPresaleTokens)}
+      />
+      {/* Sold out blocks further subscribe() calls; reaching the hard cap ends the presale. */}
+      <p className="mt-2 min-w-0 text-xs leading-[1.4] text-[#A0A3A7]">
+        {m.presale_list_progress_hint()}
+      </p>
+      <div className="mt-1.5 flex flex-col gap-2">
+        <PresaleInfoRow
+          label={m.token_hard_cap()}
+          value={formatBnbAmount(item.hardcap)}
+        />
+        <PresaleInfoRow
+          label={m.token_soft_cap()}
+          value={formatBnbAmount(item.softCap)}
+        />
+        <PresaleInfoRow label={m.token_wallet_limit()} value={walletLimitText} />
+        <PresaleInfoRow label={m.presale_list_bnb_pair()} value={bnbPairText} />
+        {/* launch() sends every LP token to 0xdead, so the pool can never be withdrawn. */}
+        <PresaleInfoRow
+          label={m.presale_list_lp_lock()}
+          value={m.presale_list_lp_lock_value()}
+        />
       </div>
       {/* A link, not a button: it navigates, so it should support open-in-new-tab. */}
       <Link

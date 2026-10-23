@@ -6,7 +6,6 @@ import SortIcon from '@/assets/svgs/sort-default.svg'
 import BnbIcon from '@/assets/bnb-icon.svg'
 import type { BoardItemResponse } from '@/api/board'
 import { usePopularTokens } from '@/hooks/use-board'
-import { useBoardPricing } from '@/hooks/use-board-pricing'
 import { readBoardMarket } from '@/lib/board-pair'
 import { PriceText } from '@/components/common/price-text'
 import {
@@ -31,8 +30,6 @@ const FILTER_OPTIONS = [
   { value: 'market_cap', label: () => m.board_filter_market_cap() },
   { value: 'gainers', label: () => m.board_filter_gainers() },
 ] as const
-
-type Pricing = ReturnType<typeof useBoardPricing>[string] | undefined
 
 function isConfiguredTaxRate(value: number | undefined): boolean {
   return typeof value === 'number' && value > 0
@@ -65,19 +62,6 @@ export const BoardPage = () => {
       ) ?? [],
     [data],
   )
-
-  const stageTokens = useMemo(
-    () =>
-      viewMode === 'list'
-        ? tokenList.filter(
-            (token) =>
-              isConfiguredTaxRate(token.buyTax) ||
-              isConfiguredTaxRate(token.sellTax),
-          )
-        : [],
-    [tokenList, viewMode],
-  )
-  const pricingMap = useBoardPricing(stageTokens)
 
   const activeFilterLabel =
     FILTER_OPTIONS.find((option) => option.value === activeFilter)?.label() ??
@@ -222,14 +206,13 @@ export const BoardPage = () => {
       >
         {viewMode === 'list' && (
           <div className="sticky top-28 z-20 h-10 grid grid-cols-[minmax(0,1fr)_64px_64px] gap-5 items-center border-y border-y-[#484B51] bg-[#131516] px-2 text-[#A0A3A7] text-[0.625rem]">
-            <span className="truncate min-w-0">市值/24H 交易額/稅率</span>
-            <span className="text-right">价格</span>
+            <span className="truncate min-w-0">{m.board_column_market()}</span>
+            <span className="text-right">{m.board_column_price()}</span>
             <button
               type="button"
-              aria-label="24h 涨跌幅"
               className="inline-flex min-w-0 items-center gap-0.5 uppercase transition-colors hover:text-white justify-end text-right"
             >
-              <span className="truncate">24h 涨跌幅</span>
+              <span className="truncate">{m.board_column_change_24h()}</span>
               <img
                 alt=""
                 aria-hidden
@@ -282,20 +265,13 @@ export const BoardPage = () => {
             </div>
           ) : (
             <>
-              {tokenList.map((token) => {
-                const key = String(
-                  token.coinContractAddress || '',
-                ).toLowerCase()
-                return viewMode === 'grid' ? (
+              {tokenList.map((token) =>
+                viewMode === 'grid' ? (
                   <BoardGridCard key={token.id} token={token} />
                 ) : (
-                  <BoardListRow
-                    key={token.id}
-                    token={token}
-                    pricing={pricingMap[key]}
-                  />
-                )
-              })}
+                  <BoardListRow key={token.id} token={token} />
+                ),
+              )}
               {hasNextPage && (
                 <button
                   type="button"
@@ -475,48 +451,32 @@ function BoardGridCard({ token }: { token: BoardItemResponse }) {
   )
 }
 
-function TaxBadge({ showPresale }: { showPresale: boolean }) {
+function TaxBadge() {
   return (
-    <>
-      <button
-        type="button"
-        className="h-3.5 text-[0.625rem] shrink-0 flex items-center leading-none border border-[#FE810B] text-[#FE810B]"
+    <button
+      type="button"
+      className="h-3.5 text-[0.625rem] shrink-0 flex items-center leading-none border border-[#FE810B] text-[#FE810B]"
+    >
+      <span>{m.board_tax_badge()}</span>
+      <svg
+        viewBox="0 0 16 16"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+        className="ml-px size-3.5 shrink-0"
       >
-        <span>税收</span>
-        <svg
-          viewBox="0 0 16 16"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          aria-hidden="true"
-          className="ml-px size-3.5 shrink-0"
-        >
-          <path
-            d="M11.7712 3.62846C11.9304 3.62846 12.0832 3.69179 12.1957 3.80432C12.3082 3.91684 12.3715 4.06963 12.3715 4.22876V9.88562H11.1709V5.67796L4.41751 12.4314L3.56861 11.5825L10.322 4.82907L6.11438 4.82907L6.11438 3.62846H11.7712Z"
-            fill="currentColor"
-          ></path>
-        </svg>
-      </button>
-      {showPresale && (
-        <span className="inline-flex h-3.5 shrink-0 items-center border border-[#FFA546]/40 bg-[#FFA546]/15 px-1 text-[0.625rem] leading-none text-[#FFA546]">
-          预售中
-        </span>
-      )}
-    </>
+        <path
+          d="M11.7712 3.62846C11.9304 3.62846 12.0832 3.69179 12.1957 3.80432C12.3082 3.91684 12.3715 4.06963 12.3715 4.22876V9.88562H11.1709V5.67796L4.41751 12.4314L3.56861 11.5825L10.322 4.82907L6.11438 4.82907L6.11438 3.62846H11.7712Z"
+          fill="currentColor"
+        ></path>
+      </svg>
+    </button>
   )
 }
 
-function BoardListRow({
-  token,
-  pricing,
-}: {
-  token: BoardItemResponse
-  pricing: Pricing
-}) {
+function BoardListRow({ token }: { token: BoardItemResponse }) {
   const navigate = useNavigate()
   const tokenAddress = token.coinContractAddress || ''
-
-  const stage = pricing?.stage ?? 'not_launched'
-  const isPresale = stage === 'presale'
 
   const market = useMemo(() => readBoardMarket(token.pair), [token.pair])
   const marketCap = market?.marketCap ?? null
@@ -573,7 +533,7 @@ function BoardListRow({
             <span className="min-w-0 max-w-28 truncate text-sm font-medium uppercase tracking-0 text-foreground">
               ${token.symbol || token.name}
             </span>
-            {hasTax && <TaxBadge showPresale={isPresale} />}
+            {hasTax && <TaxBadge />}
           </div>
           <div className="flex items-center gap-1 text-[0.625rem] text-[#A0A3A7] min-w-0">
             <span className="truncate">

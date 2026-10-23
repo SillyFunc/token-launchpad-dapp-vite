@@ -11,12 +11,16 @@ import {
 } from '@/lib/buyback-vault'
 import { sanitizeDecimal } from '@/lib/presale-input'
 import { cn } from '@/lib/utils'
+import { m } from '@/paraglide/messages.js'
 import { Button } from '../ui/button'
 
-const INTERVAL_UNITS: { value: BuybackVaultIntervalUnit; label: string }[] = [
-  { value: 'minutes', label: '分钟' },
-  { value: 'hours', label: '小时' },
-  { value: 'days', label: '天' },
+const INTERVAL_UNITS: {
+  value: BuybackVaultIntervalUnit
+  label: () => string
+}[] = [
+  { value: 'minutes', label: () => m.buyback_vault_unit_minutes() },
+  { value: 'hours', label: () => m.buyback_vault_unit_hours() },
+  { value: 'days', label: () => m.buyback_vault_unit_days() },
 ]
 
 export interface ScheduledBuybackVaultProps {
@@ -71,10 +75,13 @@ export const ScheduledBuybackVault: React.FC<ScheduledBuybackVaultProps> = ({
   const showTriggerBalance = conditionIncludes(executionCondition, 'balance')
 
   return (
-    <CollapsibleFormSection title="選擇 VAULT" defaultOpen={selected}>
+    <CollapsibleFormSection
+      title={m.buyback_vault_section_title()}
+      defaultOpen={selected}
+    >
       <button
         type="button"
-        aria-label="選擇金庫"
+        aria-label={m.buyback_vault_select()}
         aria-pressed={selected}
         onClick={() => {
           const nextSelected = !selected
@@ -95,11 +102,10 @@ export const ScheduledBuybackVault: React.FC<ScheduledBuybackVaultProps> = ({
           />
           <div className="flex flex-col gap-0.5 text-left min-w-0 flex-1">
             <span className="font-medium text-foreground text-sm">
-              自動回購金庫
+              {m.buyback_vault_name()}
             </span>
             <span className="min-w-0 truncate text-[0.625rem] text-[#84888c] block sm:line-clamp-2">
-              自动回购金库会按照预设规则，使用交易税收 BNB 自动回购并销毁 Token
-              或 LP Token。
+              {m.buyback_vault_description()}
             </span>
           </div>
           <Checkbox
@@ -120,17 +126,21 @@ export const ScheduledBuybackVault: React.FC<ScheduledBuybackVaultProps> = ({
             }}
           ></div>
           <div className="border-x border-b border-[#84888c] bg-transparent px-3 py-6">
-            <h4 className="mb-5 text-base font-medium">配置自動回購金庫</h4>
+            <h4 className="mb-5 text-base font-medium">
+              {m.buyback_vault_config_title()}
+            </h4>
             <div className="min-w-0 space-y-5">
               <section>
-                <h4 className="text-sm font-semibold">回購方式</h4>
+                <h4 className="text-sm font-semibold">
+                  {m.buyback_vault_mode_title()}
+                </h4>
                 <p className="text-xs font-normal text-muted-foreground mt-1 mb-2">
-                  选择金库将回购并销毁的资产。
+                  {m.buyback_vault_mode_description()}
                 </p>
                 <div className="grid sm:grid-cols-2 grid-cols-1 gap-3">
                   <button
                     type="button"
-                    aria-label="Token 回購銷燬"
+                    aria-label={m.buyback_vault_mode_token()}
                     aria-pressed={buybackMode === 'token'}
                     onClick={() => patch({ buybackMode: 'token' })}
                     className={optionClassName(buybackMode === 'token')}
@@ -138,15 +148,15 @@ export const ScheduledBuybackVault: React.FC<ScheduledBuybackVaultProps> = ({
                     <strong
                       className={optionTitleClassName(buybackMode === 'token')}
                     >
-                      Token 回購銷燬
+                      {m.buyback_vault_mode_token()}
                     </strong>
                     <small className="mt-1 text-muted-foreground text-xs">
-                      税收产生的BNB将保存在金库，根据执行条件中的设置执行自动回购税收代币，并将其永久销毁。
+                      {m.buyback_vault_mode_token_description()}
                     </small>
                   </button>
                   <button
                     type="button"
-                    aria-label="LP 回購銷燬"
+                    aria-label={m.buyback_vault_mode_lp()}
                     aria-pressed={buybackMode === 'lp'}
                     onClick={() => patch({ buybackMode: 'lp' })}
                     className={optionClassName(buybackMode === 'lp')}
@@ -154,23 +164,25 @@ export const ScheduledBuybackVault: React.FC<ScheduledBuybackVaultProps> = ({
                     <strong
                       className={optionTitleClassName(buybackMode === 'lp')}
                     >
-                      LP 回购销毁
+                      {m.buyback_vault_mode_lp()}
                     </strong>
                     <small className="mt-1 text-muted-foreground text-xs">
-                      税收产生的BNB将保存在金库，根据执行条件中的设置执行自动回购税收代币并组建LP，LP将永久销毁。如果暂时无法执行LP回购，金库将回退为Token回购销毁。
+                      {m.buyback_vault_mode_lp_description()}
                     </small>
                   </button>
                 </div>
               </section>
               <section>
-                <h4 className="text-sm font-semibold">執行條件</h4>
+                <h4 className="text-sm font-semibold">
+                  {m.buyback_vault_condition_title()}
+                </h4>
                 <p className="text-xs font-normal text-muted-foreground mt-1 mb-2">
-                  选择金库执行回购前必须满足的条件。
+                  {m.buyback_vault_condition_description()}
                 </p>
                 <div className="grid sm:grid-cols-2 grid-cols-1 gap-3">
                   <button
                     type="button"
-                    aria-label="時間"
+                    aria-label={m.buyback_vault_condition_time()}
                     aria-pressed={executionCondition === 'time'}
                     onClick={() => patch({ executionCondition: 'time' })}
                     className={optionClassName(executionCondition === 'time')}
@@ -180,15 +192,15 @@ export const ScheduledBuybackVault: React.FC<ScheduledBuybackVaultProps> = ({
                         executionCondition === 'time',
                       )}
                     >
-                      時間
+                      {m.buyback_vault_condition_time()}
                     </strong>
                     <small className="mt-1 text-muted-foreground text-xs">
-                      在所选开始时间首次执行，之后按设定间隔重复执行。
+                      {m.buyback_vault_condition_time_description()}
                     </small>
                   </button>
                   <button
                     type="button"
-                    aria-label="金庫餘額"
+                    aria-label={m.buyback_vault_condition_balance()}
                     aria-pressed={executionCondition === 'balance'}
                     onClick={() => patch({ executionCondition: 'balance' })}
                     className={optionClassName(
@@ -200,15 +212,15 @@ export const ScheduledBuybackVault: React.FC<ScheduledBuybackVaultProps> = ({
                         executionCondition === 'balance',
                       )}
                     >
-                      金庫餘額
+                      {m.buyback_vault_condition_balance()}
                     </strong>
                     <small className="mt-1 text-muted-foreground text-xs">
-                      当金库有足够 BNB 且已满足最短执行间隔时执行。
+                      {m.buyback_vault_condition_balance_description()}
                     </small>
                   </button>
                   <button
                     type="button"
-                    aria-label="时间 + 金库余额"
+                    aria-label={m.buyback_vault_condition_both()}
                     aria-pressed={executionCondition === 'time-and-balance'}
                     onClick={() =>
                       patch({ executionCondition: 'time-and-balance' })
@@ -222,10 +234,10 @@ export const ScheduledBuybackVault: React.FC<ScheduledBuybackVaultProps> = ({
                         executionCondition === 'time-and-balance',
                       )}
                     >
-                      时间 + 金库余额
+                      {m.buyback_vault_condition_both()}
                     </strong>
                     <small className="mt-1 text-muted-foreground text-xs">
-                      仅在所选时间和所需金库余额两个条件都满足后执行。
+                      {m.buyback_vault_condition_both_description()}
                     </small>
                   </button>
                 </div>
@@ -233,16 +245,16 @@ export const ScheduledBuybackVault: React.FC<ScheduledBuybackVaultProps> = ({
               <section className="flex flex-col gap-4 p-3 border bg-foreground/3">
                 <div className="flex flex-col gap-1">
                   <h4 className="text-sm font-semibold text-foreground">
-                    首次执行条件
+                    {m.buyback_vault_first_title()}
                   </h4>
                   <p className="font-normal text-muted-foreground text-xs">
-                    设置首次执行时间和/或金库开始执行回购前所需的余额。
+                    {m.buyback_vault_first_description()}
                   </p>
                 </div>
                 {showFirstExecutionTime && (
                   <label className="block min-w-0">
                     <span className="mb-2 font-medium text-foreground/70 text-xs block">
-                      预计首次可执行时间（UTC+8）
+                      {m.buyback_vault_first_time()}
                     </span>
                     <div className="relative min-w-0">
                       <LucideClock3 className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/40 size-4" />
@@ -260,7 +272,7 @@ export const ScheduledBuybackVault: React.FC<ScheduledBuybackVaultProps> = ({
                       />
                     </div>
                     <p className="mt-1 text-xs text-foreground/40">
-                      固定使用 UTC+8，不跟随浏览器时区变化。
+                      {m.buyback_vault_first_time_hint()}
                     </p>
                     {firstExecuteAtError ? (
                       <p className="mt-1 text-xs text-[#f7594b]">
@@ -272,7 +284,7 @@ export const ScheduledBuybackVault: React.FC<ScheduledBuybackVaultProps> = ({
                 {showTriggerBalance && (
                   <label className="block min-w-0">
                     <span className="mb-2 font-medium text-foreground/70 text-xs block">
-                      触发金额（BNB）
+                      {m.buyback_vault_trigger_amount()}
                     </span>
                     <input
                       type="text"
@@ -293,15 +305,15 @@ export const ScheduledBuybackVault: React.FC<ScheduledBuybackVaultProps> = ({
               <section className="flex flex-col gap-4 p-3 border bg-foreground/3">
                 <div className="flex flex-col gap-1">
                   <h4 className="text-sm font-semibold text-foreground">
-                    执行设置
+                    {m.buyback_vault_execution_title()}
                   </h4>
                   <p className="font-normal text-muted-foreground text-xs">
-                    设置两次执行之间的最短间隔，以及每次执行使用的 BNB 数量。
+                    {m.buyback_vault_execution_description()}
                   </p>
                 </div>
                 <label className="block min-w-0">
                   <span className="mb-2 font-medium text-foreground/70 text-xs block">
-                    最短执行间隔
+                    {m.buyback_vault_min_interval()}
                   </span>
                   <div className="grid min-w-0 grid-cols-1 gap-2">
                     <input
@@ -330,32 +342,34 @@ export const ScheduledBuybackVault: React.FC<ScheduledBuybackVaultProps> = ({
                               : 'text-foreground/60 hover:text-foreground',
                           )}
                         >
-                          {unit.label}
+                          {unit.label()}
                         </button>
                       ))}
                     </div>
                   </div>
-                  <p className="mt-1 text-xs text-foreground/40">请输入整数</p>
+                  <p className="mt-1 text-xs text-foreground/40">
+                    {m.buyback_vault_integer_hint()}
+                  </p>
                 </label>
                 <label className="block min-w-0">
                   <span className="mb-2 font-medium text-foreground/70 text-xs block">
-                    每次执行使用的 BNB
+                    {m.buyback_vault_amount_per_run()}
                   </span>
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      autoComplete="off"
-                      spellCheck={false}
-                      className={configInputClassName}
-                      value={value.buybackAmount}
-                      onChange={(event) =>
-                        patch({
-                          buybackAmount: sanitizeDecimal(event.target.value, 3),
-                        })
-                      }
-                    />
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    autoComplete="off"
+                    spellCheck={false}
+                    className={configInputClassName}
+                    value={value.buybackAmount}
+                    onChange={(event) =>
+                      patch({
+                        buybackAmount: sanitizeDecimal(event.target.value, 3),
+                      })
+                    }
+                  />
                   <p className="mt-1 text-xs text-foreground/40">
-                    金库每次执行时使用的 BNB 数量。
+                    {m.buyback_vault_amount_per_run_hint()}
                   </p>
                 </label>
               </section>
@@ -366,7 +380,7 @@ export const ScheduledBuybackVault: React.FC<ScheduledBuybackVaultProps> = ({
                 onClick={() => patch({ selected: false })}
                 className="text-sm px-4 bg-background border border-input text-foreground hover:bg-accent h-10"
               >
-                取消配置
+                {m.buyback_vault_cancel()}
               </Button>
             </div>
           </div>

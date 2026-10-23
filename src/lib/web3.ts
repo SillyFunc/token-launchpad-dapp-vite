@@ -1,7 +1,14 @@
+import { parseEther } from 'viem'
 import { bsc } from 'wagmi/chains'
 
 export const PLATFORM_CHAIN = bsc
 export const PLATFORM_CHAIN_ID: number = bsc.id
+
+/**
+ * BNB held back for gas when an amount is filled from the whole wallet
+ * balance, so the transaction can still pay its fee.
+ */
+export const NATIVE_GAS_RESERVE = parseEther('0.0005')
 
 /**
  * Wrapped native token (WBNB) on the platform chain. DEX aggregators report a

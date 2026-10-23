@@ -5,12 +5,13 @@ import { ArrowRight } from 'lucide-react'
 import { useConfig, useConnection } from 'wagmi'
 import { readContract } from 'wagmi/actions'
 
+import { PriceText } from '@/components/common/price-text'
 import { Web3ActionButton } from '@/components/common/web3-action-button'
 import { dividendAbi } from '@/contracts'
 import { useWriteContractTx } from '@/hooks/use-contract-tx'
 import { heldTokenKeys, type HeldToken } from '@/hooks/use-held-tokens'
 import { getContractErrorMessage } from '@/lib/contract-error'
-import { formatBnbAmount, formatDecimal, formatTokenAmount } from '@/lib/format'
+import { formatBnbAmount, formatTokenAmount } from '@/lib/format'
 import { toast } from '@/lib/toast'
 import { formatAddress } from '@/lib/utils'
 import { PLATFORM_CHAIN_ID } from '@/lib/web3'
@@ -50,9 +51,7 @@ export const HeldTokenCard: React.FC<HeldTokenCardProps> = ({ token }) => {
             {m.me_asset_price()}
           </span>
           <span className="text-sm font-normal leading-[1.4] text-white">
-            {token.priceBNB === null
-              ? '--'
-              : `${formatDecimal(token.priceBNB)} BNB`}
+            <PriceText value={token.priceBNB} unit="BNB" />
           </span>
         </div>
         <div className="flex min-w-0 items-center justify-between gap-4">

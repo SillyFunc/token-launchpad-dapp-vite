@@ -2,6 +2,7 @@ import ExpandSectionIcon from '@/assets/svgs/form-section-title.svg'
 import CollapsibleSectionIcon from '@/assets/svgs/collapsible-section-marker.svg'
 import { ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { m } from '@/paraglide/messages.js'
 
 interface FormSectionTitleBaseProps {
   title: string
@@ -50,7 +51,9 @@ export const FormSectionTitle: React.FC<FormSectionTitleProps> = (props) => {
       <div className="inline-flex min-w-0 items-center gap-1 ml-1.5">
         <span className="text-base font-medium text-foreground flex items-center">
           {title}
-          {optional && <span className="text-[#a0a3a7]">（可选）</span>}
+          {optional && (
+            <span className="text-[#a0a3a7]">{m.form_optional_suffix()}</span>
+          )}
           {required && <span className="text-[#f7594b] ml-1">&#42;</span>}
         </span>
         {optional && (

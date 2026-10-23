@@ -315,7 +315,7 @@ export const PresaleDetailPage = () => {
               >
                 {channel.key === 'creator'
                   ? m.token_tax_channel_creator_short()
-                  : channel.label}{' '}
+                  : channel.label()}{' '}
                 {formatDecimal(channel.percent)}%
               </span>
             ))}

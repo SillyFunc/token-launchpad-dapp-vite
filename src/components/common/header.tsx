@@ -41,7 +41,7 @@ export const Header: React.FC<HeaderProps> = ({ isMenuOpen, onToggleMenu }) => {
         <Link
           className="flex items-center justify-center text-[#FE810B]"
           to="/board"
-          aria-label="Launchpad Home"
+          aria-label={m.header_home()}
         >
           <span
             aria-hidden
@@ -69,7 +69,7 @@ export const Header: React.FC<HeaderProps> = ({ isMenuOpen, onToggleMenu }) => {
                   type="button"
                   data-testid="mobile-header-wallet-button"
                   className="ui20-connect-chamfer grid h-9 w-9 shrink-0 place-items-center border border-[#FE810B] bg-background text-[#FE810B] transition-colors hover:bg-[#FE810B] hover:text-black [--ui20-chamfer-bg:#070808] [--ui20-chamfer-border:#FE810B] hover:[--ui20-chamfer-bg:#FE810B]"
-                  aria-label="连接钱包"
+                  aria-label={m.connect_wallet()}
                   onClick={show}
                 >
                   <svg

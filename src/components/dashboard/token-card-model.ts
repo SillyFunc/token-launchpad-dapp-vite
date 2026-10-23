@@ -1,4 +1,10 @@
-import { getAddress, isAddress, parseEther, type Address } from 'viem'
+import {
+  formatEther,
+  getAddress,
+  isAddress,
+  parseEther,
+  type Address,
+} from 'viem'
 
 import type { BoardItemResponse } from '@/api/board'
 import type { BuybackVaultStats } from '@/hooks/use-buyback-vault-stats'
@@ -132,7 +138,8 @@ export interface TokenCardState {
   buyTax?: number
   sellTax?: number
   totalSupply: string
-  presalePrice: string
+  /** BNB per token; rendered with PriceText. */
+  presalePrice: number | null
   walletLimit: string
   raised: string
   tokenAllocation: string
@@ -185,10 +192,10 @@ export function buildTokenCardState(
         : formatNumberValue(token.totalSupply),
     presalePrice:
       gate.presalePrice > 0n
-        ? formatBnbAmount(gate.presalePrice)
+        ? Number(formatEther(gate.presalePrice))
         : token.presaleTokenPrice > 0
-          ? `${formatDecimal(token.presaleTokenPrice)} BNB`
-          : '--',
+          ? token.presaleTokenPrice
+          : null,
     walletLimit: formatWalletLimitBnb(gate, token),
     raised:
       gate.presaleAddress && gate.bnbAccumulated > 0n

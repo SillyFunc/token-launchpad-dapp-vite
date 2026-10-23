@@ -4,6 +4,7 @@ import {
   useBalance,
   useConfig,
   useConnection,
+  useReadContract,
   useReadContracts,
 } from 'wagmi'
 import { AlertTriangle, Clock, Loader2 } from 'lucide-react'
@@ -15,6 +16,7 @@ import { requestAuthSignature, type AuthSignature } from '@/lib/auth'
 
 import type { TokenGateResult } from '@/hooks/use-token-gate'
 import { PresaleProgress } from '@/components/common/presale-progress'
+import { PriceText } from '@/components/common/price-text'
 import { Web3ActionButton } from '@/components/common/web3-action-button'
 import { toast } from '@/lib/toast'
 import { getContractErrorMessage } from '@/lib/contract-error'
@@ -24,9 +26,29 @@ import {
   formatTokenAmount,
 } from '@/lib/format'
 import { getPresaleProgress } from '@/lib/utils'
+import { NATIVE_GAS_RESERVE } from '@/lib/web3'
 import { m } from '@/paraglide/messages.js'
 
 const TOKEN_SCALE = 10n ** 18n
+
+/** Mirrors PRESALE.LAUNCH_DEADLINE: time allowed to launch after subscriptions end. */
+const LAUNCH_DEADLINE_SECONDS = 72 * 3_600
+
+type PresaleAction = 'subscribe' | 'refund' | 'settle' | 'enforce'
+
+const ACTION_FUNCTIONS = {
+  subscribe: 'subscribe',
+  refund: 'refund',
+  settle: 'endPresale',
+  enforce: 'enforceLaunchDeadline',
+} as const satisfies Record<PresaleAction, string>
+
+const ACTION_SUCCESS: Record<PresaleAction, () => string> = {
+  subscribe: m.token_subscribe_success,
+  refund: m.token_refund_success,
+  settle: m.token_settle_success,
+  enforce: m.token_enforce_deadline_success,
+}
 
 function ceilDivide(value: bigint, divisor: bigint): bigint {
   if (divisor <= 0n) return 0n
@@ -63,7 +85,13 @@ function formatCountdown(seconds: number): string {
   return days > 0 ? m.token_countdown_days({ days, time: clock }) : clock
 }
 
-function PresaleRow({ label, value }: { label: string; value: string }) {
+function PresaleRow({
+  label,
+  value,
+}: {
+  label: string
+  value: React.ReactNode
+}) {
   return (
     <div className="flex items-center justify-between gap-4 py-2 text-xs">
       <span className="text-[#A0A3A7]">{label}</span>
@@ -103,9 +131,7 @@ export function TokenPresale({
   const [nowSeconds, setNowSeconds] = useState(() =>
     Math.floor(Date.now() / 1_000),
   )
-  const [pendingAction, setPendingAction] = useState<
-    'subscribe' | 'refund' | 'settle' | null
-  >(null)
+  const [pendingAction, setPendingAction] = useState<PresaleAction | null>(null)
   const queryPresaleAddress = gate.presaleAddress ?? zeroAddress
   const queryUserAddress = userAddress ?? zeroAddress
 
@@ -134,8 +160,18 @@ export function TokenPresale({
     },
   })
 
+  // Set when subscriptions end (status 2); the launch deadline counts from it.
+  const { data: endedAt } = useReadContract({
+    address: queryPresaleAddress,
+    abi: presaleAbi,
+    functionName: 'endedAt',
+    query: {
+      enabled: Boolean(gate.presaleAddress) && gate.presaleStatus === 2,
+    },
+  })
+
   useEffect(() => {
-    if (gate.presaleStatus !== 1) return
+    if (gate.presaleStatus !== 1 && gate.presaleStatus !== 2) return
     const timer = window.setInterval(
       () => setNowSeconds(Math.floor(Date.now() / 1_000)),
       1_000,
@@ -160,6 +196,13 @@ export function TokenPresale({
   const countdownSeconds = hasNotStarted
     ? Math.max(0, startTimeSeconds - nowSeconds)
     : Math.max(0, endTimeSeconds - nowSeconds)
+  const launchDeadlineSeconds =
+    gate.presaleStatus === 2 && endedAt
+      ? Number(endedAt) + LAUNCH_DEADLINE_SECONDS
+      : null
+  // Past the deadline anyone may flip the presale to failed, which opens refunds.
+  const isLaunchOverdue =
+    launchDeadlineSeconds !== null && nowSeconds >= launchDeadlineSeconds
   const parsedAmount = parseBnbInput(subscribeAmount)
   const walletBalance = balanceData?.value ?? null
   const remainingWalletTokens =
@@ -182,8 +225,15 @@ export function TokenPresale({
         ? 0n
         : gate.hardCap - gate.bnbAccumulated
       : null
+  // Presets leave room for gas; spending the whole balance fails gas estimation.
+  const spendableBalance =
+    walletBalance === null
+      ? null
+      : walletBalance > NATIVE_GAS_RESERVE
+        ? walletBalance - NATIVE_GAS_RESERVE
+        : 0n
   const maxContribution = minimum([
-    walletBalance,
+    spendableBalance,
     remainingWalletBnb,
     remainingHardCap,
   ])
@@ -233,7 +283,7 @@ export function TokenPresale({
   }
 
   const transact = async (
-    action: 'subscribe' | 'refund' | 'settle',
+    action: PresaleAction,
     value?: bigint,
     auth?: AuthSignature,
   ) => {
@@ -242,27 +292,13 @@ export function TokenPresale({
 
     let txHash: `0x${string}` | undefined
     try {
-      if (action === 'subscribe') {
-        const result = await execute({
-          address: gate.presaleAddress,
-          abi: presaleAbi,
-          functionName: 'subscribe',
-          value: value ?? 0n,
-        })
-        txHash = result.hash
-      } else if (action === 'refund') {
-        await execute({
-          address: gate.presaleAddress,
-          abi: presaleAbi,
-          functionName: 'refund',
-        })
-      } else {
-        await execute({
-          address: gate.presaleAddress,
-          abi: presaleAbi,
-          functionName: 'endPresale',
-        })
-      }
+      const result = await execute({
+        address: gate.presaleAddress,
+        abi: presaleAbi,
+        functionName: ACTION_FUNCTIONS[action],
+        value,
+      })
+      txHash = result.hash
     } catch (error) {
       toast.error(
         m.token_transaction_failed(),
@@ -282,15 +318,7 @@ export function TokenPresale({
     try {
       await refreshPresale()
       if (action === 'subscribe') setSubscribeAmount('')
-      if (recordSynced) {
-        toast.success(
-          action === 'subscribe'
-            ? m.token_subscribe_success()
-            : action === 'refund'
-              ? m.token_refund_success()
-              : m.token_settle_success(),
-        )
-      }
+      if (recordSynced) toast.success(ACTION_SUCCESS[action]())
     } finally {
       setPendingAction(null)
     }
@@ -423,7 +451,14 @@ export function TokenPresale({
         <PresaleRow
           label={m.token_presale_price()}
           value={
-            gate.presalePrice > 0n ? formatBnbAmount(gate.presalePrice) : '--'
+            <PriceText
+              value={
+                gate.presalePrice > 0n
+                  ? Number(formatEther(gate.presalePrice))
+                  : null
+              }
+              unit="BNB"
+            />
           }
         />
         <PresaleRow
@@ -610,12 +645,43 @@ export function TokenPresale({
         </>
       )}
 
-      {gate.presaleStatus === 2 && (
-        <StatusMessage
-          title={m.token_waiting_launch_title()}
-          description={m.token_waiting_launch_description()}
-        />
-      )}
+      {gate.presaleStatus === 2 &&
+        (isLaunchOverdue ? (
+          <section className="flex flex-col gap-3 border border-amber-400/30 bg-amber-400/10 p-3">
+            <div className="flex items-start gap-2">
+              <Clock className="mt-0.5 size-4 shrink-0 text-amber-300" />
+              <div className="flex flex-col gap-1 text-xs">
+                <strong className="text-amber-200">
+                  {m.token_launch_overdue_title()}
+                </strong>
+                <span className="leading-5 text-[#A0A3A7]">
+                  {m.token_launch_overdue_description()}
+                </span>
+              </div>
+            </div>
+            <Web3ActionButton
+              onAction={() => transact('enforce')}
+              loading={pendingAction === 'enforce'}
+              loadingText={m.token_enforcing_deadline()}
+              className="h-10 w-full text-sm font-semibold"
+            >
+              {m.token_enforce_deadline()}
+            </Web3ActionButton>
+          </section>
+        ) : (
+          <StatusMessage
+            title={m.token_waiting_launch_title()}
+            description={
+              launchDeadlineSeconds === null
+                ? m.token_waiting_launch_description()
+                : m.token_launch_deadline_in({
+                    time: formatCountdown(
+                      Math.max(0, launchDeadlineSeconds - nowSeconds),
+                    ),
+                  })
+            }
+          />
+        ))}
       {gate.presaleStatus === 3 && (
         <StatusMessage
           title={m.token_presale_complete_title()}

@@ -46,7 +46,7 @@ export const MePage = () => {
 
   return (
     <div className="h-full py-6 flex flex-col">
-      <PageTitle title="我的主页" />
+      <PageTitle title={m.me_page_title()} />
       <div className="relative bg-transparent mt-4">
         <div aria-hidden>
           <span className="pointer-events-none absolute left-0 top-0 z-10 h-4 w-4 border-l-2 border-t-2 border-[#FE810B]"></span>
@@ -72,7 +72,7 @@ export const MePage = () => {
                 </span>
               </div>
               <p className="mt-2 line-clamp-2 break-all text-11 leading-[1.4] text-[#84888C]">
-                这个人还没有填写简介。
+                {m.me_bio_empty()}
               </p>
             </div>
           </div>
@@ -95,16 +95,15 @@ export const MePage = () => {
                   </button>
                   <button
                     type="button"
-                    aria-label="编辑资料"
                     className="flex h-8 items-center justify-center gap-2 border border-[#484B51] px-3 text-13 font-medium text-white transition-colors hover:border-[#fe810b] hover:text-[#fe810b] disabled:cursor-not-allowed disabled:opacity-40"
                   >
-                    <Pencil className="size-4" />
-                    编辑资料
+                    <Pencil className="size-4" aria-hidden="true" />
+                    {m.me_edit_profile()}
                   </button>
                   <button
                     type="button"
-                    aria-label="分享个人主页"
-                    title="分享个人主页"
+                    aria-label={m.me_share_profile()}
+                    title={m.me_share_profile()}
                     className="flex h-8 w-8 items-center justify-center border border-[#484B51] text-white transition-colors hover:border-[#fe810b] hover:text-[#fe810b] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#fe810b]"
                   >
                     <Share2 className="size-3.5" />
@@ -116,10 +115,9 @@ export const MePage = () => {
                     <button
                       type="button"
                       onClick={show}
-                      aria-label="连接钱包"
                       className="flex h-8 items-center justify-center border border-[#fe810b] bg-[#fe810b] px-3 text-13 font-semibold tracking-[-0.052px] text-[#1A1A1A] transition-colors hover:bg-[#E87000] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E87000] focus-visible:ring-offset-2 focus-visible:ring-offset-black"
                     >
-                      连接钱包
+                      {m.connect_wallet()}
                     </button>
                   )}
                 </ConnectKitButton.Custom>
@@ -130,36 +128,36 @@ export const MePage = () => {
         <div className="grid grid-cols-3">
           <div className="flex min-w-0 flex-col justify-center gap-1 border border-t-0 border-[#484B51] bg-background px-3 [&amp;:not(:first-child)]:border-l-0">
             <span className="truncate text-11 leading-[1.4] text-[#A0A3A7]">
-              资产总值
+              {m.me_total_assets()}
             </span>
             <span className="truncate text-15 font-medium leading-[1.4] text-white">
               --
             </span>
             <span className="inline-flex truncate text-11 leading-[1.4] text-[#84888C]">
               <span>--</span>
-              <span className="ml-2">24小时</span>
+              <span className="ml-2">{m.me_24h()}</span>
             </span>
           </div>
           <div className="flex min-w-0 flex-col justify-center gap-1 border border-t-0 border-[#484B51] bg-background px-3 [&amp;:not(:first-child)]:border-l-0">
             <span className="truncate text-11 leading-[1.4] text-[#A0A3A7]">
-              持有代币
+              {m.me_held_tokens()}
             </span>
             <span className="truncate text-15 font-medium leading-[1.4] text-white">
               {heldTokenCount}
             </span>
             <span className="inline-flex truncate text-11 leading-[1.4] text-[#84888C]">
-              <span>个代币</span>
+              <span>{m.me_token_unit()}</span>
             </span>
           </div>
           <div className="flex min-w-0 flex-col justify-center gap-1 border border-t-0 border-[#484B51] bg-background px-3 [&amp;:not(:first-child)]:border-l-0 min-h-20 py-3">
             <span className="truncate text-11 leading-[1.4] text-[#A0A3A7]">
-              创建代币
+              {m.me_created_tokens()}
             </span>
             <span className="truncate text-15 font-medium leading-[1.4] text-white">
               {createdTokenCount}
             </span>
             <span className="inline-flex truncate text-11 leading-[1.4] text-[#84888C]">
-              <span>个代币</span>
+              <span>{m.me_token_unit()}</span>
             </span>
           </div>
         </div>

@@ -14,11 +14,10 @@ import { formatBnbAmount, formatTokenAmount } from '@/lib/format'
 import { sanitizeDecimal } from '@/lib/presale-input'
 import { toast } from '@/lib/toast'
 import { cn } from '@/lib/utils'
-import { PLATFORM_CHAIN_ID } from '@/lib/web3'
+import { NATIVE_GAS_RESERVE, PLATFORM_CHAIN_ID } from '@/lib/web3'
 import { m } from '@/paraglide/messages.js'
 
 const PERCENT_OPTIONS = [25, 50, 75, 100] as const
-const BNB_GAS_RESERVE = parseUnits('0.0005', 18)
 
 export interface TradeSheetProps {
   open: boolean
@@ -132,8 +131,8 @@ export function TradeSheet({
     if (balanceValue === undefined) return
 
     let value = percentAmount(balanceValue, percent)
-    if (side === 'buy' && percent === 100 && balanceValue > BNB_GAS_RESERVE) {
-      value = balanceValue - BNB_GAS_RESERVE
+    if (side === 'buy' && percent === 100 && balanceValue > NATIVE_GAS_RESERVE) {
+      value = balanceValue - NATIVE_GAS_RESERVE
     }
     setAmount(formatUnits(value, decimals))
   }

@@ -25,7 +25,7 @@ import { Web3ActionButton } from '@/components/common/web3-action-button'
 import { dividendAbi } from '@/contracts'
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 import { useDividendInfo } from '@/hooks/use-dividend-info'
-import { useQuoteToken } from '@/hooks/use-quote-token'
+import { useTaxProcessor } from '@/hooks/use-tax-processor'
 import { useTaxChannelYields } from '@/hooks/use-tax-channel-yields'
 import { useTokenGate } from '@/hooks/use-token-gate'
 import { useWriteContractTx } from '@/hooks/use-contract-tx'
@@ -35,10 +35,6 @@ import { toast } from '@/lib/toast'
 import { formatAddress } from '@/lib/utils'
 import { PLATFORM_CHAIN_ID, WRAPPED_NATIVE_ADDRESS, getExplorerAddressUrl } from '@/lib/web3'
 import { m } from '@/paraglide/messages.js'
-
-const RECEIVING_WALLET = '0x7b5F94d3d5eD780A595dA7083a30dB007A78de76'
-
-const WBNB_ADDRESS = '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c'
 
 // const SWITCH_CLASS =
 // '!h-6 !w-[38px] rounded-none! border-[#484B51] bg-[#18191B] p-[4px] data-checked:border-[#5B31FF] data-checked:bg-[#5B31FF] data-unchecked:bg-[#18191B] focus-visible:ring-1 focus-visible:ring-[#5B31FF] focus-visible:ring-offset-0 [&>[data-slot=switch-thumb]]:!h-[14px] [&>[data-slot=switch-thumb]]:!w-[14px] [&>[data-slot=switch-thumb]]:rounded-none [&>span]:shadow-none [&>span[data-checked]]:!translate-x-[14px] [&>span[data-checked]]:bg-white [&>span[data-unchecked]]:!translate-x-0 [&>span[data-unchecked]]:bg-white'
@@ -121,7 +117,10 @@ export const TaxInfoPage = () => {
   const taxYield = tokenAddress
     ? taxYields.byAddress[tokenAddress.toLowerCase()]
     : undefined
-  const { quoteToken } = useQuoteToken(tokenAddress)
+  // marketAddress is where the market channel's share goes: the creator's fee
+  // recipient, or the buyback vault for vault tokens.
+  const { quoteToken, marketAddress } = useTaxProcessor(tokenAddress)
+  const recipientUrl = getExplorerAddressUrl(marketAddress)
   // The market channel's yield is in the quote token; show it as BNB only when the
   // quote token is WBNB, otherwise the figure would be mislabeled.
   const marketingInBnb =
@@ -189,7 +188,7 @@ export const TaxInfoPage = () => {
     <div className="pb-3">
       <div className="flex min-w-0 items-center gap-1 text-[0.6875rem] text-xs text-[#A0A3A7] mt-2.5">
         <Link className="transition-colors hover:text-foreground" to="/board">
-          代币
+          {m.tax_info_breadcrumb_tokens()}
         </Link>
         <span aria-hidden>&gt;</span>
         <Link
@@ -199,7 +198,7 @@ export const TaxInfoPage = () => {
           {tokenName}
         </Link>
         <span aria-hidden>&gt;</span>
-        <span className="text-foreground">稅收信息</span>
+        <span className="text-foreground">{m.tax_info_breadcrumb_current()}</span>
       </div>
       <div className="border border-[#484B51] mt-2.5">
         <div className="flex h-5 items-center border-b border-[#484B51] bg-[#010202] px-2">
@@ -297,7 +296,7 @@ export const TaxInfoPage = () => {
               <div className="absolute left-1 top-1 size-10 border border-solid border-[#484B51]">
                 <img
                   src={token?.coinImg || ''}
-                  alt="代币LOGO"
+                  alt={m.tax_info_logo_alt()}
                   loading="lazy"
                   className="size-full object-cover"
                   sizes="64px"
@@ -331,8 +330,8 @@ export const TaxInfoPage = () => {
                   <button
                     type="button"
                     className="text-white/35 transition-colors hover:text-white/80 focus-visible:text-white/80 focus-visible:outline-none inline-flex size-3.5 shrink-0 items-center justify-center"
-                    title="複製地址"
-                    aria-label="複製地址"
+                    title={m.token_copy_address()}
+                    aria-label={m.token_copy_address()}
                     onClick={() => void copy(tokenAddress)}
                   >
                     {copied ? (
@@ -374,16 +373,20 @@ export const TaxInfoPage = () => {
       <div className="space-y-2.5 mt-2.5">
         <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
           <h2 className="text-[0.9375rem] font-semibold uppercase leading-[1.35] text-[#EEEEEE]">
-            稅收金庫信息
+            {m.tax_info_vault_title()}
           </h2>
         </div>
         <div className="space-y-2.5">
           <div className="grid border border-[#484B51] grid-cols-2">
             <div className="flex min-h-9 items-center justify-center px-2 py-1.5 text-center text-[0.6875rem] leading-[1.35] text-[#2BC235]">
-              買入稅率: {buyTax === null ? '--' : `${formatDecimal(buyTax)}%`}
+              {m.tax_info_buy_tax({
+                rate: buyTax === null ? '--' : `${formatDecimal(buyTax)}%`,
+              })}
             </div>
             <div className="flex min-h-9 items-center justify-center border-l border-[#484B51] px-2 py-1.5 text-center text-[0.6875rem] leading-[1.35] text-[#F7594B]">
-              賣出稅率: {sellTax === null ? '--' : `${formatDecimal(sellTax)}%`}
+              {m.tax_info_sell_tax({
+                rate: sellTax === null ? '--' : `${formatDecimal(sellTax)}%`,
+              })}
             </div>
           </div>
 
@@ -401,7 +404,7 @@ export const TaxInfoPage = () => {
                 <div className="flex min-w-0 items-center gap-1">
                   <Landmark className="size-3.5 shrink-0 text-[#7C5AFF]" />
                   <span className="min-w-0 truncate text-13 font-medium leading-[1.3] text-[#7C5AFF]">
-                    稅收金庫 / 資金接收方
+                    {m.tax_info_treasury_title()}
                   </span>
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
@@ -417,22 +420,26 @@ export const TaxInfoPage = () => {
                 <div className="grid overflow-hidden border border-[#484B51] [&>*+*]:border-[#484B51] grid-cols-2 [&>*+*]:border-l [&>*+*]:border-t-0">
                   <div className="flex min-h-11 min-w-0 flex-col items-start justify-center gap-0.5 px-2.5 py-1.5">
                     <p className="min-w-0 text-10 leading-[1.3] text-[#A0A3A7]">
-                      資金接收錢包
+                      {m.tax_info_recipient_wallet()}
                     </p>
                     <div className="min-w-0 text-xs font-medium leading-[1.3] text-white">
-                      <a
-                        target="_blank"
-                        rel="noopener noreferrer nofollow"
-                        className="break-all transition-colors hover:text-[#7C5AFF]"
-                        href="https://bscscan.com/address/0x7b5F94d3d5eD780A595dA7083a30dB007A78de76"
-                      >
-                        0x7b5F...de76
-                      </a>
+                      {marketAddress ? (
+                        <a
+                          target="_blank"
+                          rel="noopener noreferrer nofollow"
+                          className="break-all transition-colors hover:text-[#7C5AFF]"
+                          href={recipientUrl}
+                        >
+                          {formatAddress(marketAddress)}
+                        </a>
+                      ) : (
+                        '--'
+                      )}
                     </div>
                   </div>
                   <div className="flex min-h-11 min-w-0 flex-col items-start justify-center gap-0.5 px-2.5 py-1.5">
                     <p className="min-w-0 text-10 leading-[1.3] text-[#A0A3A7]">
-                      發送給資金接收方的報價
+                      {m.tax_info_sent_to_recipient()}
                     </p>
                     <div className="min-w-0 text-xs font-medium leading-[1.3] text-white">
                       {bnbText(marketingInBnb)}
@@ -440,77 +447,85 @@ export const TaxInfoPage = () => {
                   </div>
                 </div>
                 <p className="text-11 leading-[1.4] text-white">
-                  創建者收益會先累積；累積到約 $4 後會自動發送到配置的接收錢包。
+                  {m.tax_info_creator_accrual()}
                 </p>
                 <div className="border-t border-[#303236] pt-2.5 space-y-3">
                   <h3 className="text-base font-medium leading-[1.4] text-white">
-                    資金接收方信息
+                    {m.tax_info_recipient_info()}
                   </h3>
                   <p className="text-xs leading-[1.4] text-[#A0A3A7]">
-                    交易税将发送至下方收款钱包。你可以查看其链上活动，了解这些资金的使用情况。
+                    {m.tax_info_recipient_description()}
                   </p>
                   <div className="flex min-h-14.5 min-w-0 flex-col justify-center border border-[#484B51] p-2">
                     <p className="mb-1 text-11 leading-[1.35] text-[#A0A3A7]">
-                      接收地址
+                      {m.tax_info_recipient_address()}
                     </p>
                     <div
                       className="flex min-w-0 items-center gap-3"
                       data-testid="vault-address-row"
                     >
-                      <a
-                        target="_blank"
-                        rel="noopener noreferrer nofollow"
-                        className="block min-w-0 flex-1 break-all font-mono text-xs leading-[1.35] text-white hover:text-[#D0FF00]"
-                        href="https://bscscan.com/address/0x7b5F94d3d5eD780A595dA7083a30dB007A78de76"
-                      >
-                        <span>0x7b5F94d3d5eD780A595dA7083a30dB007A78de76</span>
-                      </a>
-                      <button
-                        type="button"
-                        className="inline-flex h-4 w-4 shrink-0 items-center justify-center text-[#A0A3A7] transition-colors hover:text-white focus-visible:text-white focus-visible:outline-none"
-                        title="複製地址"
-                        aria-label="複製地址"
-                        onClick={() => void copy(RECEIVING_WALLET)}
-                      >
-                        {copiedText === RECEIVING_WALLET ? (
-                          <Check
-                            className="size-4 text-[#2BC235]"
-                            aria-hidden="true"
-                          />
-                        ) : (
-                          <span
-                            className="relative inline-block h-4 w-4"
-                            aria-hidden="true"
+                      {marketAddress ? (
+                        <>
+                          <a
+                            target="_blank"
+                            rel="noopener noreferrer nofollow"
+                            className="block min-w-0 flex-1 break-all font-mono text-xs leading-[1.35] text-white hover:text-[#D0FF00]"
+                            href={recipientUrl}
                           >
-                            <svg
-                              viewBox="0 0 14.834 14.834"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                              preserveAspectRatio="none"
-                              className="absolute inset-[12.92%_12.91%_12.91%_12.92%]"
-                            >
-                              <path
-                                d="M10.7503 3.33333C10.9492 3.33333 11.1403 3.41241 11.2809 3.55306C11.4216 3.69371 11.5007 3.88475 11.5007 4.08366V14.0837C11.5007 14.4979 11.1645 14.834 10.7503 14.834H0.750326C0.336112 14.834 1.51715e-08 14.4979 0 14.0837V4.08366C4.41037e-06 3.66945 0.336115 3.33333 0.750326 3.33333H10.7503ZM1.50065 13.3333H10V4.83398H1.50065V13.3333ZM14.0837 0C14.2826 8.3105e-08 14.4736 0.0790748 14.6143 0.219727C14.7549 0.360379 14.834 0.551414 14.834 0.750326V10.7503H13.3333V1.50065H4.08366V0H14.0837Z"
-                                fill="currentColor"
-                              ></path>
-                            </svg>
-                          </span>
-                        )}
-                      </button>
-                      <a
-                        target="_blank"
-                        rel="noopener noreferrer nofollow"
-                        className="inline-flex h-4 w-4 shrink-0 items-center justify-center text-[#A0A3A7] transition-colors hover:text-white focus-visible:text-white focus-visible:outline-none"
-                        aria-label="接收地址："
-                        href="https://bscscan.com/address/0x7b5F94d3d5eD780A595dA7083a30dB007A78de76"
-                      >
-                        <ExternalLink className="size-4" />
-                      </a>
+                            <span>{marketAddress}</span>
+                          </a>
+                          <button
+                            type="button"
+                            className="inline-flex h-4 w-4 shrink-0 items-center justify-center text-[#A0A3A7] transition-colors hover:text-white focus-visible:text-white focus-visible:outline-none"
+                            title={m.tax_info_copy_recipient()}
+                            aria-label={m.tax_info_copy_recipient()}
+                            onClick={() => void copy(marketAddress)}
+                          >
+                            {copiedText === marketAddress ? (
+                              <Check
+                                className="size-4 text-[#2BC235]"
+                                aria-hidden="true"
+                              />
+                            ) : (
+                              <span
+                                className="relative inline-block h-4 w-4"
+                                aria-hidden="true"
+                              >
+                                <svg
+                                  viewBox="0 0 14.834 14.834"
+                                  fill="none"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  preserveAspectRatio="none"
+                                  className="absolute inset-[12.92%_12.91%_12.91%_12.92%]"
+                                >
+                                  <path
+                                    d="M10.7503 3.33333C10.9492 3.33333 11.1403 3.41241 11.2809 3.55306C11.4216 3.69371 11.5007 3.88475 11.5007 4.08366V14.0837C11.5007 14.4979 11.1645 14.834 10.7503 14.834H0.750326C0.336112 14.834 1.51715e-08 14.4979 0 14.0837V4.08366C4.41037e-06 3.66945 0.336115 3.33333 0.750326 3.33333H10.7503ZM1.50065 13.3333H10V4.83398H1.50065V13.3333ZM14.0837 0C14.2826 8.3105e-08 14.4736 0.0790748 14.6143 0.219727C14.7549 0.360379 14.834 0.551414 14.834 0.750326V10.7503H13.3333V1.50065H4.08366V0H14.0837Z"
+                                    fill="currentColor"
+                                  ></path>
+                                </svg>
+                              </span>
+                            )}
+                          </button>
+                          <a
+                            target="_blank"
+                            rel="noopener noreferrer nofollow"
+                            className="inline-flex h-4 w-4 shrink-0 items-center justify-center text-[#A0A3A7] transition-colors hover:text-white focus-visible:text-white focus-visible:outline-none"
+                            aria-label={m.tax_info_view_recipient()}
+                            href={recipientUrl}
+                          >
+                            <ExternalLink className="size-4" />
+                          </a>
+                        </>
+                      ) : (
+                        <span className="font-mono text-xs leading-[1.35] text-white">
+                          --
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div className="flex min-h-13 min-w-0 items-center justify-between gap-3 border border-[#484B51] p-2">
                     <span className="text-sm leading-[1.4] text-[#A0A3A7]">
-                      總稅收
+                      {m.tax_info_total_tax()}
                     </span>
                     <span className="text-sm font-medium leading-[1.4] text-white">
                       {taxYield
@@ -541,7 +556,7 @@ export const TaxInfoPage = () => {
                 <div className="flex min-w-0 items-center gap-1">
                   <Gift className="size-3.5 shrink-0 text-[#D0FF00]" />
                   <span className="min-w-0 truncate text-13 font-medium leading-[1.3] text-[#D0FF00]">
-                    分红
+                    {m.dashboard_tax_channel_dividend()}
                   </span>
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
@@ -557,7 +572,7 @@ export const TaxInfoPage = () => {
                 <div className="grid overflow-hidden border border-[#484B51] [&>*+*]:border-[#484B51] grid-cols-2 [&>*+*]:border-l [&>*+*]:border-t-0">
                   <div className="flex min-h-11 min-w-0 flex-col items-start justify-center gap-0.5 px-2.5 py-1.5">
                     <p className="min-w-0 text-10 leading-[1.3] text-[#A0A3A7]">
-                      已分配總分紅
+                      {m.tax_info_dividends_distributed()}
                     </p>
                     <div className="min-w-0 text-xs font-medium leading-[1.3] text-white">
                       {bnbText(taxYield?.dividendBNB)}
@@ -565,22 +580,22 @@ export const TaxInfoPage = () => {
                   </div>
                   <div className="flex min-h-11 min-w-0 flex-col items-start justify-center gap-0.5 px-2.5 py-1.5">
                     <p className="min-w-0 text-10 leading-[1.3] text-[#A0A3A7]">
-                      分紅代幣
+                      {m.tax_info_dividend_token()}
                     </p>
                     <div className="min-w-0 text-xs font-medium leading-[1.3] text-white">
                       <span className="flex min-w-0 flex-wrap items-center gap-1.5">
                         <span>BNB</span>
                         <span className="break-all font-mono text-10 font-normal text-[#A0A3A7]">
-                          0xbb4C...095c
+                          {formatAddress(WRAPPED_NATIVE_ADDRESS)}
                         </span>
                         <button
                           type="button"
                           className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[#84888C] transition-colors hover:text-[#D0FF00] focus-visible:text-[#D0FF00] focus-visible:outline-none"
-                          title="複製分紅代幣地址"
-                          aria-label="複製分紅代幣地址"
-                          onClick={() => void copy(WBNB_ADDRESS)}
+                          title={m.tax_info_copy_dividend_token()}
+                          aria-label={m.tax_info_copy_dividend_token()}
+                          onClick={() => void copy(WRAPPED_NATIVE_ADDRESS)}
                         >
-                          {copiedText === WBNB_ADDRESS ? (
+                          {copiedText === WRAPPED_NATIVE_ADDRESS ? (
                             <Check
                               className="size-3.5 text-[#2BC235]"
                               aria-hidden="true"
@@ -626,12 +641,10 @@ export const TaxInfoPage = () => {
                 </div>
                 */}
                 <p className="text-11 leading-[1.4] text-[#84888C]">
-                  分紅將分配給持有超過 {minimumShareText} 的錢包。超過約 $4
-                  的餘額會自動發送給您，您也可以隨時在此手動領取分紅——即使是低至
-                  $0.001 的金額。
+                  {m.tax_info_dividend_rules({ minimum: minimumShareText })}
                   <br />
                   <span className="block h-1" aria-hidden="true"></span>
-                  您將默認收到 WBNB，並可以在領取時選擇解包為原生代幣。
+                  {m.tax_info_dividend_wbnb_note()}
                 </p>
                 <div className="space-y-2.5">
                   <div
@@ -640,7 +653,7 @@ export const TaxInfoPage = () => {
                   >
                     <div className="flex min-h-11 min-w-0 flex-col items-start justify-center gap-0.5 px-2.5 py-1.5">
                       <p className="min-w-0 text-10 leading-[1.3] text-[#A0A3A7]">
-                        已領取
+                        {m.tax_info_claimed()}
                       </p>
                       <div className="min-w-0 text-xs font-medium leading-[1.3] text-white">
                         {dividendInfo?.withdrawn === undefined
@@ -650,7 +663,7 @@ export const TaxInfoPage = () => {
                     </div>
                     <div className="flex min-h-11 min-w-0 flex-col items-start justify-center gap-0.5 px-2.5 py-1.5">
                       <p className="min-w-0 text-10 leading-[1.3] text-[#A0A3A7]">
-                        未領取
+                        {m.tax_info_unclaimed()}
                       </p>
                       <div className="min-w-0 text-xs font-medium leading-[1.3] text-white">
                         {dividendInfo?.withdrawable === undefined
@@ -699,7 +712,7 @@ export const TaxInfoPage = () => {
                 <div className="flex min-w-0 items-center gap-1">
                   <Waves className="size-3.5 shrink-0 text-[#16D9D9]" />
                   <span className="min-w-0 truncate text-13 font-medium leading-[1.3] text-[#16D9D9]">
-                    流動性
+                    {m.dashboard_tax_channel_liquidity()}
                   </span>
                 </div>
                 <div className="flex shrink-0 items-center gap-1 text-[#16D9D9]">
@@ -714,7 +727,7 @@ export const TaxInfoPage = () => {
               <CollapsibleContent className="grid overflow-hidden border border-[#484B51] [&>*+*]:border-[#484B51] grid-cols-2 [&>*+*]:border-l [&>*+*]:border-t-0 mt-2.5">
                 <div className="flex min-h-11 min-w-0 flex-col items-start justify-center gap-0.5 px-2.5 py-1.5">
                   <p className="min-w-0 text-10 leading-[1.3] text-[#A0A3A7]">
-                    添加到流動性的報價
+                    {m.tax_info_liquidity_quote()}
                   </p>
                   <div className="min-w-0 text-xs font-medium leading-[1.3] text-white">
                     {bnbText(taxYield?.liquidityBNB)}
@@ -722,7 +735,7 @@ export const TaxInfoPage = () => {
                 </div>
                 <div className="flex min-h-11 min-w-0 flex-col items-start justify-center gap-0.5 px-2.5 py-1.5">
                   <p className="min-w-0 text-10 leading-[1.3] text-[#A0A3A7]">
-                    添加到流動性的代幣
+                    {m.tax_info_liquidity_tokens()}
                   </p>
                   <div className="min-w-0 text-xs font-medium leading-[1.3] text-white">
                     {taxYield
@@ -748,7 +761,7 @@ export const TaxInfoPage = () => {
                 <div className="flex min-w-0 items-center gap-1">
                   <Flame className="size-3.5 shrink-0 text-[#F7594B]" />
                   <span className="min-w-0 truncate text-13 font-medium leading-[1.3] text-[#F7594B]">
-                    代幣銷毀
+                    {m.tax_info_burn_title()}
                   </span>
                 </div>
                 <div className="flex shrink-0 items-center gap-1 text-[#F7594B]">
@@ -762,7 +775,7 @@ export const TaxInfoPage = () => {
               </CollapsibleTrigger>
               <CollapsibleContent className="flex min-h-10 min-w-0 items-center justify-between gap-2 border border-[#484B51] px-2.5 py-1.5 mt-2.5">
                 <span className="min-w-0 text-11 leading-[1.3] text-[#A0A3A7]">
-                  已銷毀代幣
+                  {m.tax_info_burned_tokens()}
                 </span>
                 <div className="flex min-w-0 flex-wrap items-center justify-end gap-1.5 text-11 leading-[1.3]">
                   <span className="font-medium text-white">
@@ -773,7 +786,9 @@ export const TaxInfoPage = () => {
                     aria-hidden="true"
                   ></span>
                   <span className="text-[#A0A3A7]">
-                    {percentOfSupply(taxYield?.burnedTokens)} 佔最大供應量
+                    {m.tax_info_of_max_supply({
+                      percent: percentOfSupply(taxYield?.burnedTokens),
+                    })}
                   </span>
                 </div>
               </CollapsibleContent>

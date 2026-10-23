@@ -1,9 +1,12 @@
+import { m } from '@/paraglide/messages.js'
+
 export type TaxChannelKey = 'creator' | 'burn' | 'dividend' | 'liquidity'
 
 export interface TaxChannel {
   key: TaxChannelKey
-  label: string
-  sublabel: string
+  /** Message getters, so the text follows the current locale. */
+  label: () => string
+  sublabel: () => string
   color: string
 }
 
@@ -15,26 +18,26 @@ export interface TaxChannel {
 export const TAX_CHANNELS: readonly TaxChannel[] = [
   {
     key: 'creator',
-    label: '创作者资金钱包',
-    sublabel: '开发者、营销等',
+    label: m.dashboard_tax_channel_creator,
+    sublabel: m.tax_channel_creator_sublabel,
     color: 'rgb(254, 129, 11)',
   },
   {
     key: 'burn',
-    label: '銷毀',
-    sublabel: '銷毀',
+    label: m.dashboard_tax_channel_burn,
+    sublabel: m.dashboard_tax_channel_burn,
     color: 'rgb(91, 49, 255)',
   },
   {
     key: 'dividend',
-    label: '分紅',
-    sublabel: '持有者獎勵',
+    label: m.dashboard_tax_channel_dividend,
+    sublabel: m.tax_channel_dividend_sublabel,
     color: 'rgb(208, 255, 0)',
   },
   {
     key: 'liquidity',
-    label: '流動性',
-    sublabel: '增加流動性',
+    label: m.dashboard_tax_channel_liquidity,
+    sublabel: m.tax_channel_liquidity_sublabel,
     color: 'rgb(22, 217, 217)',
   },
 ]

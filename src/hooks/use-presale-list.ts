@@ -25,6 +25,9 @@ const DETAIL_FUNCTIONS = [
   'startTime',
   'endTime',
   'maxBuyPerWallet',
+  'totalSubscribedTokens',
+  'maxPresaleTokens',
+  'poolShare',
 ] as const
 
 export interface PresaleListItem {
@@ -44,6 +47,12 @@ export interface PresaleListItem {
   endTime: bigint
   /** Per-wallet subscription cap, in token wei. */
   maxBuyPerWallet: bigint
+  /** Tokens subscribed so far, in token wei. */
+  subscribedTokens: bigint
+  /** Token cap of the presale (subscribe reverts past it), in token wei. */
+  maxPresaleTokens: bigint
+  /** Tokens launch() pairs with all raised BNB in the PancakeSwap pool, in token wei. */
+  poolShare: bigint
 }
 
 export const presaleListKeys = {
@@ -173,6 +182,9 @@ async function fetchPresaleList(
       startTime,
       endTime,
       maxBuyPerWallet: asBigInt(details[base + 6]),
+      subscribedTokens: asBigInt(details[base + 7]),
+      maxPresaleTokens: asBigInt(details[base + 8]),
+      poolShare: asBigInt(details[base + 9]),
     })
   })
 
