@@ -561,6 +561,19 @@ export const buybackVaultAbi = [
   },
   {
     "type": "function",
+    "name": "temporaryRecoverAll",
+    "inputs": [
+      {
+        "name": "to",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "token",
     "inputs": [],
     "outputs": [
@@ -783,9 +796,51 @@ export const buybackVaultAbi = [
     "anonymous": false
   },
   {
+    "type": "event",
+    "name": "VaultRecovery",
+    "inputs": [
+      {
+        "name": "to",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "nativeAmount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "wbnbAmount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "tokenAmount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
     "type": "error",
     "name": "AlreadyInitialized",
     "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ETHTransferFailed",
+    "inputs": [
+      {
+        "name": "to",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
   },
   {
     "type": "error",
@@ -849,6 +904,11 @@ export const buybackVaultAbi = [
   },
   {
     "type": "error",
+    "name": "InvalidVaultRecoveryRecipient",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "OnlySelf",
     "inputs": []
   },
@@ -881,6 +941,11 @@ export const buybackVaultAbi = [
   {
     "type": "error",
     "name": "UnauthorizedKeeper",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "UnauthorizedVaultRecovery",
     "inputs": []
   },
   {

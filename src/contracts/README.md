@@ -7,9 +7,11 @@
 | 内容 | 来源文件 | 合约仓库 commit |
 |---|---|---|
 | `abis/*.ts` | `token-launchpad-contracts/out/<Contract>.sol/<Contract>.json` 的 `abi` 字段 | `3e04354` + `script/deployments/97.json` working tree |
-| `addresses.ts` | `token-launchpad-contracts/script/deployments/{56,97}.json` | 同上 |
+| `addresses.ts` | `token-launchpad-contracts/script/deployments/56-mainnet-test.json`（chainId 56，主网验收环境）、`97.json` | 同上 |
 
 合约仓库本地路径：`D:/gh-projects/token-launchpad-contracts`。
+
+> **当前状态：** `addresses.ts` 的 chainId 56 指向主网验收环境，因此 `abis/buyback-vault.ts` 与 `abis/tax-processor.ts` 包含 `[TEMP-RECOVERY]` 临时回收条目。正式上线前须切回正式部署（`script/deployments/56.json`）、移除这些条目，并按合约仓库 `docs/pre-launch-cleanup.md` 核验。
 
 `TokenConfig` 为 8 字段（无 `taxDuration`）。税期由 Coordinator 常量 `TAX_DURATION() == 100 * 365 days` 注入。
 

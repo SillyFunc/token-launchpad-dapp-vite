@@ -2,17 +2,17 @@ import type { Address } from 'viem'
 
 export const addresses = {
   56: {
-    flapTaxTokenImplementation: '0x6980190344e6E485119039C9DC6bEC7971E28BC2',
-    tokenFactory: '0x0AA8E4edd3D00275B464daC30ac618a2aF14305a',
-    presaleImplementation: '0x9CA45c3aE5A9Ca8cCf3f09E4B91B48c52eF23CeD',
-    presaleFactory: '0x350597F41B981cf5493a0d387FeD8646b76A0AFb',
-    coordinatorFactory: '0xb73bdF3E86737F64E6f624112069F9D282a68e35',
+    flapTaxTokenImplementation: '0x4EeBdf2B4bb94A2019bd04e0a6724eC9a1b018B6',
+    tokenFactory: '0x9d132C13B24b9CaDa74dAbE11f4D3DE0f1814F2c',
+    presaleImplementation: '0xC4fD2511c583B4Ce6D8209406875a4c92b6184b0',
+    presaleFactory: '0xBD1eFD77acA6dC8B00fc051fB977e1D4373FE5a2',
+    coordinatorFactory: '0xf5723650A64a7b3F05D1544d540E77C57EcDD94D',
     router: '0x10ED43C718714eb63d5aA57B78B54704E256024E',
-    buybackVaultImplementation: '0x193335e9C56b4F34466b9FF66E9fB3D72dE685Bf',
-    buybackVaultFactory: '0x81E3a74e859248737E43d60Fc1D66F44a203aBc5',
-    dividendImplementation: '0x53E6E5487D954AF595532b0D0660bBCd06Db8bFC',
-    taxInfrastructureFactory: '0x7f28Ebdc94301D349C5CD1924A7dE3d6BD7b74A6',
-    taxProcessorImplementation: '0xeD32EEf193Cf589c4abFA76e19d6A35614F8bA0d',
+    buybackVaultImplementation: '0xcC31Ff9bE3091cF147b57501fFa39956AEf303Ce',
+    buybackVaultFactory: '0xc027DaD66C7dF259953932B10b66Fad991889b86',
+    dividendImplementation: '0x8EEDFE0445ec4849E752F6B18283eD01D81b8ddb',
+    taxInfrastructureFactory: '0x505B02Eb32c545489B64d29A660AEcC3bE79965F',
+    taxProcessorImplementation: '0x8d5E672cBa2ae731f887C08AfAb1F4980ABa4B87',
   },
   97: {
     flapTaxTokenImplementation: '0x4073e66Ac74e23E6F1B36feb9C230D8757AcF99d',

@@ -742,6 +742,19 @@ export const taxProcessorAbi = [
   },
   {
     "type": "function",
+    "name": "temporaryRecoverAll",
+    "inputs": [
+      {
+        "name": "to",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "totalDividendTokenSent",
     "inputs": [],
     "outputs": [
@@ -1040,6 +1053,37 @@ export const taxProcessorAbi = [
     "anonymous": false
   },
   {
+    "type": "event",
+    "name": "TemporaryRecovery",
+    "inputs": [
+      {
+        "name": "to",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "taxTokenAmount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "quoteAmount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "nativeAmount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
     "type": "error",
     "name": "AccountingInvariant",
     "inputs": []
@@ -1069,6 +1113,17 @@ export const taxProcessorAbi = [
     "type": "error",
     "name": "DividendRequired",
     "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ETHTransferFailed",
+    "inputs": [
+      {
+        "name": "to",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
   },
   {
     "type": "error",
@@ -1123,6 +1178,11 @@ export const taxProcessorAbi = [
   {
     "type": "error",
     "name": "InvalidTaxAmount",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidTemporaryRecoveryRecipient",
     "inputs": []
   },
   {
@@ -1205,6 +1265,11 @@ export const taxProcessorAbi = [
   {
     "type": "error",
     "name": "UnauthorizedTaxKeeper",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "UnauthorizedTemporaryRecovery",
     "inputs": []
   },
   {
