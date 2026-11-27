@@ -36,3 +36,4 @@ dist-ssr
 workers/**/.dev.vars
 workers/**/.wrangler
 workers/**/node_modules
+*.zip
